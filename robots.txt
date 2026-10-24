@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yema7582-code.github.io/koubo-ai-ok/sitemap.xml
