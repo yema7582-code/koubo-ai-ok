@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フリーランス新法 取引条件チェックリスト＆確認依頼文の作成（無料・登録不要）</title>
+<meta name="description" content="仕事を受けるとき、発注者から示された取引条件にフリーランス法（2024年11月施行）で明示が求められる項目がそろっているかをチェックし、足りない項目を丁寧に確認するメッセージ文を作ります。入力はブラウザ内だけで処理され、送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/freelance-terms-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:760px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin:6px 0}
+textarea{width:100%;min-height:14em;font-size:.95em}
+input[type=text]{font-size:1em;padding:3px;width:14em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>フリーランス新法 取引条件チェックリスト</h1>
+<p>2024年11月1日に施行された「特定受託事業者に係る取引の適正化等に関する法律」（いわゆるフリーランス法）では、業務を委託する側は、委託したら直ちに取引条件を書面やメール・チャット等で明示することになっています。受け取ったメッセージや発注書を見ながら、下の項目にチェックを入れてください。足りない項目があれば、確認をお願いする文面を自動で作ります。</p>
+
+<div class="box">
+<h2>1. 示された条件にあるものにチェック</h2>
+<div id="items"></div>
+</div>
+
+<div class="box">
+<h2>2. 確認依頼メッセージ</h2>
+<label>相手の呼び方 <input type="text" id="to" value="ご担当者様"></label>
+<label>案件名 <input type="text" id="job" value="今回のご依頼"></label>
+<label>自分の名前 <input type="text" id="me" value=""></label>
+<button id="gen">文面を作る</button><button id="copy">コピー</button>
+<textarea id="out" readonly></textarea>
+</div>
+
+<div class="box">
+<h2>3. 1か月以上の仕事なら、こんな要求は禁止行為にあたる可能性があります</h2>
+<ul>
+<li>納品物を正当な理由なく受け取らない（受領拒否）</li>
+<li>決めた報酬をあとから減らす（報酬の減額）</li>
+<li>受け取った納品物を正当な理由なく返す（返品）</li>
+<li>相場より著しく低い報酬を一方的に決める（買いたたき）</li>
+<li>指定する物やサービスを買わせる・使わせる（購入・利用強制）</li>
+<li>金銭や労務などを無償で提供させる（不当な経済上の利益の提供要請）</li>
+<li>費用を負担せずに内容変更ややり直しをさせる（不当な給付内容の変更・やり直し）</li>
+</ul>
+<p>また、報酬の支払期日は、原則として納品（役務の提供）を受けた日から60日以内のできるだけ短い期間内で定めることになっています。6か月以上続く契約を発注者側から中途解除する場合は、原則30日前までの予告が必要です。</p>
+</div>
+
+<div class="note">
+<p><strong>注意</strong>：このページは公的資料をもとにした確認用のチェックリストと文例で、法律相談や個別の判断ではありません。実際の適用（相手が従業員を使用している事業者か、取引の内容など）はケースにより異なります。困ったときは、無料の相談窓口「フリーランス・トラブル110番」や、公正取引委員会・厚生労働省・中小企業庁の案内をご確認ください。</p>
+<p>参考：<a href="https://www.jftc.go.jp/fllaw_limited.html" rel="noopener">公正取引委員会 フリーランス法特設サイト</a> ／ <a href="https://www.mhlw.go.jp/stf/newpage_39352.html" rel="noopener">厚生労働省 フリーランスの方へ</a></p>
+<p><small>入力内容はこのブラウザ内でのみ処理され、どこにも送信されません。</small></p>
+</div>
+<p><a href="./">ほかの無料ツール</a></p>
+
+<script>
+const ITEMS=[
+ ["content","仕事の内容（何を・どれだけ・どんな品質で納めるか）"],
+ ["amount","報酬の額（または具体的な算定方法）"],
+ ["due","報酬の支払期日"],
+ ["names","発注者と自分の名称（名前・屋号・ID等）"],
+ ["date","業務を委託した日"],
+ ["delivery","納品日（役務を提供する日・期間）"],
+ ["place","納品場所（納品方法・提出先）"],
+ ["inspect","検査をする場合は、検査完了日"],
+ ["method","現金以外で支払う場合は、その支払方法に関する事項"]
+];
+const box=document.getElementById('items');
+ITEMS.forEach(([k,t])=>{const l=document.createElement('label');l.innerHTML='<input type="checkbox" id="c_'+k+'"> '+t;box.appendChild(l);});
+function gen(){
+ const miss=ITEMS.filter(([k])=>!document.getElementById('c_'+k).checked).map(([,t])=>t.replace(/（.*?）/,''));
+ const to=document.getElementById('to').value||'ご担当者様';
+ const job=document.getElementById('job').value||'今回のご依頼';
+ const me=document.getElementById('me').value;
+ let s=to+'\n\nお世話になっております'+(me?'、'+me+'です':'')+'。\n'+job+'のご連絡をありがとうございます。\n\n';
+ if(miss.length===0){s+='条件を確認いたしました。内容に問題ございませんので、この条件でお受けいたします。\nどうぞよろしくお願いいたします。';}
+ else{s+='お受けするにあたり、念のため以下の点を確認させていただけますでしょうか。\n\n'+miss.map(m=>'・'+m).join('\n')+'\n\n行き違いを防ぐため、メールまたはこちらのメッセージで文字に残る形でいただけますと助かります。\nお手数をおかけしますが、どうぞよろしくお願いいたします。';}
+ if(me)s+='\n\n'+me;
+ document.getElementById('out').value=s;
+}
+document.getElementById('gen').onclick=gen;
+document.getElementById('copy').onclick=()=>{gen();navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('out').value);};
+gen();
+</script>
+</body>
+</html>
