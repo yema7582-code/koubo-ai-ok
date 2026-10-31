@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>商品データ AIショッピング対応チェッカー（Shopify商品CSV・無料・ブラウザ内で完結）</title>
+<meta name="description" content="Shopifyの商品CSVを読み込むだけで、AIアシスタントや比較サイトに読み取られにくい商品データ（短すぎるタイトル、説明文不足、JAN/GTIN未入力、画像の代替テキストなし、SEO説明なし）を商品ごとに一覧表示します。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/catalog-check.html">
+<meta property="og:title" content="商品データ AIショッピング対応チェッカー（Shopify商品CSV）">
+<meta property="og:description" content="商品CSVの抜け漏れを商品ごとに点数化。ブラウザ内で完結、無料。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yema7582-code.github.io/koubo-ai-ok/catalog-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.6em}
+textarea{width:100%;height:160px;font-family:monospace}
+table{border-collapse:collapse;width:100%;font-size:.88em;margin-top:12px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3;cursor:pointer}.bad{color:#b00020}.warn{color:#8a5a00}.good{color:#1b6e1b}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}.box{background:#f5f8ff;padding:10px 12px;border-radius:8px}
+button{padding:6px 14px;margin:6px 6px 0 0}
+</style>
+</head>
+<body>
+<h1>商品データ AIショッピング対応チェッカー</h1>
+<p>ChatGPTやGeminiなどのAIアシスタント、Googleショッピング、価格比較サイトは、商品ページの見た目ではなく<strong>商品データ</strong>（タイトル、説明文、ブランド、カテゴリ、JAN/GTIN、画像の説明など）を読んで商品を比べます。Shopifyの商品CSVを読み込むと、データの抜けや薄い部分を商品ごとに点数で表示します。</p>
+<p class="note">処理はすべてこのブラウザの中で行われ、CSVはどこにも送信されません。点数はこのページ独自の目安で、検索順位やAIでの表示を保証するものではありません。</p>
+<p>Shopify管理画面の「商品」から「エクスポート」で出したCSVを選ぶか、中身を貼り付けてください。</p>
+<input type="file" id="file" accept=".csv,text/csv">
+<textarea id="src" placeholder="Handle,Title,Body (HTML),Vendor,Product Category,Type,Tags,Variant SKU,Variant Price,Variant Barcode,Image Src,Image Alt Text,SEO Description&#10;..."></textarea>
+<div>
+<label>説明文の最低文字数 <input id="minBody" type="number" value="150" style="width:5em"></label>
+<label><input type="checkbox" id="needGtin" checked> JAN/GTIN（Variant Barcode）を必須にする</label>
+</div>
+<button id="run">チェックする</button><button id="dl">結果をCSVでダウンロード</button>
+<div id="sum" class="box" style="display:none"></div>
+<div id="out"></div>
+
+<h2>何をチェックするか</h2>
+<ul>
+<li>タイトル：短すぎる（15文字未満）、長すぎる（150文字超）、型番や記号だけで何の商品かわからないもの。</li>
+<li>説明文：HTMLタグを除いた本文が設定した文字数より少ないもの、素材・サイズ・用途などの言葉がまったく入っていないもの。</li>
+<li>ブランド（Vendor）、商品カテゴリ（Product Category）またはタイプ（Type）、タグ：空欄のもの。</li>
+<li>バリエーション：SKUやJAN/GTINが空欄、価格が0円、オプション名が「Option1」のような初期値のままのもの。</li>
+<li>画像：1枚もない、または代替テキスト（Image Alt Text）がないもの。</li>
+<li>SEOタイトル・SEO説明文：空欄のもの（空欄だとタイトルと本文の先頭が自動で使われます）。</li>
+<li>同じタイトルの商品が複数あるもの。</li>
+</ul>
+<h2>直し方のヒント</h2>
+<ul>
+<li>タイトルは「ブランド＋商品名＋主な仕様（容量・サイズ・色）」の順にすると、人にもAIにも伝わりやすくなります。</li>
+<li>説明文には、誰のための商品か、素材、サイズ、使い方、お手入れ、同梱物を書きます。実際にない効能や数値は書かないでください。</li>
+<li>JANコードがある商品はVariant Barcodeに入れておくと、比較サイトで同じ商品として正しくまとめられます。</li>
+<li>配送や返品の条件はストアのポリシーページにはっきり書いておきます。</li>
+</ul>
+<p>商品データの書き直しや日本語・英語・中国語の商品説明の作成と翻訳のご相談は shinji-work@mail.grokbot.com までどうぞ。</p>
+<p>関連ツール：<a href="ogp-maker.html">OGP・メタタグ作成＆チェック</a> ／ <a href="address-check.html">送り状CSV 住所・郵便番号チェッカー</a> ／ <a href="hreflang.html">hreflangタグ作成＆チェック</a></p>
+<p><a href="./">トップへ戻る</a></p>
+<script>
+function parseCSV(t){const rows=[];let row=[],f='',q=false;t=t.replace(/^\uFEFF/,'');const d=(t.split('\n')[0].split('\t').length>t.split('\n')[0].split(',').length)?'\t':',';
+for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
+else if(c=='"')q=true;else if(c==d){row.push(f);f=''}else if(c=='\n'){row.push(f.replace(/\r$/,''));rows.push(row);row=[];f=''}else f+=c}
+if(f!==''||row.length){row.push(f.replace(/\r$/,''));rows.push(row)}return rows.filter(r=>r.some(x=>x.trim()!==''))}
+function strip(h){const d=document.createElement('div');d.innerHTML=h||'';return (d.textContent||'').replace(/\s+/g,' ').trim()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ATTR=/素材|材質|サイズ|寸法|重さ|重量|容量|内容量|色|カラー|原材料|産地|対象|用途|使い方|お手入れ|同梱|仕様|cm|mm|ml|g\b|kg|material|size|weight|color|colour|dimension|ingredient|cotton|wool|leather/i;
+let results=[];
+document.getElementById('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{document.getElementById('src').value=r.result};r.readAsText(f,'utf-8')};
+document.getElementById('run').onclick=()=>{
+const rows=parseCSV(document.getElementById('src').value);if(rows.length<2){alert('見出し行つきのCSVを入れてください');return}
+const H=rows[0].map(h=>h.trim().toLowerCase());const col=n=>H.indexOf(n.toLowerCase());
+const ix={h:col('Handle'),t:col('Title'),b:col('Body (HTML)'),v:col('Vendor'),pc:col('Product Category'),ty:col('Type'),tg:col('Tags'),sku:col('Variant SKU'),pr:col('Variant Price'),bc:col('Variant Barcode'),img:col('Image Src'),alt:col('Image Alt Text'),st:col('SEO Title'),sd:col('SEO Description'),o1:col('Option1 Name'),vi:col('Variant Image')};
+if(ix.h<0||ix.t<0){alert('Handle列とTitle列が見つかりません。ShopifyからエクスポートしたCSVか確認してください。');return}
+const g=new Map();const get=(r,i)=>i>=0&&r[i]!=null?r[i].trim():'';
+for(const r of rows.slice(1)){const h=get(r,ix.h);if(!h)continue;if(!g.has(h))g.set(h,{h,rows:[]});g.get(h).rows.push(r)}
+const minBody=+document.getElementById('minBody').value||150,needG=document.getElementById('needGtin').checked;
+const titles={};results=[];
+for(const p of g.values()){const f=p.rows[0];const t=get(f,ix.t);titles[t]=(titles[t]||0)+1;
+const iss=[];let score=100;const add=(pts,msg,lv)=>{score-=pts;iss.push([lv,msg])};
+if(!t)add(25,'タイトルが空欄','bad');else{if(t.length<15)add(10,'タイトルが短い（'+t.length+'文字）','warn');if(t.length>150)add(5,'タイトルが長すぎる（'+t.length+'文字）','warn');if(/^[A-Za-z0-9\-_ #\/.]+$/.test(t)&&t.length<25)add(10,'タイトルが型番や記号だけに見える','warn')}
+const body=strip(get(f,ix.b));if(!body)add(20,'説明文が空欄','bad');else{if(body.length<minBody)add(10,'説明文が短い（'+body.length+'文字）','warn');if(!ATTR.test(body))add(8,'説明文に素材・サイズ・用途などの言葉がない','warn')}
+if(ix.v>=0&&!get(f,ix.v))add(8,'ブランド（Vendor）が空欄','warn');
+if(!(get(f,ix.pc)||get(f,ix.ty)))add(8,'カテゴリとタイプが両方空欄','warn');
+if(ix.tg>=0&&!get(f,ix.tg))add(4,'タグが空欄','warn');
+const vrows=p.rows.filter(r=>get(r,ix.pr)!==''||get(r,ix.sku)!==''||get(r,ix.bc)!=='');
+const noSku=vrows.filter(r=>!get(r,ix.sku)).length,noBc=vrows.filter(r=>!get(r,ix.bc)).length,zero=vrows.filter(r=>ix.pr>=0&&parseFloat(get(r,ix.pr))===0).length;
+if(noSku)add(5,'SKUが空欄のバリエーション '+noSku+'件','warn');
+if(needG&&noBc)add(8,'JAN/GTIN（Variant Barcode）が空欄のバリエーション '+noBc+'件','warn');
+if(zero)add(10,'価格が0円のバリエーション '+zero+'件','bad');
+if(/^option\d?$/i.test(get(f,ix.o1)))add(5,'オプション名が初期値のまま（'+get(f,ix.o1)+'）','warn');
+const imgs=p.rows.filter(r=>get(r,ix.img));if(ix.img>=0&&!imgs.length)add(15,'画像が1枚もない','bad');
+const noAlt=imgs.filter(r=>!get(r,ix.alt)).length;if(noAlt)add(5,'代替テキストのない画像 '+noAlt+'枚','warn');
+if(ix.st>=0&&!get(f,ix.st))add(3,'SEOタイトルが空欄','warn');if(ix.sd>=0&&!get(f,ix.sd))add(4,'SEO説明文が空欄','warn');
+results.push({h:p.h,t,score,iss,vars:vrows.length,imgs:imgs.length})}
+for(const r of results)if(r.t&&titles[r.t]>1){r.score-=5;r.iss.push(['warn','同じタイトルの商品が'+titles[r.t]+'件ある'])}
+results.forEach(r=>r.score=Math.max(0,r.score));results.sort((a,b)=>a.score-b.score);
+const avg=results.length?Math.round(results.reduce((s,r)=>s+r.score,0)/results.length):0;
+const cnt={};results.forEach(r=>r.iss.forEach(i=>{const k=i[1].replace(/[（ ][^）]*）?$/,'').replace(/ \d+(件|枚)$/,'');cnt[k]=(cnt[k]||0)+1}));
+const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>esc(k)+'：'+v+'商品').join('<br>');
+const s=document.getElementById('sum');s.style.display='block';
+s.innerHTML='<b>商品数 '+results.length+'</b>　平均 '+avg+'点　80点以上 '+results.filter(r=>r.score>=80).length+'商品　60点未満 '+results.filter(r=>r.score<60).length+'商品<br><b>多い問題</b><br>'+(top||'目立った問題はありません');
+document.getElementById('out').innerHTML='<table><tr><th>点数</th><th>Handle</th><th>タイトル</th><th>バリエーション/画像</th><th>指摘</th></tr>'+results.map(r=>'<tr><td class="'+(r.score>=80?'good':r.score>=60?'warn':'bad')+'"><b>'+r.score+'</b></td><td>'+esc(r.h)+'</td><td>'+esc(r.t)+'</td><td>'+r.vars+' / '+r.imgs+'</td><td>'+(r.iss.map(i=>'<span class="'+i[0]+'">・'+esc(i[1])+'</span>').join('<br>')||'<span class="good">問題なし</span>')+'</td></tr>').join('')+'</table>'};
+document.getElementById('dl').onclick=()=>{if(!results.length){alert('先にチェックしてください');return}
+const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const csv='\uFEFF'+['score,handle,title,issues'].concat(results.map(r=>[r.score,q(r.h),q(r.t),q(r.iss.map(i=>i[1]).join(' / '))].join(','))).join('\r\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='catalog-check-result.csv';a.click()};
+</script>
+</body>
+</html>
