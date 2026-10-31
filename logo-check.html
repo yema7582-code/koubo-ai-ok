@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ロゴ 縮小・白黒チェッカー｜公募応募前に小さく・単色で見えるか確認（無料）</title>
+<meta name="description" content="ロゴ画像を選ぶだけで、16px〜128pxや実寸10mm・20mm相当の縮小表示、グレースケール・白黒2値化、濃い背景での見え方、色のコントラスト比をその場で確認。ロゴマーク公募の「白黒・縮小でも視認性を保つこと」対策に。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/logo-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.cell{text-align:center;font-size:.8em;color:#555}
+.cell canvas,.cell img{display:block;margin:0 auto 4px;image-rendering:auto}
+.dark{background:#1d1d1f;color:#ddd;padding:10px;border-radius:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}
+table{border-collapse:collapse;font-size:.9em}td,th{border:1px solid #ddd;padding:3px 8px}
+.sw{display:inline-block;width:1em;height:1em;border:1px solid #999;vertical-align:middle}
+</style>
+</head>
+<body>
+<h1>ロゴ 縮小・白黒チェッカー</h1>
+<p>ロゴマークの公募要項には「白黒や縮小でも視認性を保てること」とよく書かれています。画像（PNG・JPG・SVG）を選ぶと、小さいサイズ、単色、濃い背景での見え方をまとめて表示し、主な色どうしのコントラスト比を出します。画像はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<input type="file" id="f" accept="image/*"> 
+<label>2値化のしきい値 <input type="range" id="th" min="40" max="220" value="140"> <span id="thv">140</span></label>
+</div>
+<div id="res" hidden>
+<h2>1. 縮小表示</h2>
+<div class="row" id="sizes"></div>
+<p><small>実寸の目安は96dpi画面での表示です（10mm≒38px、20mm≒76px）。名刺や封筒の隅、スマホのアイコンはこのくらいの大きさになります。</small></p>
+<h2>2. 単色・白黒</h2>
+<div class="row" id="mono"></div>
+<h2>3. 濃い背景の上</h2>
+<div class="row dark" id="dark"></div>
+<h2>4. 主な色とコントラスト</h2>
+<div id="colors"></div>
+<div id="tips"></div>
+</div>
+<div class="note">
+<b>見るポイント</b><br>
+・16〜32pxで形がつぶれていないか。細い線や小さい文字は消えやすいので、縮小用の簡略版を用意すると安心です。<br>
+・グレースケールで色の違いが消えていないか。明るさが近い色（例：赤と緑）は白黒にすると同じ灰色になります。<br>
+・2値化（白か黒だけ）で、隣り合う色面がくっついて一つの塊にならないか。白い隙間で分けると単色でも読めます。<br>
+・透過PNGを濃い背景に置いたとき、紺や黒の部分が背景に溶けないか。白抜き版を別に作るのが一般的です。<br>
+・提出前に要項のファイル形式・容量（例：5MB以下、A4で印刷して鮮明か）も確認してください。
+</div>
+<p><small>関連：<a href="ai-disclosure.html">生成AI利用の申告文メーカー</a> ／ <a href="moji-count.html">公募用 文字数チェッカー</a> ／ <a href="./">AI利用OKの公募まとめ</a>。ロゴの簡略版づくりや白黒版・白抜き版の作成、応募書類の日英中の翻訳は shinji-work@mail.grokbot.com までご相談ください。</small></p>
+<script>
+const f=document.getElementById('f'),th=document.getElementById('th');let img=null;
+f.onchange=e=>{const file=e.target.files[0];if(!file)return;const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{img=i;render()};i.src=u};
+th.oninput=()=>{document.getElementById('thv').textContent=th.value;if(img)render()};
+function draw(w,mode,bg){const h=Math.round(w*img.naturalHeight/img.naturalWidth)||w;const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(bg){x.fillStyle=bg;x.fillRect(0,0,w,h)}x.imageSmoothingQuality='high';x.drawImage(img,0,0,w,h);
+ if(mode){const d=x.getImageData(0,0,w,h),p=d.data,t=+th.value;for(let k=0;k<p.length;k+=4){const a=p[k+3]/255;let y=.2126*p[k]+.7152*p[k+1]+.0722*p[k+2];y=y*a+255*(1-a);let v=mode==='gray'?y:(y<t?0:255);p[k]=p[k+1]=p[k+2]=v;p[k+3]=255}x.putImageData(d,0,0)}return c}
+function cell(el,c,label){const d=document.createElement('div');d.className='cell';d.appendChild(c);d.appendChild(document.createTextNode(label));el.appendChild(d)}
+function lum(r,g,b){const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(r)+.7152*f(g)+.0722*f(b)}
+function cr(a,b){const l1=lum(...a),l2=lum(...b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)}
+function hex(c){return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function render(){document.getElementById('res').hidden=false;
+ const S=document.getElementById('sizes'),M=document.getElementById('mono'),D=document.getElementById('dark');S.innerHTML=M.innerHTML=D.innerHTML='';
+ [[16,'16px'],[24,'24px'],[32,'32px'],[38,'約10mm'],[64,'64px'],[76,'約20mm'],[128,'128px']].forEach(([w,l])=>cell(S,draw(w,null,'#fff'),l));
+ cell(M,draw(160,null,'#fff'),'元の色');cell(M,draw(160,'gray'),'グレースケール');cell(M,draw(160,'bw'),'白黒2値');cell(M,draw(48,'bw'),'白黒 48px');
+ cell(D,draw(160,null,'#1d1d1f'),'黒背景');cell(D,draw(160,null,'#0f3d75'),'紺背景');cell(D,draw(48,null,'#1d1d1f'),'黒背景 48px');
+ // palette
+ const c=draw(200,null,null),x=c.getContext('2d'),p=x.getImageData(0,0,c.width,c.height).data,m=new Map();
+ for(let k=0;k<p.length;k+=4){if(p[k+3]<200)continue;const key=[p[k]>>4,p[k+1]>>4,p[k+2]>>4].join(',');const o=m.get(key)||{n:0,r:0,g:0,b:0};o.n++;o.r+=p[k];o.g+=p[k+1];o.b+=p[k+2];m.set(key,o)}
+ let tot=0;m.forEach(o=>tot+=o.n);let cols=[...m.values()].sort((a,b)=>b.n-a.n).map(o=>({c:[o.r/o.n|0,o.g/o.n|0,o.b/o.n|0],n:o.n}));
+ const pal=[];for(const o of cols){if(o.n/tot<.01)break;if(pal.every(q=>Math.hypot(q.c[0]-o.c[0],q.c[1]-o.c[1],q.c[2]-o.c[2])>40))pal.push(o);if(pal.length>=6)break}
+ let h='<table><tr><th>色</th><th>面積</th><th>白とのコントラスト</th><th>グレー値</th></tr>';pal.forEach(o=>{h+=`<tr><td><span class="sw" style="background:${hex(o.c)}"></span> ${hex(o.c)}</td><td>${(o.n/tot*100).toFixed(0)}%</td><td>${cr(o.c,[255,255,255]).toFixed(1)}:1</td><td>${Math.round(.2126*o.c[0]+.7152*o.c[1]+.0722*o.c[2])}</td></tr>`});h+='</table>';
+ const tips=[];for(let i=0;i<pal.length;i++)for(let j=i+1;j<pal.length;j++){const r=cr(pal[i].c,pal[j].c);if(r<1.6)tips.push(`<li class="warn">${hex(pal[i].c)} と ${hex(pal[j].c)} は明るさがほぼ同じ（${r.toFixed(2)}:1）。白黒にすると区別がつきません。隣り合う場合は白い隙間や線で分けましょう。</li>`)}
+ pal.forEach(o=>{if(cr(o.c,[255,255,255])<1.5&&o.n/tot>.03)tips.push(`<li class="warn">${hex(o.c)} は白に近く、白い紙の上では見えにくい色です。</li>`)});
+ if(!tips.length)tips.push('<li class="ok">主な色どうしの明るさの差は十分です。縮小表示と2値化の見た目も確認してください。</li>');
+ document.getElementById('colors').innerHTML=h;document.getElementById('tips').innerHTML='<ul>'+tips.join('')+'</ul>'}
+</script>
+</body>
+</html>
