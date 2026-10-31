@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>公募用 文字数・原稿用紙換算チェッカー｜140字・400字詰め・規定字数を無料で確認</title>
+<meta name="description" content="エッセイ・小説・短歌などの公募に出す前に、文字数（空白・改行あり／なし）、400字詰め原稿用紙の枚数（改行・字下げを考慮した概算）、規定字数の上限下限、半角英数字や記号の混在をまとめて確認できる無料ツール。入力はブラウザの中だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/moji-count.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:14em;font-size:1em;box-sizing:border-box}
+input,select{font-size:1em;width:7em}label{display:inline-block;margin:6px 12px 6px 0}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.warn{background:#fdecea;padding:8px 12px;border-radius:8px;margin-top:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>公募用 文字数・原稿用紙換算チェッカー</h1>
+<p>「140字以内」「400字詰め原稿用紙10枚以内」「1,600〜2,000字」など、公募の字数規定に合っているかを提出前に確かめるためのツールです。数え方の違い（空白や改行を数えるか）で結果が変わるので、両方を表示します。文章はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label>規定の下限 <input type="number" id="min" min="0" placeholder="例 800"> 字</label>
+<label>規定の上限 <input type="number" id="max" min="0" value="140"> 字</label>
+<label>原稿用紙 <select id="grid"><option value="20x20" selected>20字×20行（400字詰め）</option><option value="20x10">20字×10行（200字詰め）</option><option value="40x30">40字×30行（A4）</option><option value="40x35">40字×35行（A4）</option></select></label>
+<textarea id="t" placeholder="ここに作品を貼り付けてください"></textarea>
+<div class="res" id="r"></div>
+<div id="w"></div>
+</div>
+
+<div class="note">
+<b>数え方の目安</b><br>
+・多くの公募は「本文の文字数」で、題名・氏名は含めません。空白や改行を数えるかは要項に書かれていないことが多いので、<b>厳しい方（空白・改行を含む）で収めておく</b>と安心です。<br>
+・原稿用紙の枚数は、段落の頭を1字下げ、改行ごとに次の行へ移る前提の概算です。句読点のぶら下げや、かぎかっこの扱いで1〜2行ずれることがあります。<br>
+・X（旧Twitter）の140字は全角1字＝1、半角英数字は0.5字の扱いです。X投稿で応募する場合は下の「X換算」も見てください。<br>
+・生成AIを使った場合の申告が必要な公募もあります。<a href="ai-disclosure.html">生成AI利用の申告文メーカー</a>も使えます。
+</div>
+<p><small><a href="./">AIでもOKな公募・コンテスト情報（トップ）</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+function calc(){
+ const s=$('t').value.replace(/\r/g,'');
+ const all=[...s].length;
+ const noNl=[...s.replace(/\n/g,'')].length;
+ const noSp=[...s.replace(/[\s\u3000]/g,'')].length;
+ const [cols,rows]=$('grid').value.split('x').map(Number);
+ let lines=0;
+ s.split('\n').forEach(p=>{const t=p.replace(/^[\s\u3000]+/,''); if(!t.length){lines+=1;return;} lines+=Math.ceil(([...t].length+1)/cols);});
+ if(!s.trim())lines=0;
+ const pages=lines?Math.ceil(lines/rows):0;
+ let x=0;[...s].forEach(c=>{x+=/[\u0000-\u007F\uFF61-\uFF9F]/.test(c)?0.5:1;});
+ $('r').innerHTML=`文字数（空白・改行を含む）：<b>${all.toLocaleString()}</b> 字<br>改行を除く：<b>${noNl.toLocaleString()}</b> 字 ／ 空白・改行を除く：<b>${noSp.toLocaleString()}</b> 字<br>原稿用紙（${cols}字×${rows}行）：約 <b>${lines}</b> 行 ＝ <b>${pages}</b> 枚（最終ページ ${lines?lines-(pages-1)*rows:0} 行）<br>X換算：<b>${x}</b> / 140`;
+ const w=[];const mn=+$('min').value||0,mx=+$('max').value||0;
+ if(mx&&all>mx)w.push(`空白・改行を含めると上限を <b>${all-mx}</b> 字超えています${noSp<=mx?'（空白・改行を除けば収まります。要項の数え方を確認してください）':''}。`);
+ if(mn&&noSp<mn)w.push(`空白・改行を除くと下限まで <b>${mn-noSp}</b> 字足りません。`);
+ if(/[A-Za-z0-9]/.test(s))w.push('半角英数字が含まれています。縦書き・原稿用紙指定の公募では全角にそろえるか、要項を確認してください。');
+ if(/[!?]/.test(s))w.push('半角の「!」「?」があります。全角「！」「？」にそろえると表記が統一されます。');
+ if(/\.\.\.|…(?!…)/.test(s))w.push('三点リーダーは「……」（2つ重ね）が一般的な表記です。');
+ if(/[^\n]　{2,}|  +/.test(s))w.push('文中に連続した空白があります。意図したものか確認してください。');
+ $('w').innerHTML=w.map(x=>`<div class="warn">${x}</div>`).join('');
+}
+['t','min','max','grid'].forEach(id=>$(id).addEventListener('input',calc));calc();
+</script>
+</body>
+</html>
