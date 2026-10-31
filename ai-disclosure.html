@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生成AI利用の申告文メーカー｜AI可コンテスト・公募・素材販売向け（日本語／英語・無料）</title>
+<meta name="description" content="生成AIを使った作品をコンテストに応募したり素材として販売したりするときに求められる「AI利用の申告（AI disclosure）」の文章を、使ったツール・AIが作った部分・人が手を入れた部分を選ぶだけで日本語と英語で作れます。ブラウザ内だけで処理し、送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-disclosure.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:9em;font-size:.95em}input[type=text]{width:100%;font-size:.95em}
+label{display:inline-block;margin:2px 12px 2px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}small{color:#555}
+</style>
+</head>
+<body>
+<h1>生成AI利用の申告文メーカー（日本語／英語）</h1>
+<p>AIを使った作品を受け付けるコンテストや素材サイトの多くは、応募のときに「どのツールを使い、どこまでをAIが作り、どこを人が仕上げたか」を書くよう求めています。下の項目を選ぶと、そのまま貼れる申告文を日本語と英語で作ります。</p>
+
+<div class="box">
+<h2>1. 作品について</h2>
+作品タイトル<input type="text" id="title" value="海辺の灯り">
+作品の種類 <select id="kind"><option>イラスト・画像</option><option>写真加工</option><option>動画</option><option>音楽・音声</option><option>文章</option><option>ゲーム・プログラム</option><option>デザイン素材</option></select>
+<h2>2. 使ったAIツール（モデル名・バージョンがわかれば）</h2>
+<input type="text" id="tools" value="Stable Diffusion XL（ローカル実行）, Photoshop 生成塗りつぶし">
+<label><input type="checkbox" id="commercial" checked> 商用利用が許可されたツール・プランを規約どおりに使った</label>
+<h2>3. AIが作った部分</h2>
+<label><input type="checkbox" class="ai" value="下絵・構図案" checked>下絵・構図案</label>
+<label><input type="checkbox" class="ai" value="背景" checked>背景</label>
+<label><input type="checkbox" class="ai" value="人物・キャラクター">人物・キャラクター</label>
+<label><input type="checkbox" class="ai" value="質感・細部の描き込み">質感・細部</label>
+<label><input type="checkbox" class="ai" value="文章・コピー">文章・コピー</label>
+<label><input type="checkbox" class="ai" value="音楽・効果音">音楽・効果音</label>
+<label><input type="checkbox" class="ai" value="プログラムのコード">コード</label>
+<h2>4. 人が行った部分</h2>
+<label><input type="checkbox" class="hu" value="企画・テーマ設定とプロンプトの作成" checked>企画・プロンプト作成</label>
+<label><input type="checkbox" class="hu" value="候補の中からの選定" checked>候補の選定</label>
+<label><input type="checkbox" class="hu" value="手描きでの修正・加筆" checked>手描き修正・加筆</label>
+<label><input type="checkbox" class="hu" value="色調・構図の調整" checked>色調・構図の調整</label>
+<label><input type="checkbox" class="hu" value="文字入れ・レイアウト">文字入れ・レイアウト</label>
+<label><input type="checkbox" class="hu" value="作曲・演奏・録音">作曲・演奏</label>
+<label><input type="checkbox" class="hu" value="プログラムの設計とテスト">設計・テスト</label>
+<h2>5. 素材の扱い</h2>
+<label><input type="checkbox" id="noref" checked> 他人の作品・写真・キャラクターを入力に使っていない</label>
+<label><input type="checkbox" id="nostyle" checked> 特定の作家名で「〜風」と指示していない</label>
+<label><input type="checkbox" id="keeplog" checked> プロンプトと生成履歴を保存しており、求めがあれば提出できる</label>
+<br>補足（任意）<input type="text" id="extra" value="">
+<button id="run">申告文を作る</button>
+</div>
+
+<div class="box"><h2>日本語</h2><textarea id="ja" readonly></textarea><button data-c="ja">コピー</button>
+<span id="jalen"></span></div>
+<div class="box"><h2>English</h2><textarea id="en" readonly></textarea><button data-c="en">Copy</button>
+<span id="enlen"></span></div>
+
+<div class="note">
+<b>応募前に必ず確認してほしいこと</b><br>
+・生成AIを一部でも使った作品を受け付けないコンテストは多くあります。応募要項の「生成AI」「AI」の項目を先に読んでください。<br>
+・「〜風」の指定や、他人の作品を下敷きにした生成を明確に禁止している公募もあります（例：TCCP GENERATE 2026、さばえeスポーツDAY AIイラストコンテスト）。<br>
+・文化庁の<a href="https://www.bunka.go.jp/seisaku/chosakuken/aiandcopyright.html" rel="noopener">「AIと著作権」</a>のページに、生成物が既存作品に似ている場合の考え方がまとめられています。<br>
+・この文章は申告の下書きです。内容が実際の制作過程と合っているか、ご自身で確認してから使ってください。
+</div>
+<p><small>入力内容はこのページの中だけで処理され、どこにも送信されません。／<a href="index.html">AI利用OKの公募まとめに戻る</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const vals=c=>[...document.querySelectorAll('.'+c+':checked')].map(e=>e.value);
+const EN={"下絵・構図案":"rough sketches and composition ideas","背景":"backgrounds","人物・キャラクター":"figures and characters","質感・細部の描き込み":"textures and fine detail","文章・コピー":"text and copy","音楽・効果音":"music and sound effects","プログラムのコード":"program code","企画・テーマ設定とプロンプトの作成":"concept, theme and prompt writing","候補の中からの選定":"selecting from generated candidates","手描きでの修正・加筆":"hand-drawn corrections and additions","色調・構図の調整":"color and composition adjustments","文字入れ・レイアウト":"lettering and layout","作曲・演奏・録音":"composing, performing and recording","プログラムの設計とテスト":"program design and testing"};
+const KEN={"イラスト・画像":"illustration","写真加工":"photo edit","動画":"video","音楽・音声":"music/audio piece","文章":"written piece","ゲーム・プログラム":"game/program","デザイン素材":"design asset"};
+function run(){
+ const t=$('title').value.trim()||'本作品',k=$('kind').value,tools=$('tools').value.trim()||'（ツール名未記入）';
+ const ai=vals('ai'),hu=vals('hu'),ex=$('extra').value.trim();
+ let ja=`作品「${t}」（${k}）の制作には、生成AIツール ${tools} を使用しました。`;
+ if($('commercial').checked) ja+='いずれも商用利用が認められたツール・プランで、各利用規約に従って使用しています。';
+ ja+= ai.length?`AIが生成したのは${ai.join('、')}です。`:'';
+ ja+= hu.length?`一方、${hu.join('、')}は私自身が行いました。`:'';
+ const s=[];if($('noref').checked)s.push('他者の作品・写真・キャラクターを入力に使用していません');if($('nostyle').checked)s.push('特定の作家名による作風の指定はしていません');
+ if(s.length) ja+=s.join('。また、')+'。';
+ if($('keeplog').checked) ja+='制作時のプロンプトと生成履歴は保存しており、ご要望があれば提出できます。';
+ if(ex) ja+=ex;
+ const tn=$('title').value.trim()?`"${t}"`:'This work';
+ let en=`${tn} (${KEN[k]}) was made with the help of generative AI: ${tools}.`;
+ if($('commercial').checked) en+=' All tools were used under plans that allow commercial use and in line with their terms.';
+ if(ai.length) en+=` AI generated the ${ai.map(x=>EN[x]).join(', ')}.`;
+ if(hu.length) en+=` I personally did the ${hu.map(x=>EN[x]).join(', ')}.`;
+ if($('noref').checked) en+=' No third-party artworks, photos or characters were used as input.';
+ if($('nostyle').checked) en+=' No prompts asked for the style of a named artist.';
+ if($('keeplog').checked) en+=' I have kept the prompts and generation history and can provide them on request.';
+ $('ja').value=ja;$('en').value=en;
+ $('jalen').textContent=ja.length+'文字';$('enlen').textContent=en.split(/\s+/).length+' words';
+}
+$('run').onclick=run;document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText($(b.dataset.c).value)});
+run();
+</script>
+</body>
+</html>
