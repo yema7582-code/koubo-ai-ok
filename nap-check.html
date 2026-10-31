@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>店舗情報（NAP）表記ゆれチェッカー｜Googleビジネスプロフィール・ポータルサイトの店名・住所・電話番号を比較（無料）</title>
+<meta name="description" content="Googleビジネスプロフィール、自社サイト、食べログ・ホットペッパー・エキテンなどに載っている店名・住所・電話番号を貼り付けると、全角半角や「丁目・番地」の書き方の違いをそろえたうえで、本当に食い違っている箇所だけを表示します。ブラウザ内だけで処理し、送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nap-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:11em;font-size:.95em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+table{border-collapse:collapse;width:100%;font-size:.9em}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+.ng{background:#ffe5e5}.ok{background:#e8f6e8}small{color:#555}
+</style>
+</head>
+<body>
+<h1>店舗情報（NAP）表記ゆれチェッカー</h1>
+<p>店名（Name）・住所（Address）・電話番号（Phone）が掲載先ごとに違っていると、Googleマップや AI 検索が同じお店だと判断しにくくなると言われています。各掲載先の情報を1行ずつ貼り付けると、「１－２－３」と「1丁目2番3号」のような書き方の違いはそろえたうえで、中身が違う箇所だけを赤で示します。</p>
+
+<div class="box">
+<h2>1. 掲載先ごとに1行で入力</h2>
+<p><small>形式：<code>掲載先 | 店名 | 住所 | 電話番号</code>（区切りは「|」かタブ）。1行目を正しい情報（基準）として比較します。</small></p>
+<textarea id="in">自社サイト(基準) | 喫茶ひだまり | 〒150-0001 東京都渋谷区神宮前1丁目2番3号 ひだまりビル2F | 03-1234-5678
+Googleビジネスプロフィール | 喫茶 ひだまり | 東京都渋谷区神宮前１－２－３ ひだまりビル２階 | 0312345678
+食べログ | 喫茶ひだまり 原宿店 | 東京都渋谷区神宮前1-2-3 | 03-1234-5679
+Instagram | ひだまりカフェ | 渋谷区神宮前1-2-4 | 03-1234-5678</textarea>
+<button id="run">比較する</button>
+</div>
+
+<div class="box"><h2>2. 結果</h2><div id="out"></div><textarea id="memo" readonly placeholder="修正メモがここに出ます"></textarea><button id="copy">修正メモをコピー</button></div>
+
+<div class="note">
+<b>使い方のヒント</b><br>
+・店名に「原宿店」などの支店名や、検索用キーワードを足しているだけの場合も差分として出します。Googleのガイドラインでは、ビジネス名に余計なキーワードを入れないことが求められています（<a href="https://support.google.com/business/answer/3038177?hl=ja" rel="noopener">Googleビジネスプロフィールのガイドライン</a>）。<br>
+・建物名・階数は表記をそろえて比較しますが、片方にしかない場合は「建物名なし」として注意を出します。<br>
+・この結果は表記の機械的な比較です。どれが正しいかは、お店の方ご自身でご確認ください。
+</div>
+
+<p><small>入力内容はこのページの中だけで処理され、どこにも送信・保存されません。ほかの無料ツール：<a href="address-check.html">送り状CSV 住所チェッカー</a> ／ <a href="./">AI利用OKの公募まとめ</a></small></p>
+
+<script>
+function z2h(s){return s.replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\u3000/g,' ').replace(/[－ー―‐ｰ−—–]/g,'-');}
+const kn={'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function kan2num(s){return s.replace(/[一二三四五六七八九十〇]+(?=丁目|番|号)/g,m=>{let n=0,cur=0;for(const c of m){if(c==='十'){n+=(cur||1)*10;cur=0;}else cur=kn[c];}return String(n+cur);});}
+function normName(s){return z2h(s).replace(/\s+/g,'').toLowerCase();}
+function normPhone(s){const d=z2h(s).replace(/[^0-9+]/g,'').replace(/^\+81/,'0');return d;}
+function splitAddr(s){
+ let a=kan2num(z2h(s)).replace(/〒?\s*\d{3}-?\d{4}/,'').trim();
+ a=a.replace(/(\d+)丁目/g,'$1-').replace(/(\d+)番地?/g,'$1-').replace(/(\d+)号/g,'$1').replace(/-+/g,'-').replace(/-\s/g,' ');
+ a=a.replace(/(\d)\s*-\s*(\d)/g,'$1-$2');
+ const m=a.match(/^(.*?\d+(?:-\d+)*)(.*)$/);
+ let main=m?m[1]:a, bld=m?m[2]:'';
+ main=main.replace(/\s+/g,'').replace(/-$/,'');
+ bld=bld.replace(/^[-\s]+/,'').replace(/\s+/g,'').replace(/(\d+)(階|F)$/i,'$1F').replace(/(\d+)階/g,'$1F').toUpperCase();
+ return {main,bld};
+}
+function pref(main){const p=main.match(/^(東京都|北海道|(?:京都|大阪)府|.{2,3}県)/);return p?p[1]:'';}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+document.getElementById('run').onclick=()=>{
+ const rows=document.getElementById('in').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\s*[|｜\t]\s*/));
+ if(rows.length<2){document.getElementById('out').textContent='2行以上入力してください。';return;}
+ const base=rows[0];const bN=normName(base[1]||''),bA=splitAddr(base[2]||''),bP=normPhone(base[3]||'');
+ let html='<table><tr><th>掲載先</th><th>店名</th><th>住所</th><th>電話</th></tr>';const memo=[];
+ rows.forEach((r,i)=>{
+  const n=normName(r[1]||''),a=splitAddr(r[2]||''),p=normPhone(r[3]||'');const issues=[];
+  let mainA=a.main;if(!pref(mainA)&&pref(bA.main))mainA=pref(bA.main)+mainA;
+  const nOk=n===bN,aOk=mainA===bA.main,bOk=a.bld===bA.bld,pOk=p===bP;
+  if(i>0){
+   if(!nOk)issues.push(`店名「${r[1]||'（なし）'}」→「${base[1]}」`);
+   if(!aOk)issues.push(`住所「${r[2]||'（なし）'}」→「${base[2]}」`);
+   else if(!bOk)issues.push(a.bld?`建物名・階「${a.bld}」が基準「${bA.bld||'なし'}」と違う`:`建物名・階が抜けている（基準：${bA.bld}）`);
+   if(!pref(a.main))issues.push('住所に都道府県がない');
+   if(!pOk)issues.push(`電話「${r[3]||'（なし）'}」→「${base[3]}」`);
+   if(p&&!/^0\d{9,10}$/.test(p))issues.push('電話番号の桁数が10〜11桁ではない');
+   if(issues.length)memo.push(`■${r[0]}\n- `+issues.join('\n- '));
+  }
+  const c=ok=>i===0?'':(ok?' class="ok"':' class="ng"');
+  html+=`<tr><td>${esc(r[0]||'')}</td><td${c(nOk)}>${esc(r[1]||'')}</td><td${c(aOk&&bOk)}>${esc(r[2]||'')}</td><td${c(pOk)}>${esc(r[3]||'')}</td></tr>`;
+ });
+ html+='</table>';document.getElementById('out').innerHTML=html+(memo.length?`<p>${memo.length}件の掲載先に修正候補があります。</p>`:'<p>すべて基準と一致しました。</p>');
+ document.getElementById('memo').value=memo.length?'【店舗情報 修正メモ】基準：'+base[0]+'\n\n'+memo.join('\n\n'):'';
+};
+document.getElementById('copy').onclick=()=>{const t=document.getElementById('memo');t.select();navigator.clipboard&&navigator.clipboard.writeText(t.value);};
+document.getElementById('run').click();
+</script>
+</body>
+</html>
