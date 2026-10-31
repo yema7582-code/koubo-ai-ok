@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>計算ドリル作成（たし算・ひき算・かけ算・わり算／答えつき・無料・印刷用）</title>
+<meta name="description" content="たし算・ひき算・かけ算・わり算の計算プリントを答えつきで作って、A4で印刷できます。けた数、繰り上がり・繰り下がりの有無、九九の段、あまりの有無、問題数を選べます。番号を入れれば同じ問題をもう一度出せます。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/keisan-drill.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}.ctl label{display:inline-block;margin:4px 14px 4px 0}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.page{margin-top:16px}.ttl{display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px;border-bottom:1px solid #999}
+.grid{display:grid;grid-template-columns:repeat(var(--c),1fr);gap:14px 18px;font-size:var(--f);font-variant-numeric:tabular-nums}
+.q{white-space:nowrap}.q b{display:inline-block;min-width:2.2em;font-weight:normal;color:#666;font-size:.7em}
+.ans .q span.a{color:#c00}.br{break-before:page;page-break-before:always}
+@media print{.noprint{display:none}body{padding:0;max-width:none}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>計算ドリル作成（答えつき）</h1>
+<p>種類とレベルを選んで「作る」を押すと、問題ページと答えのページができます。そのまま印刷（A4）するか、印刷画面でPDFに保存してください。処理はすべてブラウザの中で行われます。</p>
+<div class="ctl">
+<label>種類 <select id="op"><option value="add">たし算</option><option value="sub">ひき算</option><option value="mix">たし算・ひき算まぜ</option><option value="mul">かけ算</option><option value="div">わり算</option></select></label>
+<label>けた数（左） <select id="d1"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+<label>けた数（右） <select id="d2"><option selected>1</option><option>2</option><option>3</option></select></label>
+<label>繰り上がり・繰り下がり <select id="carry"><option value="any">どちらでも</option><option value="yes">あり</option><option value="no">なし</option></select></label>
+<label>九九の段（かけ算・わり算、空欄=全部） <input id="dan" type="text" placeholder="例：6,7,8" style="width:7em"></label>
+<label>わり算のあまり <select id="rem"><option value="no">なし</option><option value="yes">あり</option></select></label>
+<label>問題数 <input id="n" type="number" value="30" min="4" max="60" style="width:4em"></label>
+<label>列数 <select id="cols"><option>2</option><option selected>3</option><option>4</option></select></label>
+<label>問題番号（同じ番号なら同じ問題） <input id="seed" type="number" value="1" style="width:6em"></label>
+<label>見出し <input id="title" type="text" value="けいさん れんしゅう" style="width:12em"></label>
+</div>
+<button id="make">作る</button><button id="next">別の問題にする</button><button onclick="window.print()">印刷する</button>
+<p class="note">けた数の「右」は、たし算・ひき算では2つめの数、かけ算ではかける数、わり算では割る数（と商）のけた数です。九九の段を指定すると、かけ算は「段×1〜9」、わり算は「段で割る」問題になります。ひき算の答えはマイナスになりません。</p>
+<p id="msg"></p>
+</div>
+<div id="out"></div>
+<div class="noprint"><p><a href="kanji-sheet.html">漢字・ひらがな練習シート作成</a> ／ <a href="./">トップへ戻る</a></p></div>
+<script>
+const $=id=>document.getElementById(id);
+function rng(s){let a=(s>>>0)||1;return()=>{a^=a<<13;a>>>=0;a^=a>>>17;a^=a<<5;a>>>=0;return a/4294967296;};}
+function rnd(r,lo,hi){return lo+Math.floor(r()*(hi-lo+1));}
+function digits(r,d){return d===1?rnd(r,1,9):rnd(r,10**(d-1),10**d-1);}
+function carryAdd(a,b){while(a>0||b>0){if(a%10+b%10>=10)return true;a=Math.floor(a/10);b=Math.floor(b/10);}return false;}
+function borrowSub(a,b){while(b>0){if(a%10<b%10)return true;a=Math.floor(a/10);b=Math.floor(b/10);}return false;}
+function gen(){
+ const op=$('op').value,d1=+$('d1').value,d2=+$('d2').value,carry=$('carry').value,rem=$('rem').value;
+ const n=Math.max(4,Math.min(60,+$('n').value||30)),seed=+$('seed').value||1,r=rng(seed*2654435761);
+ const dan=$('dan').value.split(/[,、\s]+/).map(Number).filter(x=>x>=1&&x<=9);
+ const qs=[],seen=new Set();let tries=0;
+ while(qs.length<n&&tries<20000){tries++;let o=op==='mix'?(r()<.5?'add':'sub'):op,a,b,q,ans;
+  if(o==='add'){a=digits(r,d1);b=digits(r,d2);const c=carryAdd(a,b);if(carry==='yes'&&!c||carry==='no'&&c)continue;q=`${a} ＋ ${b} ＝`;ans=String(a+b);}
+  else if(o==='sub'){a=digits(r,d1);b=digits(r,d2);if(b>a)[a,b]=[b,a];if(a===b)continue;const c=borrowSub(a,b);if(carry==='yes'&&!c||carry==='no'&&c)continue;q=`${a} － ${b} ＝`;ans=String(a-b);}
+  else if(o==='mul'){if(dan.length){a=dan[rnd(r,0,dan.length-1)];b=rnd(r,1,9);}else{a=digits(r,d1);b=digits(r,d2);}q=`${a} × ${b} ＝`;ans=String(a*b);}
+  else{let dv,qt;if(dan.length){dv=dan[rnd(r,0,dan.length-1)];qt=rnd(r,1,9);}else{dv=digits(r,d2);if(dv<2)dv=rnd(r,2,9);qt=digits(r,Math.max(1,d1-d2+ (d1>d2?0:0)));}
+   let x=dv*qt,rm=0;if(rem==='yes'){rm=rnd(r,1,dv-1);x+=rm;}q=`${x} ÷ ${dv} ＝`;ans=rm?`${qt} あまり ${rm}`:String(qt);}
+  if(seen.has(q))continue;seen.add(q);qs.push([q,ans]);}
+ return {qs,seed,n};
+}
+function page(qs,showAns,cls){
+ const p=document.createElement('div');p.className='page '+cls;const cols=+$('cols').value;
+ p.style.setProperty('--c',cols);p.style.setProperty('--f',cols>=4?'17px':'20px');
+ const t=document.createElement('div');t.className='ttl';const h=document.createElement('strong');
+ h.textContent=$('title').value+(showAns?'（こたえ）':'')+'　No.'+$('seed').value;
+ const s=document.createElement('span');s.textContent=showAns?'':'　　月　　日　なまえ＿＿＿＿＿＿　　　／'+qs.length;t.append(h,s);p.append(t);
+ const g=document.createElement('div');g.className='grid';
+ qs.forEach(([q,a],i)=>{const d=document.createElement('div');d.className='q';const b=document.createElement('b');b.textContent='('+(i+1)+')';
+  const a1=document.createElement('span');a1.className='a';a1.textContent=showAns?' '+a:'';d.append(b,document.createTextNode(q),a1);g.append(d);});
+ p.append(g);return p;}
+function make(){const {qs,n}=gen();const o=$('out');o.innerHTML='';
+ $('msg').textContent=qs.length<n?`条件に合う問題が${qs.length}問しか作れませんでした。けた数や繰り上がりの条件を変えてください。`:'';
+ if(!qs.length)return;o.append(page(qs,false,''),page(qs,true,'ans br'));}
+$('make').onclick=make;$('next').onclick=()=>{$('seed').value=(+$('seed').value||1)+1;make();};make();
+</script>
+</body>
+</html>
