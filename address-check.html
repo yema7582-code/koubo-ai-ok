@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>送り状CSV 住所・郵便番号・電話番号チェッカー（無料・ブラウザ内で完結）</title>
+<meta name="description" content="ネットショップの注文CSVを貼り付けるだけで、郵便番号の桁数、電話番号の桁数、番地の書き忘れ、全角数字の混在をまとめてチェックします。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/address-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}textarea{width:100%;height:180px;font-family:monospace}
+table{border-collapse:collapse;width:100%;font-size:.9em;margin-top:12px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+.ng{background:#ffe5e5}.ok{background:#eef9ee}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}button{padding:6px 14px;margin:6px 6px 0 0}
+label{margin-right:12px}
+</style>
+</head>
+<body>
+<h1>送り状CSV 住所・郵便番号・電話番号チェッカー</h1>
+<p>発送前に注文データを貼り付けると、配送ラベルで弾かれやすい入力ミスをまとめて見つけます。処理はすべてこのブラウザの中で行われ、データはどこにも送信されません。</p>
+<p class="note">チェックするのは書式だけです。郵便番号と住所が実在して一致しているかまでは確認しません。気になる行は日本郵便の<a href="https://www.post.japanpost.jp/zipcode/">郵便番号検索</a>で確認してください。</p>
+<p>1行目に見出しがあるCSV（カンマ区切りまたはタブ区切り）を貼り付けて、列名を選んでください。</p>
+<textarea id="src" placeholder="名前,郵便番号,住所,電話番号&#10;山田太郎,１５０-０００１,東京都渋谷区神宮前,090-1234-5678"></textarea>
+<div>
+<label>郵便番号の列 <select id="cz"></select></label>
+<label>住所の列 <select id="ca"></select></label>
+<label>電話番号の列 <select id="ct"></select></label>
+<label>住所の文字数上限 <input id="maxlen" type="number" value="32" style="width:4em"></label>
+</div>
+<button id="load">列を読み込む</button><button id="run">チェックする</button><button id="dl">整形済みCSVをダウンロード</button>
+<p id="sum"></p>
+<div id="out"></div>
+<h2 style="font-size:1.1em">何をチェックするか</h2>
+<ul>
+<li>郵便番号：全角数字とハイフンを半角にそろえ、7桁かどうか。整形後は「123-4567」の形にします。</li>
+<li>電話番号：数字が10桁または11桁で、0から始まるか。</li>
+<li>住所：数字（番地）が一つも入っていない住所、指定した文字数を超える住所、都道府県名から始まっていない住所を注意として表示します。</li>
+</ul>
+<p>文字数上限は使っている配送サービスの送り状の仕様に合わせて変えてください。</p>
+<p><a href="./">トップへ戻る</a></p>
+<script>
+const P=["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+let rows=[],head=[],fixed=[];
+const z2h=s=>(s||"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/[－ー―‐−]/g,"-");
+function parse(t){const d=t.includes("\t")?"\t":",";const out=[];let r=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==d){r.push(f);f=""}else if(c=="\n"){r.push(f.replace(/\r$/,""));out.push(r);r=[];f=""}else f+=c}if(f||r.length){r.push(f);out.push(r)}return out.filter(x=>x.join("").trim())}
+function guess(rx){const i=head.findIndex(h=>rx.test(h));return i<0?0:i}
+document.getElementById("load").onclick=()=>{const a=parse(document.getElementById("src").value);head=a[0]||[];rows=a.slice(1);for(const [id,rx] of [["cz",/郵便|〒|zip|postal/i],["ca",/住所|address/i],["ct",/電話|tel|phone/i]]){const s=document.getElementById(id);s.innerHTML=head.map((h,i)=>`<option value="${i}">${h}</option>`).join("");s.value=guess(rx)}};
+document.getElementById("run").onclick=()=>{if(!head.length)document.getElementById("load").onclick();const cz=+cz_.value,ca=+ca_.value,ct=+ct_.value,max=+document.getElementById("maxlen").value||999;let bad=0;fixed=[];
+let h="<table><tr><th>行</th><th>郵便番号</th><th>住所</th><th>電話番号</th><th>指摘</th></tr>";
+rows.forEach((r,i)=>{const issues=[];let z=z2h(r[cz]).replace(/[^0-9]/g,"");if(z.length!==7)issues.push("郵便番号が7桁ではありません");else z=z.slice(0,3)+"-"+z.slice(3);
+const a=(r[ca]||"").trim();const an=z2h(a);if(!/[0-9一二三四五六七八九十]/.test(an))issues.push("番地が入っていない可能性");if(a.length>max)issues.push(`住所が${a.length}文字（上限${max}）`);if(!P.some(p=>a.startsWith(p)))issues.push("都道府県名から始まっていません");
+const t=z2h(r[ct]).replace(/[^0-9]/g,"");if(!/^0[0-9]{9,10}$/.test(t))issues.push("電話番号の桁数か先頭が不正");
+if(issues.length)bad++;const nr=[...r];nr[cz]=z;nr[ct]=t;nr[ca]=an;fixed.push(nr);
+const e=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+h+=`<tr class="${issues.length?"ng":"ok"}"><td>${i+2}</td><td>${e(r[cz])}</td><td>${e(a)}</td><td>${e(r[ct])}</td><td>${issues.join("<br>")||"OK"}</td></tr>`});
+document.getElementById("out").innerHTML=h+"</table>";document.getElementById("sum").textContent=`${rows.length}件中 ${bad}件に指摘があります。`};
+const cz_=document.getElementById("cz"),ca_=document.getElementById("ca"),ct_=document.getElementById("ct");
+document.getElementById("dl").onclick=()=>{if(!fixed.length)return alert("先にチェックしてください");const q=v=>/[",\n]/.test(v)?`"${String(v).replace(/"/g,'""')}"`:v;const csv="\ufeff"+[head,...fixed].map(r=>r.map(q).join(",")).join("\r\n");const b=new Blob([csv],{type:"text/csv"});const l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="checked.csv";l.click()};
+</script>
+</body>
+</html>
