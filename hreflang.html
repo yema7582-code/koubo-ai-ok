@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hreflangタグ作成＆チェック｜多言語サイト・海外向けページの設定ミスを確認（無料）</title>
+<meta name="description" content="英語版・中国語版など多言語ページのURLを入れるだけで、hreflangタグ（link要素・XMLサイトマップ形式）を作成。言語コードの誤り（jp・cnなど）、x-default漏れ、相互リンク漏れ、http混在をその場でチェックできる無料ツール。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/hreflang.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;box-sizing:border-box;font-family:ui-monospace,monospace;font-size:.88em;min-height:8em}
+.out{min-height:12em}
+.warn{color:#b00020}.ok{color:#1b5e20}small{color:#555}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+table{border-collapse:collapse;font-size:.9em}td,th{border:1px solid #ddd;padding:3px 8px}
+</style>
+</head>
+<body>
+<h1>hreflangタグ作成＆チェック</h1>
+<p>同じ内容の日本語版・英語版・中国語版などのページがあるとき、Googleに「この言語の人にはこのURLを」と伝えるのがhreflangです。1行に「言語コード URL」を書くと、&lt;head&gt;に貼るタグとサイトマップ用XMLを作り、よくある設定ミスをチェックします。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label>言語コードとURL（1行に1つ、半角スペース区切り）<br>
+<textarea id="in">ja https://example.jp/
+en https://example.jp/en/
+zh-Hans https://example.jp/zh-cn/
+zh-Hant https://example.jp/zh-tw/
+x-default https://example.jp/en/</textarea></label>
+<button onclick="run()">作成・チェック</button>
+<small>例：ja（日本語）、en（英語）、en-US（米国向け英語）、zh-Hans（簡体字）、zh-Hant（繁体字）、ko（韓国語）、x-default（どれにも当てはまらない人向け）</small>
+</div>
+
+<h2>チェック結果</h2>
+<div id="checks" class="box"></div>
+
+<h2>各ページの&lt;head&gt;に貼るタグ（全ページ共通で同じセットを貼ります）</h2>
+<textarea id="out" class="out" readonly></textarea>
+<button onclick="copy('out')">コピー</button>
+
+<h2>XMLサイトマップ形式（タグの代わりに使う場合）</h2>
+<textarea id="xml" class="out" readonly></textarea>
+<button onclick="copy('xml')">コピー</button>
+
+<div class="note">
+<b>よくある間違い</b>
+<ul>
+<li>日本語は <code>jp</code> ではなく <code>ja</code>、中国語は <code>cn</code> ではなく <code>zh</code>（地域は <code>zh-CN</code>、文字体系なら <code>zh-Hans</code>）。<code>jp</code> は国コードなので <code>ja-JP</code> のように後ろに付けます。</li>
+<li>英語版にだけタグを入れて日本語版に入れていない（相互に指していないと無視されます）。</li>
+<li>自分自身のURLを含めていない。各ページに、自分を含む全言語のセットを入れます。</li>
+<li>canonicalを全言語版で日本語トップに向けている。canonicalは各言語版それぞれ自分自身に向けます。</li>
+<li>リダイレクトする旧URLやhttpのURLを書いている。最終的に表示されるhttpsのURLを書きます。</li>
+<li>機械翻訳のままのページは、言語設定より先に中身で評価を落とします。ネイティブの目で直してから公開しましょう。</li>
+</ul>
+</div>
+
+<h2>多言語化・翻訳チェックの相談</h2>
+<p>日本語・英語・中国語（簡体字・繁体字）のページ翻訳、AI翻訳の手直し、hreflang・メタタグの設定確認をお手伝いします。小さな店舗サイトやLPから対応できます。ご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）まで。</p>
+<p><a href="./">← 無料ツール一覧へ</a> ／ <a href="ogp-maker.html">OGP・メタタグ作成＆チェック</a> ／ <a href="ja-aso-check.html">日本語アプリストア文言チェック</a></p>
+
+<script>
+const lang=/^(?:[a-z]{2,3})(?:-(?:[A-Z][a-z]{3}))?(?:-(?:[A-Z]{2}|[0-9]{3}))?$/;
+const badLang={jp:'ja',cn:'zh',kr:'ko',tw:'zh-Hant',ch:'de / fr / it（スイスは地域コードCH）',gr:'el',dk:'da',se:'sv',cz:'cs',ua:'uk',vn:'vi',in:'hi など（INは国コード）',br:'pt-BR',uk:'（ukはウクライナ語。英国向けなら en-GB）'};
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+function run(){
+ const rows=document.getElementById('in').value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\s+/));
+ const msg=[];let ok=true;const seen={},urls={};
+ rows.forEach((r,i)=>{
+  const n=i+1;let [c,u]=r;
+  if(!u){msg.push(`<li class="warn">${n}行目：URLがありません。</li>`);ok=false;return}
+  const lc=c.toLowerCase();
+  if(c!=='x-default'){
+   const fixed=c.replace(/^([A-Za-z]+)/,m=>m.toLowerCase()).replace(/-([A-Za-z]{2})$/,(m,a)=>'-'+a.toUpperCase());
+   if(badLang[lc.split('-')[0]]&&!(lc==='uk')){msg.push(`<li class="warn">${n}行目「${esc(c)}」：言語コードではなく国コードの可能性。正しくは ${badLang[lc.split('-')[0]]}。</li>`);ok=false}
+   else if(lc==='uk'){msg.push(`<li>${n}行目「uk」はウクライナ語です。英国向け英語なら en-GB。</li>`)}
+   else if(!lang.test(c)&&!lang.test(fixed)){msg.push(`<li class="warn">${n}行目「${esc(c)}」：言語コードの形が正しくありません（例 ja, en-US, zh-Hant）。</li>`);ok=false}
+   else if(!lang.test(c)){msg.push(`<li>${n}行目「${esc(c)}」は大文字小文字が混在。Googleは読めますが、表記は ${esc(fixed)} が標準です。</li>`)}
+  }
+  if(seen[lc]){msg.push(`<li class="warn">${n}行目：言語コード「${esc(c)}」が重複しています。</li>`);ok=false}
+  seen[lc]=1;
+  if(!/^https?:\/\//.test(u)){msg.push(`<li class="warn">${n}行目：URLは https:// から始まる絶対URLにしてください。</li>`);ok=false}
+  else if(u.startsWith('http://')){msg.push(`<li class="warn">${n}行目：httpのURLです。https化済みならhttpsで書きます。</li>`);ok=false}
+  if(/[?#]/.test(u))msg.push(`<li>${n}行目：URLに ? や # が含まれています。実際にcanonicalとして使っているURLか確認してください。</li>`);
+  if(urls[u]&&c!=='x-default'&&urls[u]!=='x-default')msg.push(`<li>${n}行目：同じURLが複数の言語に割り当てられています（${esc(urls[u])} と ${esc(c)}）。意図した設定か確認を。</li>`);
+  urls[u]=urls[u]||c;
+ });
+ if(rows.length<2){msg.push('<li class="warn">2言語以上を入れてください。1言語だけならhreflangは不要です。</li>');ok=false}
+ if(!seen['x-default'])msg.push('<li>x-default がありません。必須ではありませんが、言語選択ページや英語版を指定しておくと安心です。</li>');
+ const langs=Object.keys(seen).filter(k=>k!=='x-default');
+ const bases={};langs.forEach(l=>{const b=l.split('-')[0];bases[b]=(bases[b]||[]).concat(l)});
+ Object.entries(bases).forEach(([b,arr])=>{if(arr.every(x=>x.includes('-'))&&b!=='zh')msg.push(`<li>${b} は地域付き（${arr.join(', ')}）だけです。それ以外の地域の${b}話者向けに「${b}」単独も追加すると取りこぼしが減ります。</li>`)});
+ if(ok)msg.unshift('<li class="ok">形式上の大きな問題は見つかりませんでした。下のタグを全言語のページに同じように貼ってください。</li>');
+ document.getElementById('checks').innerHTML='<ul>'+msg.join('')+'</ul>';
+ const good=rows.filter(r=>r[1]);
+ document.getElementById('out').value=good.map(([c,u])=>`<link rel="alternate" hreflang="${c}" href="${u}" />`).join('\n');
+ const links=good.map(([c,u])=>`    <xhtml:link rel="alternate" hreflang="${c}" href="${u}"/>`).join('\n');
+ const uniq=[...new Set(good.filter(r=>r[0]!=='x-default').map(r=>r[1]))];
+ document.getElementById('xml').value='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'+uniq.map(u=>`  <url>\n    <loc>${u}</loc>\n${links}\n  </url>`).join('\n')+'\n</urlset>';
+}
+function copy(id){const t=document.getElementById(id);t.select();navigator.clipboard&&navigator.clipboard.writeText(t.value)}
+run();
+</script>
+</body>
+</html>
