@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暗号資産の所得計算（総平均法・移動平均法）無料・登録不要</title>
+<meta name="description" content="ビットコインなど暗号資産の売却・交換の利益を、総平均法と移動平均法の両方で計算します。取引を貼り付けるだけ。入力はブラウザ内だけで処理され、送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/crypto-tax-calc.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}textarea{width:100%;height:12em;font-family:ui-monospace,monospace;font-size:.95em}
+input[type=number]{width:10em;padding:3px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border-bottom:1px solid #eee;padding:5px;text-align:right}td:first-child,th:first-child{text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}.err{color:#b00020}
+button{font-size:1em;padding:6px 14px}
+</style>
+</head>
+<body>
+<h1>暗号資産（仮想通貨）の所得計算：総平均法・移動平均法</h1>
+<p>1つの銘柄について、1年分の購入・売却を貼り付けると、売却原価と所得（利益）を<strong>総平均法</strong>と<strong>移動平均法</strong>の両方で計算します。確定申告の前の見積もりや、取引所の年間取引報告書との照合に使えます。</p>
+
+<div class="box">
+<label>年初（1月1日）の保有数量 <input type="number" id="q0" step="any" value="0"></label>
+<label>その取得価額の合計（円） <input type="number" id="c0" step="any" value="0"></label>
+<p>取引（1行に1件、カンマ区切り）：<code>日付,種類,数量,金額(円),手数料(円)</code><br>
+種類は <code>買</code>（購入）か <code>売</code>（売却）。他の暗号資産との交換や、暗号資産での支払いも、その時の時価で「売」として入れてください。手数料は省略できます。</p>
+<textarea id="tx">2026-01-10,買,0.05,700000,500
+2026-03-02,買,0.03,450000,300
+2026-06-15,売,0.04,640000,400
+2026-09-20,買,0.02,280000,200
+2026-12-01,売,0.03,480000,300</textarea>
+<p><button id="go">計算する</button></p>
+<div id="err" class="err"></div>
+<div id="out"></div>
+</div>
+
+<div class="note">
+<p><strong>計算のしかた</strong>（国税庁「暗号資産等に関する税務上の取扱いについて（FAQ）」に基づく）</p>
+<ul>
+<li><strong>総平均法</strong>：(年初の取得価額＋その年の購入額の合計) ÷ (年初数量＋その年の購入数量) を1単位の取得価額とし、売却数量を掛けて売却原価を出します。届出をしていない個人は原則こちらです。</li>
+<li><strong>移動平均法</strong>：購入のたびに平均単価を出し直し、売却時点の平均単価で原価を出します。使うには税務署への届出が必要です。</li>
+<li>購入手数料は取得価額に加え、売却手数料は必要経費として差し引いています。</li>
+<li>所得は原則<strong>雑所得</strong>（総合課税）です。給与所得者で給与以外の所得が年20万円以下なら確定申告が不要な場合がありますが、住民税の申告は別に必要なことがあります。</li>
+</ul>
+<p>このページは計算の目安です。税務上の助言ではありません。ステーキング報酬・エアドロップ・マイニング・NFTなどは含みません。最終的な判断は<a href="https://www.nta.go.jp/publication/pamph/shotoku/kakuteishinkokukankei/kasoutuka/index.htm">国税庁の暗号資産に関するページ</a>や税理士に確認してください。入力内容はこのブラウザの中だけで計算され、どこにも送信されません。</p>
+</div>
+
+<p><a href="./">← 無料ツール一覧へ</a></p>
+<p style="font-size:.85em;color:#666">役に立ったら投げ銭歓迎です（任意）。Base/EVM: 0x4C4860b980a3AE0c91aa69e8eff48009C5469fEe</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const yen=v=>Math.round(v).toLocaleString('ja-JP')+' 円';
+const num=v=>(+v.toFixed(8)).toString();
+function parse(){
+  const rows=[],errs=[];
+  $('tx').value.split(/\r?\n/).forEach((line,i)=>{
+    line=line.trim(); if(!line) return;
+    const p=line.split(/[,，\t]/).map(s=>s.trim());
+    if(p.length<4){errs.push((i+1)+'行目：項目が足りません');return;}
+    let t=p[1]; t=/^(買|buy|b|購入)$/i.test(t)?'買':/^(売|sell|s|売却|交換)$/i.test(t)?'売':null;
+    const q=parseFloat(p[2]), a=parseFloat(String(p[3]).replace(/[円,]/g,'')), f=p[4]?parseFloat(String(p[4]).replace(/[円,]/g,'')):0;
+    if(!t){errs.push((i+1)+'行目：種類は「買」か「売」にしてください');return;}
+    if(!(q>0)||!(a>=0)||!(f>=0)){errs.push((i+1)+'行目：数量・金額の数字を確認してください');return;}
+    rows.push({d:p[0],t,q,a,f,i});
+  });
+  rows.sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:x.i-y.i);
+  return {rows,errs};
+}
+function calc(){
+  const q0=parseFloat($('q0').value)||0,c0=parseFloat($('c0').value)||0;
+  const {rows,errs}=parse(); $('err').innerHTML=errs.join('<br>');
+  let bq=q0,bc=c0,sq=0,sa=0,sf=0;
+  rows.forEach(r=>{if(r.t==='買'){bq+=r.q;bc+=r.a+r.f;}else{sq+=r.q;sa+=r.a;sf+=r.f;}});
+  const endQ=bq-sq;
+  let warn='';
+  if(endQ<-1e-12) warn='<p class="err">売却数量が保有数量を超えています。年初の保有数量か取引を確認してください。</p>';
+  // total average
+  const tu=bq>0?bc/bq:0, tCost=tu*sq, tInc=sa-sf-tCost;
+  // moving average
+  let mq=q0,mc=c0,mCost=0,detail='';
+  rows.forEach(r=>{
+    if(r.t==='買'){mq+=r.q;mc+=r.a+r.f;detail+=`<tr><td>${r.d} 買</td><td>${num(r.q)}</td><td>${yen(r.a+r.f)}</td><td>${yen(mq>0?mc/mq:0)}</td><td></td></tr>`;}
+    else{const u=mq>0?mc/mq:0,c=u*r.q;mCost+=c;mq-=r.q;mc-=c;detail+=`<tr><td>${r.d} 売</td><td>${num(r.q)}</td><td>${yen(r.a)}</td><td>${yen(u)}</td><td>${yen(r.a-r.f-c)}</td></tr>`;}
+  });
+  const mInc=sa-sf-mCost;
+  $('out').innerHTML=warn+`<table><tr><th></th><th>総平均法</th><th>移動平均法</th></tr>
+<tr><td>売却額の合計</td><td>${yen(sa)}</td><td>${yen(sa)}</td></tr>
+<tr><td>売却手数料</td><td>${yen(sf)}</td><td>${yen(sf)}</td></tr>
+<tr><td>売却原価</td><td>${yen(tCost)}</td><td>${yen(mCost)}</td></tr>
+<tr><td><strong>所得（利益）</strong></td><td><strong>${yen(tInc)}</strong></td><td><strong>${yen(mInc)}</strong></td></tr>
+<tr><td>1単位の取得価額</td><td>${yen(tu)}</td><td>売却ごとに変動</td></tr>
+<tr><td>年末の保有数量</td><td>${num(endQ)}</td><td>${num(mq)}</td></tr>
+<tr><td>年末の取得価額（翌年の年初へ）</td><td>${yen(tu*endQ)}</td><td>${yen(mc)}</td></tr></table>
+<p>移動平均法の明細</p><table><tr><th>日付</th><th>数量</th><th>金額</th><th>その時点の平均単価</th><th>その売却の所得</th></tr>${detail}</table>`;
+}
+$('go').onclick=calc; calc();
+</script>
+</body>
+</html>
