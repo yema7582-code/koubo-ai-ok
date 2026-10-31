@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checking an AI-translated App Store listing for Japan: a short checklist (Oct 2026)</title>
+<meta name="description" content="AI tools can now localize an app and its store listing in minutes. Here is what to check before the Japanese version goes live, plus an optional native review.">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ja-aso-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:760px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.4em}h2{font-size:1.15em;border-left:4px solid #3a7;padding-left:8px;margin-top:2em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}code{word-break:break-all}
+</style>
+</head>
+<body>
+<h1>Checking an AI-translated App Store listing for Japan</h1>
+<p>Localizing an app used to take weeks. In October 2026 it takes minutes: tools like <a href="https://app-bro.com/">App Bro</a> (open source, launched Oct 24) let Claude or Codex translate your strings and write store listings for each country. That makes the translation cheap. What it doesn't do is tell you whether a Japanese user would actually search for the words it picked.</p>
+<p class="note">Two public write-ups show why this matters. In <a href="https://trysonar.app/blog/ai-agent-app-store-localization-case-study">Sonar's case study</a> (Oct 14, 2026) a first agent pass won top-10 rankings, and a later automated metadata pass erased 21 of them in one day. In <a href="https://medium.com/@javiergalloroca/how-i-localized-my-ios-app-to-22-markets-in-a-few-hours-using-claude-code-f2deead91a73">Javier Gallo Roca's write-up</a>, the useful Japanese keywords (あと何日, 卒業, 妊娠) were not translations of his English ones at all.</p>
+
+<h2>What to check before the Japanese listing goes live</h2>
+<ul>
+<li><strong>Keywords are search phrases, not translations.</strong> Japanese users often type a short phrase or the everyday word (家計簿, 筋トレ, あと何日) rather than the katakana form of an English term. Look at what local competitors rank for.</li>
+<li><strong>The 100-character keyword field has no spaces to waste.</strong> Separate with commas only, and don't repeat words already in the app name or subtitle.</li>
+<li><strong>Katakana vs. kanji vs. English.</strong> Pick one spelling per concept that people really use (e.g. タイマー is normal, クロノメーター is not). Mixing all three just splits your keyword budget.</li>
+<li><strong>Tone.</strong> Store copy in Japan is usually polite (です・ます) and concrete. Literal "Unlock your potential!" lines read as odd ads.</li>
+<li><strong>Subtitle keeps the main search term.</strong> If a second automated pass rewrites the subtitle, check that the phrase you rank for is still there.</li>
+<li><strong>Screenshots.</strong> Text in images needs Japanese line breaks that don't split words; machine output often breaks in the middle of a word.</li>
+<li><strong>In-app purchase names and the privacy text</strong> are easy to forget and look unfinished when left in English.</li>
+</ul>
+
+<h2>Optional: a native review</h2>
+<p>If you'd like a native Japanese / Chinese (Simplified and Traditional) / English check of a listing your tool already produced, send the name, subtitle, keyword field and description to <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>. I'll send back corrected text and a short note on each change. The first listing is free so you can judge whether it's useful; after that we can agree a price per listing.</p>
+<p>Shinji Nakasaki, freelance translator (JA / ZH / EN), Japan.</p>
+
+<footer>
+<p>Corrections welcome via <a href="https://github.com/yema7582-code/koubo-ai-ok/issues">GitHub issues</a>.</p>
+<p>Japanese pages on this site: <a href="./">AI可の公募まとめ</a> · <a href="paid-check.html">AI副業の報酬検証メモ</a></p>
+</footer>
+</body>
+</html>
