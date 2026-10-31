@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>漢字・ひらがな練習シート作成（無料・印刷用・登録不要）</title>
+<meta name="description" content="練習したい漢字やひらがなを入力するだけで、十字の補助線つきマス目の練習プリントをA4で印刷できます。お手本・なぞり書き・空白マスの数を選べます。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kanji-sheet.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}.ctl label{display:inline-block;margin:4px 14px 4px 0}
+input[type=text]{width:100%;font-size:1.2em;padding:4px}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+#sheet{margin-top:16px}
+.ttl{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+.row{display:flex;margin-bottom:4px}
+.cell{width:var(--s);height:var(--s);border:1.5px solid #333;margin-right:-1.5px;position:relative;box-sizing:border-box;
+ display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.78);
+ font-family:"UD デジタル 教科書体 N-R","UD Digi Kyokasho N-R","YuKyokasho","Klee One","Hiragino Mincho ProN","Noto Serif JP",serif;line-height:1}
+.cell::before,.cell::after{content:"";position:absolute;border:0 dashed #aaa}
+.cell::before{left:50%;top:0;bottom:0;border-left-width:1px}
+.cell::after{top:50%;left:0;right:0;border-top-width:1px}
+.cell span{position:relative;z-index:1}.trace span{color:#c8c8c8}.model span{color:#111}
+@media print{.noprint{display:none}body{padding:0;max-width:none}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>漢字・ひらがな練習シート作成</h1>
+<p>練習したい文字を入力して「作る」を押すと、十字の補助線つきマス目の練習プリントができます。そのまま印刷（A4）するか、印刷画面でPDFに保存してください。処理はすべてブラウザの中で行われます。</p>
+<div class="ctl">
+<input type="text" id="chars" value="山川木林森" aria-label="練習する文字">
+<label>1行のマス数 <input type="number" id="cols" value="10" min="4" max="16" style="width:4em"></label>
+<label>なぞり書きのマス数 <input type="number" id="tr" value="3" min="0" max="15" style="width:4em"></label>
+<label>1文字あたりの行数 <input type="number" id="rep" value="1" min="1" max="5" style="width:4em"></label>
+<label>マスの大きさ <select id="sz"><option value="15mm">小（15mm）</option><option value="18mm" selected>中（18mm）</option><option value="22mm">大（22mm）</option></select></label>
+<label>見出し <input type="text" id="title" value="かんじ れんしゅう" style="width:12em;font-size:1em"></label>
+</div>
+<button id="make">作る</button><button onclick="window.print()">印刷する</button>
+<p class="note">字形はお使いの端末に入っているフォントで表示されます。Windowsなら「UD デジタル 教科書体」が入っていれば自動で使います。学校で習う書き方（とめ・はね・はらい）と違って見える場合は、教科書で確認してください。</p>
+</div>
+<div id="sheet"></div>
+<div class="noprint"><p><a href="./">トップへ戻る</a></p></div>
+<script>
+const $=id=>document.getElementById(id);
+function make(){
+ const chars=[...$('chars').value.replace(/\s/g,'')];const cols=Math.max(4,Math.min(16,+$('cols').value||10));
+ const tr=Math.max(0,Math.min(cols-1,+$('tr').value||0));const rep=Math.max(1,Math.min(5,+$('rep').value||1));
+ const sh=$('sheet');sh.innerHTML='';sh.style.setProperty('--s',$('sz').value);
+ const t=document.createElement('div');t.className='ttl';
+ const h=document.createElement('strong');h.textContent=$('title').value;
+ const n=document.createElement('span');n.textContent='　　月　　日　なまえ＿＿＿＿＿＿＿＿';t.append(h,n);sh.append(t);
+ for(const c of chars){for(let r=0;r<rep;r++){const row=document.createElement('div');row.className='row';
+  for(let i=0;i<cols;i++){const d=document.createElement('div');d.className='cell';
+   if(r===0&&i===0){d.classList.add('model');}else if(r===0&&i<=tr){d.classList.add('trace');}else{row.append(d);continue;}
+   const s=document.createElement('span');s.textContent=c;d.append(s);row.append(d);}
+  sh.append(row);}}
+}
+$('make').onclick=make;make();
+</script>
+</body>
+</html>
