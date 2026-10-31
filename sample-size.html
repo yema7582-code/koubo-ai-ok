@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アンケートのサンプルサイズ・誤差計算｜必要回答数と許容誤差を無料で計算</title>
+<meta name="description" content="アンケートに何人の回答が必要か、集まった回答数で誤差は何％かを計算できる無料ツール。母集団の大きさ（有限母集団修正）、信頼水準90/95/99％、想定回答比率、回収率から配布数まで一度に出せます。2つの割合の差が意味のある差かの簡易検定つき。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/sample-size.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+input,select{font-size:1em;width:9em}label{display:block;margin:6px 0}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px;font-size:1.02em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;font-size:.9em}td,th{border:1px solid #ccc;padding:4px 8px;text-align:right}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>アンケートのサンプルサイズ・誤差計算</h1>
+<p>「何人に聞けば十分？」「200人の回答だと誤差はどれくらい？」をその場で計算します。顧客満足度調査、社内アンケート、自治体・学校の調査、卒論の質問紙調査などの単純な割合（「はい」と答えた人の％）を想定しています。計算はこのブラウザの中だけで行います。</p>
+
+<h2>1. 必要な回答数を出す</h2>
+<div class="box">
+<label>母集団の大きさ（対象者の総数。わからない・非常に多いときは空欄）<br><input type="number" id="N" min="1" placeholder="例 1200"></label>
+<label>許容誤差（±何ポイントまでなら許せるか）<br><input type="number" id="e" value="5" step="0.5" min="0.5"> ％</label>
+<label>信頼水準<br><select id="cl"><option value="1.6449">90％</option><option value="1.96" selected>95％（一般的）</option><option value="2.5758">99％</option></select></label>
+<label>想定する回答比率（わからなければ50％が最も安全）<br><input type="number" id="p" value="50" min="1" max="99"> ％</label>
+<label>想定回収率（配布数を出したいとき）<br><input type="number" id="rr" value="100" min="1" max="100"> ％</label>
+<div class="res" id="r1"></div>
+</div>
+
+<h2>2. 集まった回答数から誤差を出す</h2>
+<div class="box">
+<label>回答数<br><input type="number" id="n2" value="200" min="1"></label>
+<label>結果の割合（例：「満足」と答えた人）<br><input type="number" id="p2" value="62" min="0" max="100"> ％</label>
+<label>母集団の大きさ（空欄可）<br><input type="number" id="N2" min="1"></label>
+<label>信頼水準<br><select id="cl2"><option value="1.6449">90％</option><option value="1.96" selected>95％</option><option value="2.5758">99％</option></select></label>
+<div class="res" id="r2"></div>
+</div>
+
+<h2>3. 2つの割合の差は意味のある差？（簡易検定）</h2>
+<div class="box">
+<label>グループA：回答数 <input type="number" id="na" value="150"> 割合 <input type="number" id="pa" value="58"> ％</label>
+<label>グループB：回答数 <input type="number" id="nb" value="140"> 割合 <input type="number" id="pb" value="47"> ％</label>
+<div class="res" id="r3"></div>
+<small>2つの独立したグループの比率の差のz検定（両側）です。同じ人に2回聞いた前後比較には使えません。</small>
+</div>
+
+<h2>早見表（母集団が十分大きい場合・信頼水準95％・回答比率50％）</h2>
+<table id="tbl"><tr><th>許容誤差</th><th>必要回答数</th></tr></table>
+
+<h2>使うときの注意</h2>
+<div class="note">
+<ul>
+<li>この計算は「対象者から無作為に選んで聞いた」ことが前提です。SNSで募集した回答や、関心の強い人だけが答えたアンケートは、回答数を増やしても偏りは減りません。</li>
+<li>男女別・年代別など<strong>グループごとに比べたいなら、グループごとに</strong>必要数を満たす必要があります。</li>
+<li>母集団が小さい（数百人程度）ときは有限母集団修正で必要数が減ります。全員に配れる規模なら全数調査も検討してください。</li>
+<li>式：n₀ = z²·p(1−p)/e²、有限母集団修正 n = n₀ / (1 + (n₀−1)/N)。誤差は e = z·√(p(1−p)/n)·√((N−n)/(N−1))。</li>
+</ul>
+</div>
+<p><small>アンケートの設計・集計・レポート作成（日本語・英語・中国語）のご相談：shinji-work@mail.grokbot.com ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=v=>v===''?NaN:Number(v);
+function need(z,e,p,N){const n0=z*z*p*(1-p)/(e*e);return isFinite(N)&&N>0?n0/(1+(n0-1)/N):n0;}
+function erf(x){const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
+function calc(){
+ const z=+$('cl').value,e=num($('e').value)/100,p=num($('p').value)/100,N=num($('N').value),rr=num($('rr').value)/100;
+ if(e>0&&p>0&&p<1){const n=Math.ceil(need(z,e,p,N));let s=`必要な回答数：<b>${n.toLocaleString()} 人</b>`;
+  if(isFinite(N)&&n>=N)s+='（母集団以上なので全数調査になります）';
+  if(rr>0&&rr<1)s+=`<br>回収率${Math.round(rr*100)}％なら配布数の目安：<b>${Math.ceil(n/rr).toLocaleString()} 件</b>`;
+  $('r1').innerHTML=s;}else $('r1').textContent='入力を確認してください';
+ const n2=num($('n2').value),p2=num($('p2').value)/100,N2=num($('N2').value),z2=+$('cl2').value;
+ if(n2>0&&p2>=0&&p2<=1){let se=Math.sqrt(p2*(1-p2)/n2);if(isFinite(N2)&&N2>1&&n2<=N2)se*=Math.sqrt((N2-n2)/(N2-1));
+  const m=z2*se*100;$('r2').innerHTML=`誤差：<b>±${m.toFixed(1)} ポイント</b><br>真の割合はおおむね ${Math.max(0,p2*100-m).toFixed(1)}％ 〜 ${Math.min(100,p2*100+m).toFixed(1)}％ の範囲`;
+  if(n2<30)$('r2').innerHTML+='<br><small>回答数が30未満のため、この近似は粗くなります。</small>';}
+ const na=num($('na').value),pa=num($('pa').value)/100,nb=num($('nb').value),pb=num($('pb').value)/100;
+ if(na>0&&nb>0){const pp=(pa*na+pb*nb)/(na+nb);const se=Math.sqrt(pp*(1-pp)*(1/na+1/nb));const zz=se>0?(pa-pb)/se:0;const pv=2*(1-0.5*(1+erf(Math.abs(zz)/Math.SQRT2)));
+  $('r3').innerHTML=`差：${((pa-pb)*100).toFixed(1)} ポイント、z = ${zz.toFixed(2)}、p値 ≈ <b>${pv<0.001?'<0.001':pv.toFixed(3)}</b><br>`+(pv<0.05?'5％水準で「偶然とは言いにくい差」です。':'5％水準では「偶然の範囲かもしれない差」です。回答数を増やすと判断しやすくなります。');}
+}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+[10,7,5,4,3,2,1].forEach(e=>{const tr=document.createElement('tr');tr.innerHTML=`<td>±${e}％</td><td>${Math.ceil(need(1.96,e/100,.5,NaN)).toLocaleString()} 人</td>`;$('tbl').appendChild(tr);});
+calc();
+</script>
+</body>
+</html>
