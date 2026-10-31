@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>経費・請求書CSV 取り込み前チェッカー（重複・登録番号・税額・日付／無料）</title>
+<meta name="description" content="freee・マネーフォワード・弥生などに取り込む前の経費・請求書CSVを点検します。二重計上の疑い、インボイス登録番号の形式とチェックデジット、税額のずれ、期間外の日付、空欄を一覧にして、結果CSVを保存できます。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/keihi-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}textarea{width:100%;height:160px;font-family:monospace;font-size:13px}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ng{color:#b00020}.warn{color:#a15c00}.ok{color:#1b7f3a}.sum li{margin:2px 0}select{max-width:11em}
+</style>
+</head>
+<body>
+<h1>経費・請求書CSV 取り込み前チェッカー</h1>
+<p>会計ソフトに取り込む前の経費や請求書の一覧（CSV）を、人が目で確かめるべき行だけに絞り込みます。全部を自動で直すのではなく、「怪しい行の一覧」を出す道具です。処理はすべてブラウザの中で行われ、データはどこにも送信されません。</p>
+<p><input type="file" id="file" accept=".csv,text/csv"> または下に貼り付け（1行目は見出し）</p>
+<textarea id="src" placeholder="日付,取引先,金額,税率,消費税額,登録番号,摘要
+2026/10/03,株式会社サンプル,11000,10,1000,T1234567890123,文具
+2026/10/03,株式会社サンプル,11000,10,1000,T1234567890123,文具"></textarea>
+<button id="load">列を読み取る</button>
+<div id="map" style="display:none">
+<p>列の割り当て（自動で推測しています。違っていたら選び直してください）</p>
+<div id="maps"></div>
+<label>対象期間 <input type="date" id="from"> 〜 <input type="date" id="to"></label>
+<label>近い重複とみなす日数 <input type="number" id="near" value="7" min="0" max="60" style="width:4em"></label>
+<label>金額は <select id="incl"><option value="in">税込</option><option value="ex">税抜</option></select></label>
+<label>高額として目立たせる金額 <input type="number" id="big" value="100000" style="width:7em">円以上</label>
+<br><button id="run">チェックする</button><button id="dl" disabled>結果CSVを保存</button>
+</div>
+<div id="out"></div>
+<p class="note">チェック内容：①同じ日・同じ取引先・同じ金額の行（二重計上の疑い）②同じ取引先・同じ金額が近い日付にある行 ③日付の読み取り不可・未来日・対象期間外 ④金額が空・0・マイナス・数字でない ⑤取引先の空欄 ⑥インボイス登録番号の形式（T＋13桁）とチェックデジット（法人番号と同じ計算。合わない場合は「要確認」）⑦税率が10%・8%・0%以外 ⑧消費税額が金額から計算した額と2円以上ずれる ⑨高額で端数のない金額。<br>登録番号が実在し、取り消されていないかは<a href="https://www.invoice-kohyo.nta.go.jp/" rel="noopener">国税庁 適格請求書発行事業者公表サイト</a>で確かめてください。このツールは税務上の判断（経費になるか、仕入税額控除できるか）はしません。迷う行は税理士さんに相談してください。</p>
+<p>行数が多い、登録番号を公表サイトで一括照合したい、領収書と明細の突き合わせまで頼みたい、という場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください（日本語・英語・中国語）。</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script>
+const $=id=>document.getElementById(id);let H=[],R=[],RES=[];
+const FIELDS=[["date","日付",/日付|取引日|発生日|date|日時|年月日/i],["payee","取引先",/取引先|支払先|店名|相手|vendor|payee|仕入先|請求元|発行元/i],["amount","金額",/金額|支払額|合計|amount|total|税込/i],["rate","税率",/税率|rate|税区分/i],["tax","消費税額",/消費税|税額|tax/i],["regno","登録番号",/登録番号|インボイス|適格|regno|T番号/i],["memo","摘要",/摘要|内容|品目|memo|備考|勘定科目/i]];
+function parseCSV(t){t=t.replace(/^\uFEFF/,"");const rows=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','||c=='\t'){row.push(f);f=""}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);f="";if(row.some(x=>x.trim()!==""))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x.trim()!==""))rows.push(row);return rows}
+function nk(s){return (s||"").normalize("NFKC").trim()}
+function num(s){s=nk(s).replace(/[,円¥\s]/g,"");if(/^\(.*\)$/.test(s))s="-"+s.slice(1,-1);if(s===""||!/^-?\d+(\.\d+)?$/.test(s))return null;return parseFloat(s)}
+function pdate(s){s=nk(s);let m=s.match(/^(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);if(!m){m=s.match(/^R(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/i);if(m)m=[0,2018+ +m[1],m[2],m[3]];else{m=s.match(/^令和(\d{1,2}|元)年(\d{1,2})月(\d{1,2})日/);if(m)m=[0,2018+(m[1]=="元"?1:+m[1]),m[2],m[3]];}}if(!m){m=s.match(/^(\d{4})(\d{2})(\d{2})$/)}if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);if(d.getMonth()!=+m[2]-1)return null;return d}
+function normName(s){s=nk(s);["株式会社","有限会社","合同会社","(株)","(有)","(同)","一般社団法人","一般財団法人"].forEach(c=>s=s.split(c.normalize("NFKC")).join(""));return s.replace(/[\s・,.、。]/g,"").toLowerCase()}
+function regCheck(s){let v=nk(s).toUpperCase().replace(/[\s\-‐ー―]/g,"");if(!v)return null;if(!/^T\d{13}$/.test(v))return "形式が違う（T＋13桁）";const b=v.slice(2);let t=0;[...b].reverse().forEach((c,i)=>t+=+c*(i%2==0?1:2));if(+v[1]!=9-(t%9))return "チェックデジット不一致（要確認）";return ""}
+function rateOf(s){s=nk(s);if(!s)return null;if(/軽減|8/.test(s))return 8;if(/10/.test(s))return 10;if(/^0|非課税|不課税|対象外|免税/.test(s))return 0;return NaN}
+function readSrc(){const rows=parseCSV($("src").value);if(rows.length<2){$("out").innerHTML='<p class="ng">見出し行とデータ行が必要です。</p>';return}H=rows[0].map(nk);R=rows.slice(1);
+$("maps").innerHTML=FIELDS.map(([k,l,re])=>{let g=H.findIndex(h=>re.test(h));if(k=="amount"){const g2=H.findIndex(h=>/金額|amount|支払額/i.test(h)&&!/税額|消費税/.test(h));if(g2>=0)g=g2}if(k=="tax"&&g>=0&&/税込/.test(H[g]))g=-1;return `<label>${l} <select id="m_${k}"><option value="-1">（なし）</option>${H.map((h,i)=>`<option value="${i}"${i==g?" selected":""}>${h||"列"+(i+1)}</option>`).join("")}</select></label>`}).join("");$("map").style.display="block";$("out").innerHTML=`<p>${R.length}行を読み込みました。</p>`}
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let t=r.result;if(t.includes("\uFFFD")){const r2=new FileReader();r2.onload=()=>{$("src").value=r2.result;readSrc()};r2.readAsText(f,"Shift_JIS");return}$("src").value=t;readSrc()};r.readAsText(f,"UTF-8")};
+$("load").onclick=readSrc;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+$("run").onclick=()=>{const m={};FIELDS.forEach(([k])=>m[k]=+$("m_"+k).value);const g=(r,k)=>m[k]>=0?(r[m[k]]||""):"";const from=$("from").value?new Date($("from").value+"T00:00"):null,to=$("to").value?new Date($("to").value+"T23:59"):null,near=+$("near").value||0,big=+$("big").value||0,incl=$("incl").value=="in",today=new Date();
+RES=R.map((r,i)=>({i,r,ng:[],warn:[],d:m.date>=0?pdate(g(r,"date")):null,a:num(g(r,"amount")),p:normName(g(r,"payee"))}));
+const cnt={};RES.forEach(x=>{const r=x.r;
+if(m.date>=0){if(!x.d)x.ng.push("日付を読み取れない");else{if(x.d>today)x.warn.push("未来の日付");if(from&&x.d<from||to&&x.d>to)x.warn.push("対象期間外")}}
+if(m.amount>=0){if(x.a===null)x.ng.push("金額が空か数字でない");else if(x.a===0)x.warn.push("金額が0");else if(x.a<0)x.warn.push("マイナス（返品・訂正なら問題なし）");else{if(big&&x.a>=big&&x.a%1000===0)x.warn.push("高額で端数なし（見積額・概算の可能性）")}}
+if(m.payee>=0&&!x.p)x.ng.push("取引先が空欄");
+if(m.regno>=0){const c=regCheck(g(r,"regno"));if(c)x.ng.push("登録番号："+c)}
+let rt=null;if(m.rate>=0){rt=rateOf(g(r,"rate"));if(Number.isNaN(rt)){x.warn.push("税率を読み取れない");rt=null}}
+if(m.tax>=0&&x.a!==null&&x.a>0){const t=num(g(r,"tax"));const rr=rt===null?10:rt;if(t===null)x.warn.push("消費税額が空");else{const exp=incl?Math.floor(x.a*rr/(100+rr)):Math.floor(x.a*rr/100);if(Math.abs(t-exp)>=2)x.warn.push(`消費税額 ${t} が計算値 ${exp} とずれる（税率${rr}%・${incl?"税込":"税抜"}で計算）`)}}
+if(x.d&&x.a!==null&&x.p){const k=x.d.toDateString()+"|"+x.p+"|"+x.a;(cnt[k]=cnt[k]||[]).push(x)}});
+Object.values(cnt).forEach(a=>{if(a.length>1)a.forEach(x=>x.ng.push(`同じ日・取引先・金額の行が${a.length}件（行 ${a.map(y=>y.i+2).join("・")}）`))});
+if(near>0){const by={};RES.forEach(x=>{if(x.d&&x.a!==null&&x.p)(by[x.p+"|"+x.a]=by[x.p+"|"+x.a]||[]).push(x)});Object.values(by).forEach(a=>{a.sort((p,q)=>p.d-q.d);for(let j=1;j<a.length;j++){const dd=(a[j].d-a[j-1].d)/864e5;if(dd>0&&dd<=near){a[j].warn.push(`同じ取引先・金額が${dd}日前にもある（行 ${a[j-1].i+2}）。定期払いなら問題なし`);}}})}
+const bad=RES.filter(x=>x.ng.length||x.warn.length),ngN=RES.filter(x=>x.ng.length).length;const tally={};bad.forEach(x=>[...x.ng,...x.warn].forEach(s=>{const k=s.startsWith("同じ取引先")?"同じ取引先・金額が近い日付にもある":s.startsWith("消費税額")?"消費税額のずれ":s.replace(/（行.*?）|\d+件/g,"");tally[k]=(tally[k]||0)+1}));
+const tot=RES.reduce((s,x)=>s+(x.a||0),0);
+$("out").innerHTML=`<h2>結果</h2><p>${RES.length}行中、<span class="ng">要確認 ${ngN}行</span>、<span class="warn">注意 ${bad.length-ngN}行</span>、<span class="ok">問題なし ${RES.length-bad.length}行</span>。金額合計 ${tot.toLocaleString()}円。</p><ul class="sum">${Object.entries(tally).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<li>${esc(k)}：${v}件</li>`).join("")}</ul>`+(bad.length?`<table><tr><th>行</th>${H.map(h=>`<th>${esc(h)}</th>`).join("")}<th>指摘</th></tr>${bad.map(x=>`<tr><td>${x.i+2}</td>${H.map((_,c)=>`<td>${esc(x.r[c]||"")}</td>`).join("")}<td>${x.ng.map(s=>`<div class="ng">● ${esc(s)}</div>`).join("")}${x.warn.map(s=>`<div class="warn">▲ ${esc(s)}</div>`).join("")}</td></tr>`).join("")}</table>`:"<p class='ok'>指摘はありませんでした。</p>");$("dl").disabled=false};
+$("dl").onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const lines=[[...H,"判定","指摘"].map(q).join(",")];RES.forEach(x=>lines.push([...H.map((_,c)=>x.r[c]||""),x.ng.length?"要確認":x.warn.length?"注意":"OK",[...x.ng,...x.warn].join(" / ")].map(q).join(",")));const b=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="keihi-check-result.csv";a.click()};
+</script>
+</body>
+</html>
