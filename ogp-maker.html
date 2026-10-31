@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OGP・メタタグ作成＆チェック｜X・LINE・Facebookのシェア表示を確認（無料）</title>
+<meta name="description" content="ホームページやブログのタイトル・説明文・OGP画像を入れると、検索結果とX（旧Twitter）・LINE・Facebookでのシェア表示の目安を確認しながら、貼り付けるだけのmetaタグを作れる無料ツール。文字数オーバーや画像サイズの注意点もその場でチェック。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ogp-maker.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+input[type=text],textarea,select{width:100%;font-size:.95em;box-sizing:border-box}
+textarea{min-height:5em}#out{min-height:14em;font-family:ui-monospace,monospace;font-size:.85em}
+.warn{color:#b00020}.ok{color:#1b5e20}small{color:#555}
+.card{border:1px solid #cfd9de;border-radius:14px;overflow:hidden;max-width:500px;margin:8px 0;background:#fff}
+.card .img{background:#e8eef2 center/cover no-repeat;aspect-ratio:1.91/1;display:flex;align-items:center;justify-content:center;color:#789;font-size:.9em}
+.card .t{padding:8px 12px}.card .d{color:#536471;font-size:.88em}.card .u{color:#536471;font-size:.8em}
+.serp{max-width:600px}.serp .st{color:#1a0dab;font-size:1.1em}.serp .su{color:#006621;font-size:.85em}.serp .sd{color:#4d5156;font-size:.9em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+</style>
+</head>
+<body>
+<h1>OGP・メタタグ作成＆チェック</h1>
+<p>ページのURL・タイトル・説明文・シェア用画像を入れると、Google検索とSNS（X・LINE・Facebook）での見え方の目安を確認しながら、&lt;head&gt;に貼るだけのタグを作れます。入力内容はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label>ページのURL（https://から）<input type="text" id="url" value="https://example.jp/menu/"></label>
+<label>ページタイトル<input type="text" id="title" value="季節のランチメニュー｜カフェ木もれび（吉祥寺）"></label>
+<label>説明文（description）<textarea id="desc">吉祥寺駅から徒歩5分のカフェ木もれびの季節のランチメニュー。地元野菜のプレートと自家製パン、テイクアウトの予約方法もご案内します。</textarea></label>
+<label>シェア用画像のURL（推奨 1200×630px）<input type="text" id="img" value=""></label>
+<label>画像の幅・高さ（px、わかれば）<input type="text" id="imgsize" value="1200x630"></label>
+<label>サイト名<input type="text" id="site" value="カフェ木もれび"></label>
+<label>ページの種類 <select id="type"><option value="website">website（トップページ・一般ページ）</option><option value="article">article（ブログ記事・お知らせ）</option></select></label>
+<label>Xアカウント（任意、@から）<input type="text" id="tw" value=""></label>
+</div>
+
+<h2>チェック結果</h2>
+<div id="checks" class="box"></div>
+
+<h2>表示の目安</h2>
+<p><small>実際の表示は各サービスの仕様変更や端末で変わります。あくまで目安です。</small></p>
+<div class="serp box"><div class="su" id="pu"></div><div class="st" id="pt"></div><div class="sd" id="pd"></div></div>
+<div class="card"><div class="img" id="pimg">画像なし</div><div class="t"><div class="u" id="cu"></div><b id="ct"></b><div class="d" id="cd"></div></div></div>
+
+<h2>貼り付け用タグ</h2>
+<textarea id="out" readonly></textarea>
+<button id="copy">コピー</button><span id="copied" class="ok"></span>
+
+<div class="note">
+<b>よくあるつまずき</b><br>
+・画像URLは「https://」から始まる絶対URLにしてください（/img/a.jpg のような相対パスだと読み込まれないことがあります）。<br>
+・タグを直してもSNS側に古い表示が残ることがあります。Facebookは「シェアデバッガー」で再取得できます。LINEは公式の「PagePoker」で確認・キャッシュ更新ができます。<br>
+・WordPressなどでSEOプラグインを使っている場合は、プラグインの設定欄に入力し、タグの二重出力を避けてください。
+</div>
+<p><a href="./">← 無料ツール一覧へ</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// 全角=2, 半角=1 で数える（Google表示幅の簡易目安）
+const w=s=>[...s].reduce((a,c)=>a+(c.charCodeAt(0)>0xff?2:1),0);
+function run(){
+ const u=$("url").value.trim(),t=$("title").value.trim(),d=$("desc").value.trim().replace(/\s+/g," "),
+  img=$("img").value.trim(),site=$("site").value.trim(),type=$("type").value,tw=$("tw").value.trim(),sz=$("imgsize").value.trim();
+ const c=[];const bad=(m)=>c.push('<div class="warn">✗ '+m+'</div>'),good=(m)=>c.push('<div class="ok">✓ '+m+'</div>');
+ if(!/^https?:\/\//.test(u))bad("URLが http(s):// から始まっていません。"); else if(!/^https:/.test(u))bad("URLが https ではありません。SNSで画像が出ない原因になることがあります。"); else good("URLの形式はOKです。");
+ const tw2=w(t); if(!t)bad("タイトルが空です。"); else if(tw2>60)bad("タイトルが長めです（全角 約"+Math.ceil(tw2/2)+"文字）。検索結果では全角30文字前後で省略されがちです。大事な語を前に。"); else good("タイトルの長さは適切です（全角 約"+Math.ceil(tw2/2)+"文字）。");
+ const dw=w(d); if(!d)bad("説明文が空です。"); else if(dw<100)bad("説明文が短めです（全角 約"+Math.ceil(dw/2)+"文字）。全角80〜120文字くらいが目安です。"); else if(dw>240)bad("説明文が長めです（全角 約"+Math.ceil(dw/2)+"文字）。スマホでは全角50〜60文字程度、PCでも120文字前後で切れることがあります。"); else good("説明文の長さは適切です（全角 約"+Math.ceil(dw/2)+"文字）。");
+ if(!img)bad("シェア用画像が未設定です。SNSで画像なしの小さなカードになります。"); else if(!/^https:\/\//.test(img))bad("画像URLは https:// から始まる絶対URLにしてください。"); else good("画像URLの形式はOKです。");
+ const m=sz.match(/(\d+)\s*[x×*]\s*(\d+)/);
+ if(img&&m){const W=+m[1],H=+m[2],r=W/H; if(W<600)bad("画像の幅が小さすぎます（"+W+"px）。1200px以上がおすすめです。"); else if(Math.abs(r-1.91)>0.25)bad("画像の比率が 1.91:1 から離れています（"+r.toFixed(2)+":1）。上下や左右が切れて表示されることがあります。"); else good("画像サイズと比率はOKです。");}
+ if(tw&&!/^@\w{1,15}$/.test(tw))bad("Xアカウントは @ から始まる半角英数字15文字以内で入力してください。");
+ $("checks").innerHTML=c.join("");
+ let host="";try{host=new URL(u).host}catch(e){}
+ $("pu").textContent=u;$("pt").textContent=t.length>32?t.slice(0,31)+"…":t;$("pd").textContent=d.length>120?d.slice(0,119)+"…":d;
+ $("cu").textContent=host;$("ct").textContent=t;$("cd").textContent=d.length>80?d.slice(0,79)+"…":d;
+ if(/^https?:\/\//.test(img)){$("pimg").style.backgroundImage='url("'+img.replace(/"/g,"%22")+'")';$("pimg").textContent=""}else{$("pimg").style.backgroundImage="";$("pimg").textContent="画像なし"}
+ const L=['<title>'+esc(t)+'</title>','<meta name="description" content="'+esc(d)+'">','<link rel="canonical" href="'+esc(u)+'">',
+ '<meta property="og:type" content="'+type+'">','<meta property="og:url" content="'+esc(u)+'">','<meta property="og:title" content="'+esc(t)+'">','<meta property="og:description" content="'+esc(d)+'">'];
+ if(site)L.push('<meta property="og:site_name" content="'+esc(site)+'">');
+ L.push('<meta property="og:locale" content="ja_JP">');
+ if(img){L.push('<meta property="og:image" content="'+esc(img)+'">');if(m){L.push('<meta property="og:image:width" content="'+m[1]+'">','<meta property="og:image:height" content="'+m[2]+'">')}}
+ L.push('<meta name="twitter:card" content="'+(img?'summary_large_image':'summary')+'">');
+ if(tw&&/^@\w{1,15}$/.test(tw))L.push('<meta name="twitter:site" content="'+tw+'">');
+ $("out").value=L.join("\n");
+}
+document.querySelectorAll("input,textarea,select").forEach(e=>e.addEventListener("input",run));
+$("copy").onclick=()=>{navigator.clipboard.writeText($("out").value).then(()=>{$("copied").textContent="コピーしました"})};
+run();
+</script>
+</body>
+</html>
