@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>契約の自動更新・解約通知期限 カレンダー作成ツール（iCal/CSV出力）｜無料</title>
+<meta name="description" content="業務委託・賃貸・SaaS・保守契約などの「契約期間」「自動更新」「解約は満了の◯か月前までに通知」を入れるだけで、次の満了日と解約通知の期限を一覧にし、Googleカレンダー等に取り込めるiCal（.ics）とCSVを作る無料ツール。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/keiyaku-kigen.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.95em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+input,select{font-size:.95em}input.s{width:4.5em}input.m{width:11em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.red{background:#fde8e8}.yel{background:#fff6d6}.gry{color:#777}
+button{font-size:.95em;margin:4px 4px 4px 0;padding:4px 10px}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>契約の自動更新・解約通知期限 カレンダー作成</h1>
+<p>「1年ごとに自動更新、やめるときは満了の3か月前までに書面で通知」のような条項は、期限を1日過ぎるとさらに1年続いてしまいます。契約ごとに開始日・期間・更新・通知期限を入れると、<b>次の満了日</b>と<b>解約・条件変更を伝える最終期限</b>を一覧にし、カレンダーに取り込める <b>.ics</b> と <b>CSV</b> を作ります。入力はこのブラウザの中だけで処理し、どこにも送信しません（保存はこの端末のブラウザ内だけ）。</p>
+
+<div class="box">
+<h2>契約の一覧</h2>
+<p><small>契約期間は民法の考え方（初日不算入）で「開始日から◯か月」の前日を満了日にします。例：2026/4/1開始・12か月 → 2027/3/31満了。契約書に満了日が書いてある場合は「満了日を直接入力」を使ってください。</small></p>
+<div style="overflow-x:auto">
+<table id="tbl">
+<thead><tr><th>契約名・相手</th><th>開始日</th><th>当初期間<br>(か月)</th><th>満了日を直接入力<br><small>(任意)</small></th><th>自動更新</th><th>更新後の期間<br>(か月)</th><th>通知期限<br>(満了の何前)</th><th>通知方法など<br><small>(メモ)</small></th><th></th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<button id="add">＋ 契約を追加</button><button id="sample">例を入れる</button><button id="clear">全部消す</button>
+<p>基準日 <input type="date" id="today"> <small>（ふつうは今日のまま）</small>　リマインド <input type="number" id="remind" class="s" min="0" value="14"> 日前にも通知（.ics）</p>
+</div>
+
+<div class="box">
+<h2>結果（通知期限が近い順）</h2>
+<div id="out"></div>
+<button id="ics">カレンダー用 .ics をダウンロード</button><button id="csv">CSVをダウンロード</button>
+<label><button id="imp" type="button">CSVを読み込む</button><input type="file" id="file" accept=".csv,text/csv" hidden></label>
+</div>
+
+<div class="note">
+<b>使うときの注意</b>
+<ul>
+<li>通知期限は「その日までに<b>相手に届く</b>」と書かれていることが多いです。郵送・内容証明なら数日の余裕を見て、リマインド日に動いてください。</li>
+<li>「満了の1か月前」は満了日の同じ日付の1か月前として計算しています（月末は調整）。「1か月前の<b>前日</b>まで」「末日まで」など書き方が違う場合は、短めの期間で入れて安全側に倒してください。</li>
+<li>賃貸住宅の借主からの解約、消費者契約、下請法・フリーランス法の対象取引などは法律で扱いが変わることがあります。このツールは日付の計算と管理だけで、法的な判断はしません。迷ったら契約書の文言と専門家の意見を優先してください。</li>
+</ul>
+英文契約（“automatically renew for successive one-year terms unless either party gives 90 days’ written notice”）の読み取りや、日本語・英語・中国語での解約通知文の作成は <a href="mailto:shinji-work@mail.grokbot.com?subject=契約通知文の作成について">shinji-work@mail.grokbot.com</a> で受け付けています。
+</div>
+
+<p><a href="keiyaku-check.html">業務委託契約書の確認ポイント抽出</a> ・ <a href="freelance-terms-check.html">フリーランス法 取引条件チェック</a> ・ <a href="index.html">ツール一覧</a></p>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY='keiyaku-kigen-v1';
+function pad(n){return String(n).padStart(2,'0')}
+function fmt(d){return d? d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate()):''}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function parse(s){if(!s)return null;const m=String(s).trim().match(/^(\d{4})[-\/.年](\d{1,2})[-\/.月](\d{1,2})/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d}
+function addMonths(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(day,last))}
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)}
+// 期間の満了日：開始日からnか月の応当日の前日（初日不算入、応当日がない月は末日）
+function termEnd(start,months){const y=start.getFullYear(),m=start.getMonth()+months,day=start.getDate();const last=new Date(y,m+1,0).getDate();if(day>last)return new Date(y,m,last);return addDays(new Date(y,m,day),-1)}
+function noticeDeadline(end,num,unit){num=+num||0;if(unit==='m')return addMonths(end,-num);return addDays(end,-num)}
+function calc(r,today){
+  const start=parse(r.start);let end=parse(r.end);
+  if(!end){if(!start||!(+r.term>0))return {err:'開始日と当初期間（または満了日）を入れてください'};end=termEnd(start,+r.term)}
+  const auto=r.auto==='1';const rt=+r.rterm||+r.term||12;
+  let dl=noticeDeadline(end,r.nnum,r.nunit);let loops=0;let passedNote='';
+  if(auto){
+    while(dl<today&&loops<600){const prevEnd=end;end=termEnd(addDays(prevEnd,1),rt);dl=noticeDeadline(end,r.nnum,r.nunit);loops++}
+    if(loops>0)passedNote='（すでに'+loops+'回更新された計算）';
+  }
+  const days=Math.round((dl-today)/864e5);
+  const ended=!auto&&end<today;
+  return {end,dl,days,auto,ended,passedNote,next: auto? termEnd(addDays(end,1),rt):null};
+}
+const tbody=$('#tbl tbody');
+function row(r={}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="m" data-k="name" placeholder="例：〇〇社 保守契約"></td>
+  <td><input type="date" data-k="start"></td>
+  <td><input type="number" class="s" min="1" data-k="term" placeholder="12"></td>
+  <td><input type="date" data-k="end"></td>
+  <td><select data-k="auto"><option value="1">あり</option><option value="0">なし</option></select></td>
+  <td><input type="number" class="s" min="1" data-k="rterm" placeholder="同じ"></td>
+  <td><input type="number" class="s" min="0" data-k="nnum" placeholder="3"><select data-k="nunit"><option value="m">か月前</option><option value="d">日前</option></select></td>
+  <td><input class="m" data-k="memo" placeholder="書面・メール等"></td>
+  <td><button type="button" class="del">削除</button></td>`;
+  tr.querySelectorAll('[data-k]').forEach(el=>{if(r[el.dataset.k]!==undefined)el.value=r[el.dataset.k];el.addEventListener('input',update)});
+  tr.querySelector('.del').onclick=()=>{tr.remove();update()};
+  tbody.appendChild(tr);
+}
+function rows(){return [...tbody.querySelectorAll('tr')].map(tr=>{const o={};tr.querySelectorAll('[data-k]').forEach(el=>o[el.dataset.k]=el.value);return o})}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+let last=[];
+function update(){
+  const rs=rows();try{localStorage.setItem(KEY,JSON.stringify({rs,remind:$('#remind').value}))}catch(e){}
+  const today=parse($('#today').value)||new Date();today.setHours(0,0,0,0);
+  last=rs.filter(r=>r.name||r.start||r.end).map(r=>({r,c:calc(r,today)}));
+  const ok=last.filter(x=>!x.c.err).sort((a,b)=>a.c.dl-b.c.dl);
+  let h='<table><tr><th>契約</th><th>次の満了日</th><th>通知の最終期限</th><th>残り</th><th>期限を過ぎると</th><th>メモ</th></tr>';
+  for(const {r,c} of ok){
+    const cls=c.ended?'gry':c.days<0?'gry':c.days<=30?'red':c.days<=90?'yel':'';
+    const left=c.ended?'終了済み':c.days<0?'期限切れ':c.days===0?'<b>今日</b>':c.days+'日';
+    const after=c.auto? '自動更新され、'+fmt(c.next)+'まで続く':(c.ended?'—':'満了で終了（更新なし）');
+    h+=`<tr class="${cls}"><td>${esc(r.name)||'(無題)'}</td><td>${fmt(c.end)} ${c.passedNote}</td><td><b>${fmt(c.dl)}</b></td><td>${left}</td><td>${after}</td><td>${esc(r.memo)}</td></tr>`;
+  }
+  for(const {r,c} of last.filter(x=>x.c.err))h+=`<tr class="gry"><td>${esc(r.name)||'(無題)'}</td><td colspan="5">${c.err}</td></tr>`;
+  h+='</table>';
+  const soon=ok.filter(x=>!x.c.ended&&x.c.days>=0&&x.c.days<=30).length;
+  $('#out').innerHTML=(ok.length?`<p>${ok.length}件中、通知期限まで30日以内：<b>${soon}件</b></p>`:'<p>契約を入れると、ここに期限の一覧が出ます。</p>')+(ok.length||last.length?h:'');
+}
+function dl(name,text,type){const b=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
+function ymd(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())}
+function buildIcs(){
+  const rem=+$('#remind').value||0;const now=new Date();const stamp=now.toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  let L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//koubo-ai-ok//keiyaku-kigen//JA','CALSCALE:GREGORIAN'];
+  last.filter(x=>!x.c.err&&!x.c.ended&&x.c.days>=0).forEach(({r,c},i)=>{
+    const name=r.name||'契約';
+    const desc=`満了日 ${fmt(c.end)}。${c.auto?'この日までに通知しないと自動更新（次の満了 '+fmt(c.next)+'）。':'更新なし。'}${r.memo?' 通知方法: '+r.memo:''}`;
+    L.push('BEGIN:VEVENT','UID:kigen-'+ymd(c.dl)+'-'+i+'@koubo-ai-ok','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+ymd(c.dl),'DTEND;VALUE=DATE:'+ymd(addDays(c.dl,1)),'SUMMARY:'+icsEsc('【解約・変更の通知期限】'+name),'DESCRIPTION:'+icsEsc(desc));
+    if(rem>0)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(name+' の通知期限まで'+rem+'日'),'TRIGGER:-P'+rem+'D','END:VALARM');
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');return L.join('\r\n')+'\r\n';
+}
+const COLS=['name','start','term','end','auto','rterm','nnum','nunit','memo'];
+const HEAD=['契約名','開始日','当初期間(月)','満了日(直接)','自動更新(1/0)','更新後期間(月)','通知期限(数)','通知期限(単位m/d)','メモ','次の満了日','通知の最終期限','残り日数'];
+function csvCell(v){v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function buildCsv(){const out=[HEAD.join(',')];for(const {r,c} of last){out.push([...COLS.map(k=>r[k]),c.err?'':fmt(c.end),c.err?'':fmt(c.dl),c.err?'':c.days].map(csvCell).join(','))}return '\ufeff'+out.join('\r\n')+'\r\n'}
+function parseCsv(t){const rows=[];let row=[],cur='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){cur+='"';i++}else q=false}else cur+=ch}else if(ch=='"')q=true;else if(ch==','){row.push(cur);cur=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;row.push(cur);rows.push(row);row=[];cur=''}else cur+=ch}if(cur||row.length){row.push(cur);rows.push(row)}return rows}
+$('#add').onclick=()=>{row({auto:'1',nunit:'m'});update()};
+$('#clear').onclick=()=>{if(confirm('入力した契約を全部消しますか？')){tbody.innerHTML='';update()}};
+$('#sample').onclick=()=>{
+  row({name:'A社 Webサイト保守契約',start:'2025-04-01',term:'12',auto:'1',rterm:'12',nnum:'3',nunit:'m',memo:'書面で通知'});
+  row({name:'事務所 賃貸借契約',start:'2025-02-01',term:'24',auto:'1',rterm:'24',nnum:'6',nunit:'m',memo:'普通借家・借主は1か月前でも可か要確認'});
+  row({name:'B社 業務委託（翻訳）',start:'2026-01-01',term:'6',auto:'1',rterm:'3',nnum:'30',nunit:'d',memo:'メール可'});
+  row({name:'SaaS 年額プラン',end:'2027-01-14',auto:'1',rterm:'12',nnum:'14',nunit:'d',memo:'管理画面から解約'});
+  update()};
+$('#ics').onclick=()=>dl('keiyaku-kigen.ics',buildIcs(),'text/calendar');
+$('#csv').onclick=()=>dl('keiyaku-kigen.csv',buildCsv(),'text/csv');
+$('#imp').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();let t=new TextDecoder('utf-8').decode(buf);if(t.includes('\ufffd'))try{t=new TextDecoder('shift_jis').decode(buf)}catch(_){}t=t.replace(/^\ufeff/,'');const rs=parseCsv(t).filter(r=>r.some(x=>x.trim()));rs.shift();for(const r of rs){const o={};COLS.forEach((k,i)=>o[k]=(r[i]||'').trim());['start','end'].forEach(k=>{const d=parse(o[k]);o[k]=d?iso(d):''});if(!/^[01]$/.test(o.auto))o.auto=/なし|no|false/i.test(o.auto)?'0':'1';if(!/^[md]$/.test(o.nunit))o.nunit=/日|d/i.test(o.nunit)?'d':'m';row(o)}update();e.target.value=''};
+$('#today').value=iso(new Date());$('#today').oninput=update;$('#remind').oninput=update;
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.rs&&s.rs.length){s.rs.forEach(row);if(s.remind!==undefined)$('#remind').value=s.remind}}catch(e){}
+if(!tbody.children.length)row({auto:'1',nunit:'m'});
+update();
+if(typeof module!=='undefined')module.exports={termEnd,noticeDeadline,calc,parse,fmt,buildIcs};
+</script>
+</body>
+</html>
