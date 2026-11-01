@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>川柳・俳句・短歌 音数チェッカー｜五七五・五七五七七の字余り字足らずを無料で確認</title>
+<meta name="description" content="川柳・俳句・短歌の音数（拍）を数える無料ツール。読みをひらがな・カタカナで入れると、拗音（ゃゅょ）は数えず、促音（っ）・撥音（ん）・長音（ー）は1音として句ごとに数え、字余り・字足らずを表示します。複数作品を一度に確認でき、公募に出す前の重複チェックもできます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/senryu-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:10em;font-size:1em;box-sizing:border-box}
+select{font-size:1em}label{display:inline-block;margin:6px 12px 6px 0}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+.ok{background:#eef6ee}.ng{background:#fdecea}.mid{background:#fff8e1}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>川柳・俳句・短歌 音数チェッカー</h1>
+<p>公募に出す前に、五・七・五（短歌は五・七・五・七・七）の音数を句ごとに数えます。漢字の読みは機械では決められないので、<b>読みをひらがなかカタカナで、句の切れ目に空白を入れて</b>入力してください。1行に1作品、何作品でもまとめて確認できます。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label>形式 <select id="form"><option value="5,7,5" selected>川柳・俳句（5・7・5）</option><option value="5,7,5,7,7">短歌（5・7・5・7・7）</option><option value="7,7">七七（付句・都々逸の下）</option></select></label>
+<textarea id="t" placeholder="例：ふるいけや かわずとびこむ みずのおと
+例：しずかさや いわにしみいる せみのこえ"></textarea>
+<div id="r"></div>
+</div>
+
+<div class="note">
+<b>数え方のルール（一般的なもの）</b><br>
+・拗音の小さい「ゃ・ゅ・ょ」「ぁぃぅぇぉ」「ゎ」は前の字とあわせて1音です（「しゃ」で1音）。<br>
+・促音「っ」、撥音「ん」、長音「ー」はそれぞれ1音と数えます。<br>
+・句読点・記号・空白は数えません。英数字が混じっているときは読みに直して入れてください。<br>
+・上五の字余り（6音）は川柳・俳句では比較的許される一方、中七・下五の字余りは目立ちやすいとされます。結社や選者によって考え方が違うので、表示は目安です。<br>
+・公募の多くは「自作・未発表」「他の公募と同時応募不可」が条件です。生成AIの扱いも要項ごとに違うので、応募前に必ず要項を読んでください。<a href="ai-disclosure.html">生成AI利用の申告文メーカー</a>、<a href="moji-count.html">公募用 文字数チェッカー</a>もあります。
+</div>
+
+<h2>重複・似た作品のチェック</h2>
+<p><small>上に入れた作品どうしで、同じ句（上五・中七・下五のどれか）が使われていないかも自動で表示します。同じ言い回しを別の公募に使い回すと「他の公募に投稿中」とみなされることがあるので、応募履歴の管理にも使えます。</small></p>
+<div id="dup"></div>
+
+<p style="margin-top:2em"><small>翻訳・校正・応募書類づくりのご相談：shinji-work@mail.grokbot.com ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+const SMALL=new Set([..."ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ"]);
+function toHira(s){return s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
+function count(seg){
+  let n=0,bad=[];
+  for(const ch of seg){
+    if(/[\s、。，．,.!！?？「」『』（）()・…〜~]/.test(ch))continue;
+    if(SMALL.has(ch))continue;
+    if(/[\u3041-\u3096\u30a1-\u30faー]/.test(ch)){n++;continue;}
+    bad.push(ch);
+  }
+  return {n,bad};
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function run(){
+  const pat=document.getElementById('form').value.split(',').map(Number);
+  const lines=document.getElementById('t').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  if(!lines.length){document.getElementById('r').innerHTML='';document.getElementById('dup').innerHTML='';return;}
+  let html='<table><tr><th>#</th><th>作品（読み）</th><th>句ごとの音数</th><th>判定</th></tr>';
+  const segMap={};
+  lines.forEach((ln,i)=>{
+    const segs=ln.split(/[\s\u3000\/／]+/).filter(Boolean);
+    const res=segs.map(count);
+    const nums=res.map(r=>r.n);
+    const bad=[...new Set(res.flatMap(r=>r.bad))];
+    let cls='ok',msg=[];
+    if(segs.length!==pat.length){cls='mid';msg.push(`句の数が${segs.length}つです（${pat.length}つに区切ると句ごとに判定できます）。合計 ${nums.reduce((a,b)=>a+b,0)} 音／規定 ${pat.reduce((a,b)=>a+b,0)} 音`);}
+    else{
+      nums.forEach((v,k)=>{const d=v-pat[k];const name=k===0?'上の句（初句）':(k===pat.length-1?'結句・下五':'第'+(k+1)+'句');
+        if(d>0){msg.push(`${name}が${d}音の字余り（${v}音）`);cls=(k===0&&d===1&&cls==='ok')?'mid':'ng';}
+        if(d<0){msg.push(`${name}が${-d}音の字足らず（${v}音）`);cls='ng';}});
+      if(!msg.length)msg.push('規定どおりです');
+    }
+    if(bad.length){msg.push('数えられない文字があります（漢字・英数字は読みに直してください）：'+esc(bad.join('')));if(cls==='ok')cls='mid';}
+    segs.forEach((s,k)=>{const key=toHira(s).replace(/[^\u3041-\u3096ー]/g,'');if(!key)return;(segMap[key]=segMap[key]||[]).push(i+1);});
+    html+=`<tr class="${cls}"><td>${i+1}</td><td>${esc(ln)}</td><td>${nums.join('・')}</td><td>${msg.join('<br>')}</td></tr>`;
+  });
+  html+='</table>';
+  document.getElementById('r').innerHTML=html;
+  const d=Object.entries(segMap).filter(([k,v])=>v.length>1);
+  document.getElementById('dup').innerHTML=d.length?'<div class="note">同じ句が複数の作品で使われています：<br>'+d.map(([k,v])=>`「${esc(k)}」→ 作品 ${v.join('・')}`).join('<br>')+'</div>':'<p><small>同じ句の使い回しは見つかりませんでした。</small></p>';
+}
+document.getElementById('t').addEventListener('input',run);
+document.getElementById('form').addEventListener('change',run);
+</script>
+</body>
+</html>
