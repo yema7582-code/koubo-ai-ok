@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>翻訳ファイル（JSON/PO）チェッカー｜キー漏れ・プレースホルダ・未翻訳・文字数を無料で確認</title>
+<meta name="description" content="アプリやWebサイトの翻訳ファイル（i18n JSON、gettext .po）を原文と訳文で比べ、キーの過不足、{name}・%s・<b>などのプレースホルダ崩れ、未翻訳、改行・空白の違い、長すぎる訳を一覧にする無料ツール。ブラウザ内で処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/i18n-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.cols{display:flex;gap:12px;flex-wrap:wrap}.cols>div{flex:1;min-width:280px}
+textarea{width:100%;min-height:14em;font-size:.92em;box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,monospace}
+table{border-collapse:collapse;width:100%;font-size:.9em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top;word-break:break-all}th{background:#f3f3f3}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.e{color:#b00020;font-weight:bold}.w{color:#a15c00}.i{color:#555}
+button{font-size:1em;padding:4px 12px}small{color:#555}
+</style>
+</head>
+<body>
+<h1>翻訳ファイル（JSON / PO）チェッカー</h1>
+<p>アプリやWebサイトの翻訳ファイルを、原文（例：英語 en.json）と訳文（例：日本語 ja.json）で突き合わせ、<b>納品前・取り込み前によく起きるミス</b>を一覧にします。機械翻訳やAI翻訳の出力を確認するときにも使えます。ファイルはブラウザの中だけで処理し、送信しません。</p>
+<div class="box">
+<p>形式：<label><input type="radio" name="fmt" value="auto" checked> 自動判定</label>
+<label><input type="radio" name="fmt" value="json"> JSON（入れ子可）</label>
+<label><input type="radio" name="fmt" value="po"> gettext .po（msgid/msgstr）</label></p>
+<div class="cols">
+<div><b>原文ファイル</b> <input type="file" id="fa"><br><textarea id="a" placeholder='{"login":{"title":"Sign in","hello":"Hello, {name}!"}}'></textarea></div>
+<div><b>訳文ファイル</b> <input type="file" id="fb"><br><textarea id="b" placeholder='{"login":{"title":"ログイン","hello":"こんにちは、{name}さん！"}}'></textarea><br><small>.po の場合は訳文側だけ貼れば msgid と msgstr を比べます。</small></div>
+</div>
+<p>長さの警告：訳文が原文の <input id="ratio" type="number" value="2" step="0.1" style="width:4em"> 倍（表示幅）を超えたら注意
+<label><input type="checkbox" id="optSame" checked> 原文と同じ訳を「未翻訳の疑い」にする</label>
+<label><input type="checkbox" id="optJa" checked> 日本語向けの表記チェック（半角カナ、全角スペース、！？の混在）</label></p>
+<p><small>未翻訳から除外する語（ブランド名など、カンマ区切り）</small> <input id="keep" style="width:60%" placeholder="OK, Email, GitHub"></p>
+<button id="go">チェックする</button> <button id="csv" disabled>結果をCSVで保存</button>
+</div>
+<div id="out"></div>
+<h2>チェックする内容</h2>
+<ul>
+<li><b>キーの過不足</b>：訳文にないキー（訳し漏れ）と、原文にないキー（古いキー・打ち間違い）。</li>
+<li><b>プレースホルダ</b>：<code>{name}</code> <code>{{count}}</code> <code>%s</code> <code>%1$s</code> <code>%d</code> <code>${x}</code> <code>:name</code> と HTMLタグ <code>&lt;b&gt;</code>・<code>&lt;a href&gt;</code> の数と種類が原文と同じか。ICUの <code>{count, plural, ...}</code> は変数名だけを比べます。</li>
+<li><b>未翻訳・空欄</b>：訳が空、または原文と同じ（数字・記号だけの文字列や除外語は対象外）。</li>
+<li><b>改行・前後の空白</b>：改行の数や、先頭・末尾の空白が原文と違う。</li>
+<li><b>長さ</b>：ボタンやメニューに入りきらない恐れのある長い訳（全角を2、半角を1で数えた表示幅で比較）。</li>
+<li><b>日本語表記</b>：半角カタカナ、全角スペース、！と!・？と?の混在。</li>
+</ul>
+<div class="note"><b>使い方のヒント</b>：エラー（赤）はアプリが落ちたり変数が表示されなかったりする原因になるので必ず直します。注意（橙）は画面で確認して判断してください。翻訳ファイルのレビューや、AI翻訳の仕上げ（ポストエディット）のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ（日本語・中国語・英語）。</div>
+<p><a href="index.html">← 無料ツール一覧へ</a> ／ <a href="steam-check.html">Steamストアページ 翻訳チェッカー</a> ／ <a href="hyoki-yure.html">表記ゆれ・文体チェッカー</a> ／ <a href="font-check.html">ゲーム用フォント 文字欠けチェッカー</a></p>
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function flatJSON(o,p,out){out=out||{};if(o!==null&&typeof o==="object"){if(Array.isArray(o))o.forEach((v,i)=>flatJSON(v,p+"["+i+"]",out));else for(const k in o)flatJSON(o[k],p?p+"."+k:k,out)}else out[p]=o==null?"":String(o);return out}
+function unq(s){return s.replace(/\\(n|t|"|\\)/g,(m,c)=>({n:"\n",t:"\t",'"':'"',"\\":"\\"}[c]))}
+function parsePO(t){const ents=[];let cur=null,field=null;const lines=t.replace(/\r/g,"").split("\n");
+ function push(){if(cur&&(cur.msgid!==""||cur.ctx))ents.push(cur);cur=null}
+ for(const L of lines){const l=L.trim();
+  if(!l){push();continue}
+  if(l.startsWith("#")){if(l.startsWith("#,")&&!cur)cur={flags:l};else if(l.startsWith("#,")&&cur)cur.flags=l;continue}
+  let m;
+  if((m=l.match(/^msgctxt\s+"(.*)"$/))){if(cur&&cur.msgid!=null&&cur.done)push();cur=cur||{};cur.ctx=unq(m[1]);field="ctx";continue}
+  if((m=l.match(/^msgid\s+"(.*)"$/))){if(cur&&cur.msgid!=null)push();cur=cur||{};cur.msgid=unq(m[1]);field="msgid";continue}
+  if((m=l.match(/^msgid_plural\s+"(.*)"$/))){cur.plural=unq(m[1]);field="plural";continue}
+  if((m=l.match(/^msgstr(?:\[(\d+)\])?\s+"(.*)"$/))){cur.strs=cur.strs||[];const i=m[1]?+m[1]:0;cur.strs[i]=unq(m[2]);field="s"+i;cur.done=1;continue}
+  if((m=l.match(/^"(.*)"$/))&&cur){const v=unq(m[1]);if(field==="msgid")cur.msgid+=v;else if(field==="plural")cur.plural+=v;else if(field==="ctx")cur.ctx+=v;else if(field&&field[0]==="s"){const i=+field.slice(1);cur.strs[i]+=v}}
+ }push();return ents}
+function parse(t,fmt){t=t.replace(/^\uFEFF/,"");if(fmt==="auto")fmt=/^\s*[\[{]/.test(t)?"json":"po";
+ if(fmt==="json"){return{fmt,map:flatJSON(JSON.parse(t),"")}}
+ const ents=parsePO(t),map={},src={};
+ ents.forEach(e=>{const k=(e.ctx?e.ctx+"\u0004":"")+e.msgid;(e.strs||[""]).forEach((s,i)=>{const kk=e.strs&&e.strs.length>1?k+"["+i+"]":k;map[kk]=s;src[kk]=e.plural&&(i>0||e.strs.length===1)?e.plural:e.msgid;if(e.flags&&/fuzzy/.test(e.flags))map[kk+"\u0000fuzzy"]=1})});
+ return{fmt,map,src}}
+const PH=[/\{\{\s*[\w.\-]+\s*\}\}/g,/%(\d+\$)?[-+ #0]*\d*(\.\d+)?[sdifuxXeEgGcp@]/g,/\$\{[\w.]+\}/g,/\{\s*[\w.\-]+\s*(?:,[^{}]*(?:\{[^{}]*\}[^{}]*)*)?\}/g,/(?<![\w:]):[a-zA-Z_]\w*/g,/<\/?[a-zA-Z][\w-]*(?:\s[^<>]*)?\/?>/g];
+function placeholders(s){let t=s;const out=[];
+ t=t.replace(PH[0],m=>{out.push(m.replace(/\s/g,""));return " "});
+ t=t.replace(PH[2],m=>{out.push(m);return " "});
+ t=t.replace(PH[3],m=>{const n=m.match(/^\{\s*([\w.\-]+)/)[1];out.push("{"+n+"}");return " "});
+ t=t.replace(PH[1],m=>{if(m==="%%")return m;out.push(m.replace(/[-+ #0]*\d*(\.\d+)?(?=[a-zA-Z@]$)/,""));return " "});
+ t=t.replace(PH[5],m=>{const n=m.match(/^<\/?[a-zA-Z][\w-]*/)[0].toLowerCase();out.push(n+(/\/>$/.test(m)?"/>":">"));return " "});
+ (t.match(/(?:^|[\s(])(:[a-zA-Z_]\w*)/g)||[]).forEach(m=>out.push(m.trim().replace(/^\(/,"")));
+ return out.sort()}
+function width(s){let w=0;for(const c of s)w+=/[\u0000-\u00ff\uff61-\uff9f]/.test(c)?1:2;return w}
+function diffList(a,b){const ca={},cb={};a.forEach(x=>ca[x]=(ca[x]||0)+1);b.forEach(x=>cb[x]=(cb[x]||0)+1);const miss=[],extra=[];
+ for(const k in ca)if((cb[k]||0)<ca[k])miss.push(k+(ca[k]-(cb[k]||0)>1?"×"+(ca[k]-(cb[k]||0)):""));
+ for(const k in cb)if((ca[k]||0)<cb[k])extra.push(k+(cb[k]-(ca[k]||0)>1?"×"+(cb[k]-(ca[k]||0)):""));return{miss,extra}}
+function check(A,B,opt){const R=[];const add=(lv,key,type,msg,src,tgt)=>R.push({lv,key,type,msg,src:src==null?"":src,tgt:tgt==null?"":tgt});
+ const keep=opt.keep.map(s=>s.trim().toLowerCase()).filter(Boolean);
+ const keys=new Set([...Object.keys(A),...Object.keys(B)].filter(k=>!k.includes("\u0000")));
+ for(const k of keys){const s=A[k],t=B[k];
+  if(s===undefined){add("w",k,"余分なキー","原文にないキーです（古いキーか打ち間違い）","",t);continue}
+  if(t===undefined){add("e",k,"訳し漏れ","訳文にキーがありません",s,"");continue}
+  if(B[k+"\u0000fuzzy"])add("w",k,"fuzzy","fuzzy（要確認）の印が付いています",s,t);
+  if(t.trim()===""){if(s.trim()!=="")add("e",k,"空欄","訳が空です",s,t);continue}
+  const ps=placeholders(s),pt=placeholders(t),d=diffList(ps,pt);
+  if(d.miss.length||d.extra.length)add("e",k,"プレースホルダ",(d.miss.length?"足りない: "+d.miss.join(" "):"")+(d.miss.length&&d.extra.length?" ／ ":"")+(d.extra.length?"余分: "+d.extra.join(" "):""),s,t);
+  else{const ord=x=>x.filter(p=>/^%\d*[sd]$|^%[a-z@]$/.test(p));const os=(s.match(PH[1])||[]).filter(m=>!/\$/.test(m));if(os.length>1&&(t.match(PH[1])||[]).filter(m=>!/\$/.test(m)).join()!==os.join())add("w",k,"順番","番号なしの %s/%d の順番が変わっています。語順を変えるなら %1$s のように番号を付けてください",s,t);}
+  if(opt.same&&s===t&&/[A-Za-z]{2,}/.test(s.replace(/\{[^}]*\}|%\S|<[^>]+>/g,""))&&!keep.includes(s.trim().toLowerCase()))add("w",k,"未翻訳の疑い","原文と同じです",s,t);
+  const nl=x=>(x.match(/\n/g)||[]).length;if(nl(s)!==nl(t))add("w",k,"改行","改行の数が違います（原文"+nl(s)+"／訳文"+nl(t)+"）",s,t);
+  const lead=x=>/^\s/.test(x),trail=x=>/[ \t]$/.test(x);if(lead(s)!==lead(t)||trail(s)!==trail(t))add("w",k,"前後の空白","先頭または末尾の空白が原文と違います",s,t);
+  const ws=width(s),wt=width(t);if(ws>=4&&wt>ws*opt.ratio)add("w",k,"長さ","表示幅が原文の"+(wt/ws).toFixed(1)+"倍です（"+ws+"→"+wt+"）",s,t);
+  if(opt.ja){if(/[\uff61-\uff9f]/.test(t))add("w",k,"半角カナ","半角カタカナが含まれています",s,t);
+   if(/\u3000/.test(t))add("i",k,"全角スペース","全角スペースが含まれています",s,t);
+   if(/[!?]/.test(t)&&/[\u3040-\u30ff\u4e00-\u9fff]/.test(t)&&/[！？]/.test(t))add("i",k,"！？混在","全角と半角の！？が混ざっています",s,t);}
+ }
+ return R}
+let LAST=[];
+function readFile(inp,ta){inp.addEventListener("change",()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{ta.value=r.result};r.readAsText(f,"utf-8")})}
+if(typeof document!=="undefined"){
+readFile(document.getElementById("fa"),document.getElementById("a"));readFile(document.getElementById("fb"),document.getElementById("b"));
+document.getElementById("go").onclick=()=>{const out=document.getElementById("out");out.innerHTML="";
+ const fmt=document.querySelector('input[name=fmt]:checked').value;const at=document.getElementById("a").value,bt=document.getElementById("b").value;
+ let A,B;try{
+  const pb=parse(bt,fmt);
+  if(pb.fmt==="po"&&!at.trim()){B=pb.map;A=pb.src}else{const pa=parse(at,fmt==="auto"?pb.fmt:fmt);A=pa.map;B=pb.map;if(pa.fmt==="po"&&pa.src){/* po vs po: compare by msgid */}}
+ }catch(e){out.innerHTML='<p class="e">読み込めませんでした：'+esc(e.message)+'（JSONの最後のカンマや引用符を確認してください）</p>';return}
+ const opt={ratio:+document.getElementById("ratio").value||2,same:document.getElementById("optSame").checked,ja:document.getElementById("optJa").checked,keep:document.getElementById("keep").value.split(",")};
+ const R=check(A,B,opt);LAST=R;document.getElementById("csv").disabled=!R.length;
+ const n=Object.keys(A).length,ne=R.filter(r=>r.lv==="e").length,nw=R.filter(r=>r.lv==="w").length;
+ let h='<div class="res">原文 '+n+' 件を確認しました。<span class="e">エラー '+ne+'</span>、<span class="w">注意 '+nw+'</span>、参考 '+(R.length-ne-nw)+'。'+(R.length?'':'問題は見つかりませんでした。')+'</div>';
+ if(R.length){h+='<table><tr><th>種類</th><th>キー</th><th>内容</th><th>原文</th><th>訳文</th></tr>';
+  const ord={e:0,w:1,i:2};R.sort((x,y)=>ord[x.lv]-ord[y.lv]);
+  R.forEach(r=>{h+='<tr><td class="'+r.lv+'">'+esc(r.type)+'</td><td>'+esc(r.key.replace("\u0004"," | "))+'</td><td>'+esc(r.msg)+'</td><td>'+esc(r.src).replace(/\n/g,"↵<br>")+'</td><td>'+esc(r.tgt).replace(/\n/g,"↵<br>")+'</td></tr>'});h+='</table>'}
+ out.innerHTML=h};
+document.getElementById("csv").onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const L={e:"エラー",w:"注意",i:"参考"};
+ const csv="\uFEFF"+["レベル,種類,キー,内容,原文,訳文"].concat(LAST.map(r=>[L[r.lv],r.type,r.key.replace("\u0004"," | "),r.msg,r.src,r.tgt].map(q).join(","))).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="i18n-check.csv";a.click()};
+}
+if(typeof module!=="undefined")module.exports={parse,check,placeholders};
+</script>
+</body>
+</html>
