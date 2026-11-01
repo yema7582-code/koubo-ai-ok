@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フリマ出品文チェッカー（タイトル文字数・書き忘れ・NG表現／メルカリ・ラクマ等・無料）</title>
+<meta name="description" content="フリマアプリの出品タイトルと商品説明を貼り付けると、文字数、状態・サイズ・付属品などの書き忘れ、外部への誘導やあいまいな表現をブラウザ内でチェックします。入力内容は送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/furima-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea,input[type=text]{width:100%;font-size:14px;box-sizing:border-box}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}input[type=number]{width:5em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}ul{padding-left:1.3em}
+.ng{color:#b00020}.warn{color:#a15c00}.ok{color:#1b7f3a}
+</style>
+</head>
+<body>
+<h1>フリマ出品文チェッカー</h1>
+<p>出品前のタイトルと商品説明を貼り付けると、文字数オーバー、買い手がよく質問してくる情報の書き忘れ、トラブルになりやすい表現を機械的に洗い出します。処理はすべてこのページの中で行い、入力した文章はどこにも送信しません。</p>
+<p>文字数の上限 <label>タイトル <input type="number" id="tmax" value="40"></label><label>説明 <input type="number" id="dmax" value="1000"></label>（初期値はメルカリの上限です。他のアプリでは各アプリの出品画面に表示される上限に合わせて変えてください）</p>
+<h2>タイトル</h2>
+<input type="text" id="title" placeholder="例：無印良品 ステンレス ケトル 0.5L 美品 箱付き">
+<h2>商品説明</h2>
+<textarea id="desc" style="height:220px" placeholder="例：2025年春に購入し、数回使用しました。目立つ傷や汚れはありません。サイズ：幅20×高さ15cm。付属品：箱・説明書。らくらくメルカリ便で発送します。"></textarea>
+<label><input type="checkbox" id="cloth"> 服・靴（サイズ表記を必須で確認）</label>
+<label><input type="checkbox" id="elec"> 家電・電子機器（動作確認を必須で確認）</label>
+<br><button id="run">チェックする</button>
+<div id="out"></div>
+<p class="note">見ているもの：①タイトルと説明の文字数（全角・半角とも1文字）。②状態、購入時期、サイズ、付属品、発送方法、喫煙・ペットの有無など、書いておくと質問が減る項目。③URL、メールアドレス、電話番号、LINE IDなど、アプリの外での取引や連絡に見える表現（多くのフリマアプリで禁止されています）。④「ノークレームノーリターン」「即購入禁止」「値下げ不可」など、買い手に強く見える言い回し。⑤タイトルの記号・絵文字の多さ、同じ言葉の繰り返し。<br>これは文字の機械チェックで、各アプリの規約や出品禁止物の判断はしません。最終的には各アプリのガイドを確認してください。</p>
+<p>ネットショップやフリマの商品説明をまとめて書き直したい、他の言語に訳したい場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください。<a href="./">ほかの無料ツール</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const len=s=>[...s].length;
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+$('run').onclick=()=>{
+ const t=$('title').value.trim(), d=$('desc').value, all=t+'\n'+d;
+ const tmax=+$('tmax').value||40, dmax=+$('dmax').value||1000;
+ const ng=[],warn=[],ok=[];
+ const tl=len(t), dl=len(d);
+ (tl>tmax?ng:ok).push(`タイトル ${tl}／${tmax}文字`+(tl>tmax?`（${tl-tmax}文字オーバー）`:''));
+ if(tl&&tl<tmax*0.5) warn.push('タイトルが短めです。ブランド名・商品名・型番・サイズ・色など、検索されやすい言葉を足せないか見てください。');
+ (dl>dmax?ng:ok).push(`説明 ${dl}／${dmax}文字`+(dl>dmax?`（${dl-dmax}文字オーバー）`:''));
+ if(dl<60) warn.push('説明がかなり短いです。状態・サイズ・付属品・発送方法を書くと質問が減ります。');
+ const items=[
+  ['商品の状態（傷・汚れ・使用感）',/(傷|キズ|汚れ|使用感|美品|新品|未使用|未開封|目立った|ダメージ|ほつれ|色あせ|日焼け)/],
+  ['購入時期・使用期間',/(購入|年|ヶ月|か月|カ月|使用回数|回使用|数回)/],
+  ['サイズ・寸法・容量',/(サイズ|cm|ｃｍ|mm|ミリ|センチ|インチ|号|[SML]サイズ|\b(XS|S|M|L|XL)\b|容量|ml|mL|ℓ|L\b|g\b|kg)/],
+  ['付属品（箱・説明書・ケーブル等）',/(付属|箱|説明書|ケーブル|保証書|タグ|ケース|本体のみ)/],
+  ['発送方法・梱包',/(発送|配送|梱包|便|ゆうパケット|ネコポス|宅急便|クリックポスト|レターパック)/],
+  ['喫煙・ペット環境',/(喫煙|タバコ|ペット|犬|猫)/],
+ ];
+ if($('cloth').checked) items.push(['服・靴の実寸（着丈・身幅・足長など）',/(着丈|身幅|肩幅|袖丈|ウエスト|股下|総丈|cm|ｃｍ|センチ)/]);
+ if($('elec').checked) items.push(['動作確認の有無',/(動作確認|動作品|正常に動|通電|ジャンク|初期化)/]);
+ const miss=items.filter(([n,r])=>!r.test(all)).map(x=>x[0]);
+ if(miss.length) warn.push('書かれていないかもしれない項目：'+miss.join('、'));
+ else ok.push('よく質問される項目はひと通り入っています');
+ const ext=[[/https?:\/\/\S+|www\.\S+/i,'URL'],[/[\w.+-]+@[\w-]+\.[\w.]+/,'メールアドレス'],[/0\d{1,4}-?\d{1,4}-?\d{3,4}/,'電話番号らしき数字'],[/(LINE|ライン)\s*(ID|ＩＤ|で|追加)|line\.me/i,'LINEへの誘導'],[/(直接取引|手渡し|他サイト|他のサイト|専用ページ外|振込|口座)/,'アプリ外の取引に見える言葉']];
+ ext.forEach(([r,n])=>{const m=all.match(r); if(m) ng.push(`${n}：「${esc(m[0])}」。アプリの外での連絡・取引は多くのフリマアプリで禁止です。`)});
+ const strong=['ノークレーム','ノーリターン','NCNR','即購入禁止','即購入不可','値下げ不可','値下げ交渉不可','プロフ必読','神経質な方','すり替え'];
+ strong.forEach(w=>{if(all.includes(w)) warn.push(`「${w}」は強い印象を与えます。理由を具体的に書くか、やわらかい表現にすると購入されやすくなります。`)});
+ if(/(新品|未使用)/.test(t)&&/(使用感|傷|キズ|汚れ|数回使用|使用しました)/.test(d)) ng.push('タイトルは「新品・未使用」ですが、説明に使用や傷の記述があります。状態の表記をそろえてください。');
+ const sym=(t.match(/[★☆◆◇■□●○◎※♪!！【】]/g)||[]).length + (t.match(/\p{Extended_Pictographic}/gu)||[]).length;
+ if(sym>4) warn.push(`タイトルに記号・絵文字が${sym}個あります。検索に使われる言葉に文字数を回したほうが見つかりやすくなります。`);
+ const words=t.split(/[\s　/／・,、]+/).filter(w=>len(w)>=2); const dup=[...new Set(words.filter((w,i)=>words.indexOf(w)!==i))];
+ if(dup.length) warn.push('タイトルで同じ言葉が繰り返されています：'+dup.map(esc).join('、'));
+ const tags=(d.match(/#[^\s#　]+/g)||[]).length; if(tags>10) warn.push(`ハッシュタグが${tags}個あります。商品と関係の薄いタグは外したほうが安全です。`);
+ const li=(a,c)=>a.map(x=>`<li class="${c}">${x}</li>`).join('');
+ $('out').innerHTML=`<h2>結果</h2><ul>${li(ng,'ng')}${li(warn,'warn')}${li(ok,'ok')}</ul>`;
+};
+</script>
+</body>
+</html>
