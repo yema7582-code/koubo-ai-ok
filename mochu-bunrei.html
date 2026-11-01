@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>喪中はがき・寒中見舞い 文例メーカー｜縦書きプレビューと書き方チェック（無料）</title>
+<meta name="description" content="続柄・故人の名前・亡くなった月・享年を入れるだけで、喪中はがき（年賀欠礼状）と寒中見舞いの文面を縦書きで作成。句読点・漢数字・享年と行年・出す時期などの書き方マナーも自動でチェックします。登録不要・ブラウザ内で完結。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/mochu-bunrei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin:6px 0}input,select,textarea{font-size:1em;padding:4px;width:100%;box-sizing:border-box}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.note{background:#f3f1ee;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#2e7d32}small{color:#555}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+#card{width:100mm;height:148mm;border:1px solid #999;background:#fff;margin:12px auto;box-sizing:border-box;padding:12mm 9mm;writing-mode:vertical-rl;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:3.9mm;line-height:2.05;letter-spacing:.08em;overflow:hidden}
+#card .t{font-size:5.4mm;margin-left:4mm}
+#card .gap{margin-left:5mm}
+#card .from{margin-top:auto;padding-top:28mm}
+@media print{body>*:not(#card){display:none!important}#card{border:none;margin:0}body{max-width:none;padding:0}@page{size:100mm 148mm;margin:0}}
+</style>
+</head>
+<body>
+<h1>喪中はがき・寒中見舞い 文例メーカー</h1>
+<p>身内が亡くなった年は、年賀状の代わりに「喪中はがき（年賀欠礼状）」を11月〜12月初めに出します。喪中と知らずに年賀状をくれた人や、喪中はがきが間に合わなかった相手には、松の内が明けてから「寒中見舞い」で返します。下の欄を埋めると縦書きの文面ができ、よくある書き方の間違いもチェックします。入力した内容はこのページの中だけで処理され、どこにも送信されません。</p>
+
+<div class="box">
+<div class="row">
+<label>はがきの種類<select id="kind">
+<option value="mochu">喪中はがき（年賀欠礼）</option>
+<option value="kanchu">寒中見舞い（年賀状をいただいた方へ）</option>
+<option value="kanchu2">寒中見舞い（喪中はがきが間に合わなかった方へ）</option>
+</select></label>
+<label>故人は差出人から見て<select id="rel">
+<option>父</option><option>母</option><option>義父</option><option>義母</option><option>夫</option><option>妻</option><option>祖父</option><option>祖母</option><option>兄</option><option>姉</option><option>弟</option><option>妹</option><option>長男</option><option>長女</option><option>次男</option><option>次女</option><option value="">（続柄を書かない）</option>
+</select></label>
+</div>
+<div class="row">
+<label>故人の名前（フルネーム）<input id="name" value="山田 太郎"></label>
+<label>亡くなった月<select id="month"></select></label>
+</div>
+<div class="row">
+<label>年齢<input id="age" type="number" min="0" max="120" value="88" placeholder="例：88"></label>
+<label>年齢の書き方<select id="agek"><option value="kyonen">享年（数え年・「歳」をつけない）</option><option value="gyonen">行年（満年齢・「歳」をつける）</option><option value="none">年齢を書かない</option></select></label>
+</div>
+<div class="row">
+<label>喪中の年（元号）<select id="year"></select></label>
+<label>結びの季節<select id="ki"><option value="yo">年末（十一月・十二月）</option><option value="sho">令和の新年（一月）</option></select></label>
+</div>
+<label>差出人（住所・氏名、改行可）<textarea id="from" rows="3">〒000-0000 〇〇県〇〇市〇〇町一丁目二番三号
+山田 一郎</textarea></label>
+<label>添える一言（任意・30字程度まで）<input id="extra" placeholder="例：生前のご厚情に深く感謝申し上げます"></label>
+<button id="go">文面を作る</button><button onclick="window.print()">はがきサイズで印刷</button><button id="copy">文面をコピー</button>
+</div>
+
+<div id="card"></div>
+<div class="box"><b>書き方チェック</b><ul id="chk"></ul></div>
+
+<div class="note">
+<b>よくある質問</b><br>
+・<b>いつまでに出す？</b> 相手が年賀状を書き始める前、11月中旬〜12月上旬に届くようにします。郵便局の年賀状特別扱い（例年12月15日から）より前が目安です。12月に亡くなって間に合わない場合は無理に出さず、1月7日（地域により15日）以降に寒中見舞いで知らせます。<br>
+・<b>句読点は？</b> 挨拶状は句読点を使わず、区切りは一字空けか改行にするのが昔からの習わしです。<br>
+・<b>享年と行年</b> 享年は数え年で「歳」をつけないのが正式、行年は満年齢で「歳」をつけます。どちらでも失礼ではありません。<br>
+・<b>「年賀」「おめでとう」は使わない</b> 喪中はがきでは「年賀」ではなく「年始」「新年」「年末年始」を使います。近況報告やお祝いごとは書きません。<br>
+・<b>切手</b> 弔事用の普通切手（花の絵柄など）か、胡蝶蘭柄の通常はがきを使います。
+</div>
+<p><small>このツールは一般的な文例とマナーをまとめたもので、地域や宗派によって習わしが異なる場合があります。英語・中国語で海外の知人へ訃報やお悔やみの返礼を書きたいときの翻訳や文面づくりのご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へどうぞ。</small></p>
+<p><a href="index.html">← 無料ツール一覧へ</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const KAN=['〇','一','二','三','四','五','六','七','八','九'];
+function kan(n){n=parseInt(n,10);if(isNaN(n))return '';if(n<10)return KAN[n];if(n<20)return '十'+(n%10?KAN[n%10]:'');if(n<100)return KAN[Math.floor(n/10)]+'十'+(n%10?KAN[n%10]:'');return '百'+(n%100?kan(n%100):'');}
+function toNum(s){s=String(s).trim();if(/^\d+$/.test(s))return +s;const m={'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};let t=0,c=0;for(const ch of s){if(ch==='百'){t+=(c||1)*100;c=0}else if(ch==='十'){t+=(c||1)*10;c=0}else if(ch in m){c=m[ch]}else return NaN}return t+c;}
+// fill selects
+const now=new Date();const curR=now.getFullYear()-2018;
+for(let m=1;m<=12;m++){const o=document.createElement('option');o.value=m;o.textContent=m+'月';if(m===now.getMonth()+1)o.selected=true;$('month').appendChild(o);}
+for(let r=curR-1;r<=curR+1;r++){const o=document.createElement('option');o.value=r;o.textContent='令和'+r+'年（'+(2018+r)+'年）';if(r===curR)o.selected=true;$('year').appendChild(o);}
+$('age').type='text';$('age').value='88';
+function build(){
+  const kind=$('kind').value,rel=$('rel').value,name=$('name').value.trim(),mon=+$('month').value,R=+$('year').value;
+  const ageN=toNum($('age').value),agek=$('agek').value,extra=$('extra').value.trim();
+  const who=(rel?rel+' ':'')+name;
+  let ageTxt='';if(agek!=='none'&&!isNaN(ageN)){ageTxt=agek==='kyonen'?'享年'+kan(ageN):'行年'+kan(ageN)+'歳';}
+  const monTxt=kan(mon)+'月';const lines=[];let title='';
+  if(kind==='mochu'){
+    title='喪中につき年末年始のご挨拶をご遠慮申し上げます';
+    lines.push('本年'+monTxt+'に'+who+'が'+(ageTxt?ageTxt+'にて':'')+'永眠いたしました');
+    lines.push('ここに本年中に賜りましたご厚情に深く感謝いたしますとともに');
+    lines.push('明年も変わらぬご交誼のほどお願い申し上げます');
+    if(extra)lines.push(extra);
+    lines.push('令和'+kan(R)+'年十二月');
+  }else if(kind==='kanchu'){
+    title='寒中お見舞い申し上げます';
+    lines.push('ご丁寧な年始状をいただきありがとうございました');
+    lines.push('昨年'+monTxt+'に'+who+'が'+(ageTxt?ageTxt+'にて':'')+'永眠いたしましたので');
+    lines.push('年頭のご挨拶を控えさせていただきました');
+    lines.push('ご通知が遅れましたことを深くお詫び申し上げます');
+    if(extra)lines.push(extra);
+    lines.push('寒さ厳しき折 どうぞご自愛ください');
+    lines.push('令和'+kan(R+1)+'年一月');
+  }else{
+    title='寒中お見舞い申し上げます';
+    lines.push('昨年'+monTxt+'に'+who+'が'+(ageTxt?ageTxt+'にて':'')+'永眠いたしました');
+    lines.push('年末のことでご通知が行き届かず 年頭のご挨拶を失礼いたしました');
+    lines.push('生前のご厚情に心より御礼申し上げます');
+    if(extra)lines.push(extra);
+    lines.push('本年も変わらぬお付き合いのほどお願い申し上げます');
+    lines.push('令和'+kan(R+1)+'年一月');
+  }
+  const from=$('from').value.trim();
+  const fromV=from.split('\n').map(l=>/^〒/.test(l.trim())?l:l.replace(/\d/g,c=>KAN[+c])).join('\n');
+  const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]);
+  $('card').innerHTML='<div class="t">'+esc(title)+'</div>'+lines.map((l,i)=>'<div'+(i===lines.length-1?' class="gap"':'')+'>'+esc(l)+'</div>').join('')+'<div class="from">'+esc(fromV).replace(/\n/g,'<br>')+'</div>';
+  window._txt=title+'\n\n'+lines.join('\n')+'\n\n'+from;
+  check({kind,mon,ageN,agek,name,rel,extra,lines,title,from});
+}
+function check(c){
+  const out=[];const all=c.lines.join('')+c.extra;
+  const add=(ok,msg)=>out.push('<li class="'+(ok?'ok':'warn')+'">'+(ok?'✓ ':'⚠ ')+msg+'</li>');
+  add(!/[、。，．,.]/.test(all),'句読点を使っていない（挨拶状の習わし）');
+  add(!/年賀|おめでと|賀正|謹賀|迎春/.test(all+c.title)||c.kind!=='mochu','「年賀」「おめでとう」などのお祝いの言葉が入っていない');
+  add(!/拝啓|敬具|前略|時候/.test(all),'頭語・結語（拝啓・敬具）を入れていない（喪中はがきでは省くのが一般的）');
+  add(!/\d/.test(all),'本文の数字が漢数字になっている');
+  if(!c.name)add(false,'故人の名前が空欄です');
+  if(c.agek==='kyonen')add(true,'享年は数え年が正式です。満年齢に一つ足した数（誕生日前なら二つ）になることがあります');
+  if(isNaN(c.ageN)&&c.agek!=='none')add(false,'年齢を数字か漢数字で入れてください');
+  if(c.kind==='mochu'){
+    const m=new Date().getMonth()+1,d=new Date().getDate();
+    if(m===12&&d>=15)add(false,'12月15日を過ぎています。相手がすでに年賀状を出している可能性が高いので、年明けの寒中見舞いに切り替えることも考えてください');
+    else if(m===12)add(true,'12月上旬のうちに届けましょう（年賀状の受付は例年12月15日から）');
+    else if(m>=10)add(true,'出す時期として適切です（11月中旬〜12月上旬に届くのが目安）');
+    if(/喜|祝|結婚|出産|近況/.test(c.extra))add(false,'添える一言にお祝いごと・近況が入っています。喪中はがきには書かないのが一般的です');
+  }else{
+    add(true,'寒中見舞いは松の内（1月7日、地域により15日）が明けてから立春（2月4日ごろ）までに届くように出します');
+  }
+  if(c.extra.length>40)add(false,'添える一言が長めです。はがきに収まるよう30字程度にすると読みやすくなります');
+  $('chk').innerHTML=out.join('');
+}
+$('go').onclick=build;['kind','rel','name','month','age','agek','year','from','extra'].forEach(id=>$(id).addEventListener('input',build));
+$('copy').onclick=()=>{navigator.clipboard.writeText(window._txt||'').then(()=>{$('copy').textContent='コピーしました';setTimeout(()=>$('copy').textContent='文面をコピー',1500)})};
+build();
+</script>
+</body>
+</html>
