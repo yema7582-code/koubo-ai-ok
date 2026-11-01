@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steamストアページ 翻訳チェッカー（短い説明300字・BBCode・日本語/中国語表記／無料）</title>
+<meta name="description" content="Steamのストアページ用テキスト（短い説明・ゲームについて）を貼り付けると、短い説明の300文字制限、BBCodeタグの閉じ忘れや不明タグ、日本語・中国語（簡体/繁体）の表記ゆれ、訳し残しの英語、用語集の不一致をチェックします。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/steam-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Noto Sans SC",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea{width:100%;font-family:monospace;font-size:13px}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ng{color:#b00020}.warn{color:#a15c00}.ok{color:#1b7f3a}
+</style>
+</head>
+<body>
+<h1>Steamストアページ 翻訳チェッカー</h1>
+<p>Steamworksに貼る前の「短い説明」と「ゲームについて（About This Game）」を、言語ごとに機械的にチェックします。インディーゲームのストアページを日本語・中国語に翻訳したとき、翻訳を外注したときの受け取りチェックに使えます。処理はブラウザの中だけで行われ、データは送信されません。English UI note: paste your localized Steam short description and About section; checks run locally.</p>
+<label>言語 <select id="lang">
+<option value="ja">日本語</option><option value="zhs">简体中文</option><option value="zht">繁體中文</option><option value="ko">한국어</option><option value="other">その他（英語・欧州言語など）</option>
+</select></label>
+<h2>短い説明（Short description）</h2>
+<textarea id="short" style="height:80px" placeholder="例：光を集めて、暗い海を漂う。ワンボタンで遊べる、約7分の小さな旅。"></textarea>
+<h2>ゲームについて（About This Game・BBCode可）</h2>
+<textarea id="about" style="height:200px" placeholder="[h2]特徴[/h2]
+[list]
+[*]ワンボタン操作
+[*]約7分でクリア
+[/list]"></textarea>
+<h2>用語集（任意・1行に「原語=訳語」）</h2>
+<textarea id="gloss" style="height:70px" placeholder="Ember Tide=Ember Tide
+Spark=光の粒"></textarea>
+<label>英語の原文（任意・訳し残しや抜けの目安に使います）</label>
+<textarea id="src" style="height:80px" placeholder="Original English short description / About text"></textarea>
+<br><button id="run">チェックする</button>
+<div id="out"></div>
+<p class="note">見ているもの：①短い説明の文字数（Steamの上限は300文字。日本語・中国語は1文字＝1字で数えます）と改行・BBCodeの混入。②BBCodeタグの閉じ忘れ・閉じ順の誤り・Steamで使えないタグ（使えるのは h1〜h3, b, u, i, strike, spoiler, noparse, hr, url, list, olist, *, quote, code, table, tr, th, td, img など）。③日本語：半角カナ、全角英数字、「。」と「.」の混在、感嘆符の全角半角混在、「です・ます」と「だ・である」の混在。④中国語：簡体字の欄に繁体字（またはその逆）が混ざっていないか、半角句読点の混在。⑤訳し残しの英単語の割合と、原文にある数字（7分、4人など）が訳文から消えていないか。⑥用語集の訳語が使われているか。機械的な目安なので、最終的には母語話者が読んで確認してください。</p>
+<p>Steamストアページの日本語・中国語（簡体/繁体）・英語への翻訳やネイティブチェックを頼みたい場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください。</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const OK_TAGS=new Set("h1 h2 h3 b u i strike spoiler noparse hr url list olist * quote code table tr th td img previewyoutube emoticon".split(" "));
+const NOCLOSE=new Set(["*","hr","previewyoutube"]);
+// simplified/traditional distinguishing pairs (simp,trad)
+const ST=[["这","這"],["说","說"],["们","們"],["时","時"],["间","間"],["个","個"],["为","為"],["会","會"],["发","發"],["后","後"],["战","戰"],["斗","鬥"],["门","門"],["体","體"],["来","來"],["对","對"],["开","開"],["关","關"],["游","遊"],["戏","戲"],["国","國"],["动","動"],["长","長"],["与","與"],["经","經"],["过","過"],["还","還"],["进","進"],["种","種"],["无","無"],["线","線"],["机","機"],["乐","樂"],["图","圖"],["级","級"],["华","華"],["丽","麗"],["独","獨"],["让","讓"],["选","選"],["择","擇"],["边","邊"],["险","險"],["冒","冒"]].filter(p=>p[0]!==p[1]);
+const S=new Set(ST.map(p=>p[0])),T=new Set(ST.map(p=>p[1]));
+function len(s){return [...s].length}
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function bb(text,res,where){
+ const re=/\[(\/?)([a-z0-9*]+)(=[^\]]*)?\]/gi;let m,stack=[],noparse=false;
+ while((m=re.exec(text))){const close=m[1]==="/",tag=m[2].toLowerCase();
+  if(noparse&&!(close&&tag==="noparse"))continue;
+  if(!OK_TAGS.has(tag)){res.push(["warn",where,"Steamで使えない可能性のあるタグ ["+esc(m[0].slice(1,-1))+"]"]);continue}
+  if(NOCLOSE.has(tag)){if(tag==="*"&&!stack.some(t=>t==="list"||t==="olist"))res.push(["ng",where,"[*] が [list] / [olist] の外にあります"]);continue}
+  if(tag==="noparse"){noparse=!close;if(close)stack.pop();else stack.push(tag);continue}
+  if(!close){stack.push(tag);if(tag==="img"&&m[3]===undefined){} }
+  else{const i=stack.lastIndexOf(tag);if(i<0)res.push(["ng",where,"[/"+tag+"] に対応する開始タグがありません"]);else{if(i!==stack.length-1)res.push(["ng",where,"タグの閉じ順が違います：["+stack.slice(i+1).join("], [")+"] を先に閉じてください"]);stack.splice(i)}}
+ }
+ stack.forEach(t=>res.push(["ng",where,"["+t+"] が閉じられていません"]));
+ const imgs=text.match(/\[img\]([^\[]*)\[\/img\]/gi)||[];imgs.forEach(x=>{if(!/STEAM_APP_IMAGE|^\[img\]https:\/\//i.test(x))res.push(["warn",where,"画像の指定 "+esc(x)+" はSteamにアップロードした画像（{STEAM_APP_IMAGE}/extras/…）か https のURLか確認してください"])});
+ if(/<[a-z][^>]*>/i.test(text))res.push(["ng",where,"HTMLタグが混ざっています（SteamはBBCodeのみ）"]);
+ if(/\*\*[^*]+\*\*|^#{1,3} /m.test(text))res.push(["warn",where,"Markdown記法（**太字** や # 見出し）が残っています。BBCodeに直してください"]);
+}
+function plain(t){return t.replace(/\[[^\]]*\]/g," ").replace(/https?:\/\/\S+/g," ")}
+function langChecks(t,lang,res,where){
+ const p=plain(t);
+ if(lang==="ja"){
+  if(/[\uFF61-\uFF9F]/.test(p))res.push(["ng",where,"半角カナがあります："+esc((p.match(/[\uFF61-\uFF9F]+/g)||[]).slice(0,5).join(" "))]);
+  const fw=p.match(/[Ａ-Ｚａ-ｚ０-９]+/g);if(fw)res.push(["warn",where,"全角英数字があります（半角に揃えるのが一般的）："+esc(fw.slice(0,5).join(" "))]);
+  if(/。/.test(p)&&/[^\x00-\x7F][.．](\s|$)/m.test(p))res.push(["warn",where,"文末に「。」と「.／．」が混在しています"]);
+  if(/！/.test(p)&&/[^\x00-\x7F]!/.test(p))res.push(["warn",where,"感嘆符の全角「！」と半角「!」が混在しています"]);
+  const desu=(p.match(/(です|ます|ません|でしょう)[。！!]?/g)||[]).length,da=(p.match(/(である|だ|た)[。！!]/g)||[]).length;
+  if(desu&&da)res.push(["warn",where,"「です・ます」("+desu+")と「だ・である」("+da+")が混在しています。キャッチコピー以外は揃えると読みやすくなります"]);
+ }
+ if(lang==="zhs"||lang==="zht"){
+  const chars=[...p];const sN=chars.filter(c=>S.has(c)),tN=chars.filter(c=>T.has(c));
+  if(lang==="zhs"&&tN.length)res.push(["ng",where,"简体中文の欄に繁体字があります："+esc([...new Set(tN)].join(""))]);
+  if(lang==="zht"&&sN.length)res.push(["ng",where,"繁體中文の欄に簡体字があります："+esc([...new Set(sN)].join(""))]);
+  if(/[\u4e00-\u9fff][,;:?!](?!\d)/.test(p))res.push(["warn",where,"漢字のあとに半角の句読点（, ; : ? !）があります。全角（，；：？！）が一般的です"]);
+  if(/[\u4e00-\u9fff]\.(\s|$)/m.test(p))res.push(["warn",where,"文末が半角ピリオドです。「。」が一般的です"]);
+ }
+ if(lang==="ko"){if(/[\u3040-\u30ff]/.test(p))res.push(["ng",where,"韓国語の欄にかなが混ざっています"]);}
+ if(lang!=="other"){
+  const words=p.match(/[A-Za-z][A-Za-z'’-]{2,}/g)||[];const total=len(p.replace(/\s/g,""));const en=words.join("").length;
+  if(total&&en/total>0.25)res.push(["warn",where,"英字の割合が高めです（約"+Math.round(en/total*100)+"%）。訳し残しがないか確認してください："+esc([...new Set(words)].slice(0,8).join(", "))]);
+ }
+}
+$("run").onclick=()=>{
+ const lang=$("lang").value,sh=$("short").value,ab=$("about").value,src=$("src").value;const res=[];
+ const n=len(sh.trim());
+ if(!sh.trim())res.push(["warn","短い説明","未入力です"]);
+ else{res.push([n>300?"ng":n>270?"warn":"ok","短い説明",n+" / 300文字"+(n>300?"（"+(n-300)+"文字オーバー）":n>270?"（上限が近いです）":"")]);
+  if(/\n/.test(sh.trim()))res.push(["warn","短い説明","改行が入っています。短い説明では改行は表示されません"]);
+  if(/\[[a-z\/]/i.test(sh))res.push(["ng","短い説明","BBCodeは短い説明では使えません"]);
+  langChecks(sh,lang,res,"短い説明");}
+ if(ab.trim()){bb(ab,res,"ゲームについて");langChecks(ab,lang,res,"ゲームについて");}
+ const all=sh+"\n"+ab;
+ $("gloss").value.split(/\n/).map(l=>l.split("=")).filter(a=>a.length>=2&&a[1].trim()).forEach(([k,v])=>{v=v.trim();k=k.trim();
+  if(!all.includes(v))res.push([all.includes(k)&&k!==v?"ng":"warn","用語集","訳語「"+esc(v)+"」が見つかりません"+(all.includes(k)&&k!==v?"（原語「"+esc(k)+"」のまま残っています）":"")])});
+ if(src.trim()){const nums=s=>new Set((s.normalize("NFKC").match(/\d+(\.\d+)?/g)||[]));const a=nums(src),b=nums(all);[...a].filter(x=>!b.has(x)).forEach(x=>res.push(["warn","原文との比較","原文の数字「"+x+"」が訳文に見当たりません"]));}
+ if(!res.some(r=>r[0]!=="ok"))res.push(["ok","全体","機械的なチェックでは問題は見つかりませんでした"]);
+ const cls={ng:"要修正",warn:"確認",ok:"OK"};
+ $("out").innerHTML="<table><tr><th>判定</th><th>場所</th><th>内容</th></tr>"+res.map(r=>"<tr><td class='"+r[0]+"'>"+cls[r[0]]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td></tr>").join("")+"</table>";
+};
+</script>
+</body>
+</html>
