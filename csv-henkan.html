@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSV列変換・並べ替えツール（Shift_JIS対応・ルール保存で毎月の作業を自動化）</title>
+<meta name="description" content="システムから出したCSVを、取り込み先の形式に合わせて列の並べ替え・結合・置換・日付や全角半角の統一をして、Shift_JIS／UTF-8で書き出す無料ツール。ルールを保存すれば翌月はファイルを入れるだけ。データはブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/csv-henkan.html">
+<style>
+body{font-family:system-ui,"Hiragino Sans","Yu Gothic",sans-serif;max-width:1100px;margin:0 auto;padding:16px;line-height:1.6;color:#222}
+h1{font-size:1.4em}h2{font-size:1.1em;margin-top:1.6em;border-left:4px solid #2a7;padding-left:8px}
+fieldset{border:1px solid #ccc;border-radius:6px;margin:10px 0}
+table{border-collapse:collapse;font-size:.85em}td,th{border:1px solid #ccc;padding:3px 6px;vertical-align:top}
+th{background:#f3f3f3}.prev{overflow:auto;max-height:420px}
+input[type=text]{width:100%;box-sizing:border-box}
+.rules td{white-space:nowrap}.rules td.f{min-width:260px;white-space:normal}
+.warn{color:#b00}.ok{color:#070}button{margin:2px}.small{font-size:.85em;color:#555}
+.bad{background:#fdd}
+</style>
+</head>
+<body>
+<h1>CSV列変換・並べ替えツール</h1>
+<p>会計ソフト・ネットショップ・送り状ソフト・勤怠システムなどから出したCSVを、取り込み先の形式に合わせて作り直すツールです。列の並べ替え・結合・固定値・置換・日付形式や全角半角の統一をして、<b>Shift_JIS（Excel・古い業務ソフト向け）</b>またはUTF-8で書き出せます。作った<b>ルールは保存できる</b>ので、翌月からはCSVを入れてボタンを押すだけです。ファイルはサーバーに送らず、このブラウザの中だけで処理します。</p>
+
+<h2>1. 元のCSVを読み込む</h2>
+<input type="file" id="file" accept=".csv,.txt,.tsv">
+<label>文字コード <select id="inEnc"><option value="AUTO">自動判定</option><option value="SJIS">Shift_JIS</option><option value="UTF8">UTF-8</option><option value="EUCJP">EUC-JP</option></select></label>
+<label>区切り <select id="inDelim"><option value="auto">自動</option><option value=",">カンマ</option><option value="&#9;">タブ</option><option value=";">セミコロン</option></select></label>
+<label><input type="checkbox" id="hasHeader" checked> 1行目は見出し</label>
+<label>先頭から読み飛ばす行数 <input type="number" id="skip" value="0" min="0" style="width:4em"></label>
+<div id="inInfo" class="small"></div>
+
+<h2>2. 出力する列を決める</h2>
+<p class="small">「式」には元の列を <code>{列名}</code> の形で書きます（見出しがない場合は <code>{1}</code> <code>{2}</code>…）。<code>{姓} {名}</code> のように結合したり、<code>東京都</code> のような固定値にしたりもできます。置換は1行に1つ <code>元の値=新しい値</code> と書くと完全一致で置き換えます（コード変換表として使えます）。</p>
+<div><button id="addCol">＋ 列を追加</button><button id="copyAll">元の列をすべて追加</button><button id="clearCols">全部消す</button></div>
+<table class="rules" id="rules"><thead><tr><th>#</th><th>出力列名</th><th>式</th><th>変換</th><th>置換表</th><th></th></tr></thead><tbody></tbody></table>
+
+<fieldset><legend>行の条件</legend>
+<label>この列が空の行は出さない <select id="skipEmpty"><option value="">（使わない）</option></select></label><br>
+<label>この列の値で行を絞る <select id="filterCol"><option value="">（使わない）</option></select></label>
+<select id="filterOp"><option value="eq">と等しい</option><option value="ne">と等しくない</option><option value="has">を含む</option><option value="not">を含まない</option></select>
+<input type="text" id="filterVal" style="width:12em"><br>
+<label>この列の値ごとにファイルを分ける <select id="splitCol"><option value="">（分けない）</option></select></label>
+</fieldset>
+
+<fieldset><legend>書き出し形式</legend>
+<label>文字コード <select id="outEnc"><option value="SJIS">Shift_JIS（CP932）</option><option value="UTF8BOM">UTF-8（BOM付き・Excel向け）</option><option value="UTF8">UTF-8（BOMなし）</option></select></label>
+<label>改行 <select id="eol"><option value="crlf">CRLF（Windows）</option><option value="lf">LF</option></select></label>
+<label>区切り <select id="outDelim"><option value=",">カンマ</option><option value="&#9;">タブ</option></select></label>
+<label>囲み <select id="quote"><option value="min">必要なときだけ "</option><option value="all">すべて "</option></select></label>
+<label><input type="checkbox" id="outHeader" checked> 見出し行を出す</label>
+<label>ファイル名 <input type="text" id="outName" value="converted" style="width:12em"></label>
+</fieldset>
+
+<p><button id="run" style="font-size:1.1em">変換してプレビュー</button> <button id="dl" disabled>ダウンロード</button></p>
+<div id="msg"></div>
+<div class="prev" id="prev"></div>
+
+<h2>3. ルールを保存する（毎月の作業用）</h2>
+<p><button id="saveLocal">このブラウザに保存</button> <select id="localList"></select> <button id="loadLocal">呼び出す</button> <button id="delLocal">削除</button> ／ <button id="exportRule">ルールをファイルで保存（.json）</button> <label>ルールファイルを開く <input type="file" id="importRule" accept=".json"></label></p>
+<p class="small">ルールには列の設定と書き出し形式が入ります。CSVの中身は入りません。担当者が替わっても、このファイルを渡せば同じ変換ができます。</p>
+
+<h2>使いどころの例</h2>
+<ul>
+<li>ネットショップの注文CSV → 送り状ソフト（B2クラウド・e飛伝など）の取り込み形式へ。郵便番号のハイフン除去、都道府県＋市区町村の結合、配送方法コードの置き換え。</li>
+<li>銀行・カードの明細CSV → 会計ソフトの取り込み形式へ。日付を <code>YYYY/MM/DD</code> にそろえ、金額のカンマを外す。</li>
+<li>勤怠・売上CSVを担当者や店舗ごとのファイルに分ける。</li>
+</ul>
+<p class="small">Shift_JISで表せない文字（一部の旧字体や絵文字、環境依存文字など）は書き出し前に警告し、赤く表示します。</p>
+<p>決まった形式への変換を毎月まとめて任せたい、複数ファイルの突き合わせも自動化したい、という場合は <a href="mailto:shinji-work@mail.grokbot.com?subject=CSV%E5%A4%89%E6%8F%9B%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> までご相談ください（中崎）。</p>
+<p class="small">文字コード変換に <a href="https://github.com/polygonplanet/encoding.js">encoding.js</a>（MIT License, <a href="vendor/encoding-japanese-LICENSE.txt">ライセンス</a>）を使っています。 ／ <a href="index.html">ほかの無料ツール</a></p>
+
+<script src="vendor/encoding-japanese-2.4.0.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let rawBytes=null, data={head:[],rows:[]}, out=null;
+const TRANS=[["trim","前後の空白削除"],["zen2han","全角英数→半角"],["kana","半角カナ→全角"],["nohyphen","ハイフン除去"],["num","数値化（カンマ・円・¥除去）"],["date","日付→YYYY/MM/DD"],["date2","日付→YYYYMMDD"],["zip","郵便番号→123-4567"],["upper","大文字"]];
+
+function parseCSV(text,delim){
+  const rows=[];let row=[],f="",q=false,i=0;
+  while(i<text.length){const c=text[i];
+    if(q){ if(c=='"'){ if(text[i+1]=='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else if(c=='"' && f==="") q=true;
+    else if(c==delim){row.push(f);f="";}
+    else if(c=='\r'){}
+    else if(c=='\n'){row.push(f);rows.push(row);row=[];f="";}
+    else f+=c; i++;}
+  if(f!==""||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+function detectDelim(t){const l=t.split("\n").slice(0,5).join("\n");const c={",":0,"\t":0,";":0};for(const ch of l)if(ch in c)c[ch]++;return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0];}
+function decode(){
+  if(!rawBytes)return;
+  let enc=$("inEnc").value; const arr=new Uint8Array(rawBytes);
+  if(enc==="AUTO"){enc=Encoding.detect(arr)||"UTF8"; if(enc==="UNICODE"||enc==="ASCII")enc="UTF8";}
+  let text=Encoding.convert(arr,{to:"UNICODE",from:enc,type:"string"}); if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  let d=$("inDelim").value; if(d==="auto")d=detectDelim(text);
+  let rows=parseCSV(text,d).slice(+$("skip").value||0);
+  while(rows.length&&rows[rows.length-1].every(v=>v===""))rows.pop();
+  const n=Math.max(0,...rows.map(r=>r.length));
+  let head; if($("hasHeader").checked){head=(rows.shift()||[]).map((h,i)=>h.trim()||String(i+1));}else head=[];
+  for(let i=head.length;i<n;i++)head.push(String(i+1));
+  data={head,rows};
+  $("inInfo").innerHTML=`文字コード: <b>${enc}</b>、区切り: <b>${d==="\t"?"タブ":d}</b>、列 ${head.length}、データ行 ${rows.length}。列: `+head.map(h=>`<code>{${esc(h)}}</code>`).join(" ");
+  fillSelects();
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function fillSelects(){
+  const outs=getRules().map(r=>r.name);
+  for(const id of ["skipEmpty","filterCol","splitCol"]){const s=$(id),v=s.value||s.dataset.want||"";s.innerHTML=`<option value="">（使わない）</option>`+outs.map(o=>`<option>${esc(o)}</option>`).join("");s.value=outs.includes(v)?v:"";}
+}
+function addRow(r={name:"",expr:"",tr:[],rep:""}){
+  const tb=$("rules").tBodies[0],tr=document.createElement("tr");
+  tr.innerHTML=`<td class="no"></td><td><input type="text" class="nm"></td><td class="f"><input type="text" class="ex"><select class="ins"><option value="">列を挿入…</option>${data.head.map(h=>`<option>${esc(h)}</option>`).join("")}</select></td><td>${TRANS.map(([k,l])=>`<label class="small"><input type="checkbox" value="${k}">${l}</label>`).join("<br>")}</td><td><textarea class="rp" rows="3" cols="16" placeholder="A=001"></textarea></td><td><button class="up">↑</button><button class="dn">↓</button><button class="rm">×</button></td>`;
+  tr.querySelector(".nm").value=r.name;tr.querySelector(".ex").value=r.expr;tr.querySelector(".rp").value=r.rep||"";
+  tr.querySelectorAll("input[type=checkbox]").forEach(c=>c.checked=(r.tr||[]).includes(c.value));
+  tr.querySelector(".ins").onchange=e=>{if(e.target.value){const x=tr.querySelector(".ex");x.value+=`{${e.target.value}}`;if(!tr.querySelector(".nm").value)tr.querySelector(".nm").value=e.target.value;e.target.value="";fillSelects();}};
+  tr.querySelector(".nm").onchange=fillSelects;
+  tr.querySelector(".rm").onclick=()=>{tr.remove();num();fillSelects();};
+  tr.querySelector(".up").onclick=()=>{if(tr.previousElementSibling)tb.insertBefore(tr,tr.previousElementSibling);num();};
+  tr.querySelector(".dn").onclick=()=>{if(tr.nextElementSibling)tb.insertBefore(tr.nextElementSibling,tr);num();};
+  tb.appendChild(tr);num();
+}
+function num(){[...$("rules").tBodies[0].rows].forEach((r,i)=>r.cells[0].textContent=i+1);}
+function getRules(){return [...$("rules").tBodies[0].rows].map(tr=>({name:tr.querySelector(".nm").value,expr:tr.querySelector(".ex").value,tr:[...tr.querySelectorAll("input[type=checkbox]:checked")].map(c=>c.value),rep:tr.querySelector(".rp").value}));}
+
+const HK="ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ", ZK="ヲァィゥェォャュョッーアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン";
+function hankana(s){return s.replace(/([ｦ-ﾝ])([ﾞﾟ]?)/g,(m,a,b)=>{let c=ZK[HK.indexOf(a)];if(b==="ﾞ"){c=c==="ウ"?"ヴ":String.fromCharCode(c.charCodeAt(0)+1);}else if(b==="ﾟ")c=String.fromCharCode(c.charCodeAt(0)+2);return c;}).replace(/｡/g,"。").replace(/｢/g,"「").replace(/｣/g,"」").replace(/､/g,"、").replace(/･/g,"・");}
+function toDate(s){const z=s.trim().replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));let m;
+  if(m=z.match(/^(\d{4})[\/\-\.年](\d{1,2})[\/\-\.月](\d{1,2})日?/))return [m[1],m[2],m[3]];
+  if(m=z.match(/^(\d{4})(\d{2})(\d{2})$/))return [m[1],m[2],m[3]];
+  if(m=z.match(/^(令和|R)\s*(\d{1,2}|元)[年\.\/\-](\d{1,2})[月\.\/\-](\d{1,2})/))return [String(2018+(m[2]==="元"?1:+m[2])),m[3],m[4]];
+  return null;}
+function applyTr(v,tr){
+  for(const t of tr){
+    if(t==="trim")v=v.replace(/^[\s\u3000]+|[\s\u3000]+$/g,"");
+    else if(t==="zen2han")v=v.replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\u3000/g," ");
+    else if(t==="kana")v=hankana(v);
+    else if(t==="nohyphen")v=v.replace(/[-‐－―ー−]/g,(c,i,s)=>(c==="ー"&&/[ァ-ヶ]/.test(s[i-1]||""))?c:"");
+    else if(t==="num"){const x=v.replace(/[０-９．－]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[,，円¥￥\s]/g,"").replace(/^△|^▲/,"-");v=x;}
+    else if(t==="date"||t==="date2"){const d=toDate(v);if(d){const [y,mo,da]=[d[0],d[1].padStart(2,"0"),d[2].padStart(2,"0")];v=t==="date"?`${y}/${mo}/${da}`:`${y}${mo}${da}`;}}
+    else if(t==="zip"){const d=v.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\D/g,"");if(d.length===7)v=d.slice(0,3)+"-"+d.slice(3);}
+    else if(t==="upper")v=v.toUpperCase();
+  }return v;}
+function repMap(s){const m=new Map();for(const l of (s||"").split(/\r?\n/)){const i=l.indexOf("=");if(i>0)m.set(l.slice(0,i),l.slice(i+1));}return m;}
+function evalExpr(expr,row,idx){return expr.replace(/\{([^{}]+)\}/g,(m,k)=>{const i=idx.has(k)?idx.get(k):(/^\d+$/.test(k)?+k-1:-1);return i>=0?(row[i]??""):m;});}
+
+function convert(){
+  const rules=getRules().filter(r=>r.name||r.expr); if(!rules.length)throw "出力する列がありません。";
+  const idx=new Map(data.head.map((h,i)=>[h,i])); const maps=rules.map(r=>repMap(r.rep));
+  const unknown=new Set();rules.forEach(r=>(r.expr.match(/\{([^{}]+)\}/g)||[]).forEach(m=>{const k=m.slice(1,-1);if(!idx.has(k)&&!/^\d+$/.test(k))unknown.add(k);}));
+  const names=rules.map(r=>r.name); const se=names.indexOf($("skipEmpty").value), fc=names.indexOf($("filterCol").value), sp=names.indexOf($("splitCol").value);
+  const op=$("filterOp").value,fv=$("filterVal").value; const res=[];
+  for(const row of data.rows){
+    const o=rules.map((r,i)=>{let v=applyTr(evalExpr(r.expr,row,idx),r.tr);return maps[i].has(v)?maps[i].get(v):v;});
+    if(se>=0&&o[se].trim()==="")continue;
+    if(fc>=0){const v=o[fc];const ok=op==="eq"?v===fv:op==="ne"?v!==fv:op==="has"?v.includes(fv):!v.includes(fv);if(!ok)continue;}
+    res.push(o);}
+  const groups=new Map(); if(sp>=0)for(const r of res){const k=r[sp]||"(空)";if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);} else groups.set("",res);
+  return {names,res,groups,unknown};
+}
+function toText(names,rows){const d=$("outDelim").value,eol=$("eol").value==="crlf"?"\r\n":"\n",all=$("quote").value==="all";
+  const cell=v=>{v=String(v);return (all||v.includes(d)||/["\r\n]/.test(v)||/^\s|\s$/.test(v))?'"'+v.replace(/"/g,'""')+'"':v;};
+  const lines=[];if($("outHeader").checked)lines.push(names.map(cell).join(d));for(const r of rows)lines.push(r.map(cell).join(d));return lines.join(eol)+eol;}
+function badChars(s){const bad=new Set();for(const ch of new Set(Array.from(s))){if(ch.charCodeAt(0)<128)continue;const b=Encoding.convert(Encoding.stringToCode(ch),{to:"SJIS",from:"UNICODE"});const back=Encoding.codeToString(Encoding.convert(b,{to:"UNICODE",from:"SJIS"}));if(back!==ch)bad.add(ch);}return bad;}
+function encodeOut(text){const e=$("outEnc").value;if(e==="SJIS")return new Uint8Array(Encoding.convert(Encoding.stringToCode(text),{to:"SJIS",from:"UNICODE"}));const u=new TextEncoder().encode(text);if(e==="UTF8BOM"){const b=new Uint8Array(u.length+3);b.set([0xEF,0xBB,0xBF]);b.set(u,3);return b;}return u;}
+
+$("run").onclick=()=>{
+  $("msg").innerHTML="";$("prev").innerHTML="";$("dl").disabled=true;
+  try{ if(!data.rows.length)throw "先にCSVを読み込んでください。";
+    out=convert(); const all=toText(out.names,out.res); let bad=new Set(); let html="";
+    if($("outEnc").value==="SJIS"){bad=badChars(all);}
+    if(out.unknown.size)html+=`<p class="warn">見つからない列名: ${[...out.unknown].map(esc).join("、")}（式に {…} のまま残ります）</p>`;
+    if(bad.size)html+=`<p class="warn">Shift_JISで表せない文字が ${bad.size} 種類あります: ${[...bad].map(c=>`<b>${esc(c)}</b>(U+${c.codePointAt(0).toString(16).toUpperCase()})`).join(" ")} 。書き出すと「?」になります。置換表か元データで直してください。</p>`;
+    html+=`<p class="ok">出力 ${out.res.length} 行（元 ${data.rows.length} 行）${out.groups.size>1?`、${out.groups.size} ファイルに分割`:""}。先頭30行を表示しています。</p>`;
+    $("msg").innerHTML=html;
+    const re=bad.size?new RegExp("["+[...bad].map(c=>c.replace(/[\]\\^-]/g,"\\$&")).join("")+"]","u"):null;
+    $("prev").innerHTML="<table><tr>"+out.names.map(n=>`<th>${esc(n)}</th>`).join("")+"</tr>"+out.res.slice(0,30).map(r=>"<tr>"+r.map(v=>`<td${re&&re.test(v)?' class="bad"':""}>${esc(v)}</td>`).join("")+"</tr>").join("")+"</table>";
+    $("dl").disabled=false;
+  }catch(e){$("msg").innerHTML=`<p class="warn">${esc(e)}</p>`;}
+};
+$("dl").onclick=()=>{if(!out)return;const base=($("outName").value||"converted").replace(/[\\/:*?"<>|]/g,"_");const ext=$("outDelim").value===","?"csv":"txt";
+  let n=0;for(const [k,rows] of out.groups){const blob=new Blob([encodeOut(toText(out.names,rows))],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=k?`${base}_${k.replace(/[\\/:*?"<>|]/g,"_")}.${ext}`:`${base}.${ext}`;setTimeout(()=>{a.click();URL.revokeObjectURL(a.href);},n++*400);}};
+
+function ruleObj(){const o={v:1,cols:getRules(),opt:{}};for(const id of ["inEnc","inDelim","skip","outEnc","eol","outDelim","quote","outName","skipEmpty","filterCol","filterOp","filterVal","splitCol"])o.opt[id]=$(id).value;for(const id of ["hasHeader","outHeader"])o.opt[id]=$(id).checked;return o;}
+function loadRule(o){$("rules").tBodies[0].innerHTML="";(o.cols||[]).forEach(addRow);for(const [k,v] of Object.entries(o.opt||{})){const el=$(k);if(!el)continue;if(el.type==="checkbox")el.checked=v;else{el.value=v;el.dataset.want=v;}}decode();fillSelects();}
+function refreshList(){const all=JSON.parse(localStorage.getItem("csvhenkan_rules")||"{}");$("localList").innerHTML=Object.keys(all).map(k=>`<option>${esc(k)}</option>`).join("");}
+$("saveLocal").onclick=()=>{const n=prompt("ルール名（例：楽天注文→B2クラウド）");if(!n)return;const all=JSON.parse(localStorage.getItem("csvhenkan_rules")||"{}");all[n]=ruleObj();localStorage.setItem("csvhenkan_rules",JSON.stringify(all));refreshList();$("localList").value=n;};
+$("loadLocal").onclick=()=>{const all=JSON.parse(localStorage.getItem("csvhenkan_rules")||"{}");const o=all[$("localList").value];if(o)loadRule(o);};
+$("delLocal").onclick=()=>{const all=JSON.parse(localStorage.getItem("csvhenkan_rules")||"{}");delete all[$("localList").value];localStorage.setItem("csvhenkan_rules",JSON.stringify(all));refreshList();};
+$("exportRule").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(ruleObj(),null,1)],{type:"application/json"}));a.download=($("outName").value||"rule")+"_rule.json";a.click();};
+$("importRule").onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>loadRule(JSON.parse(t)));};
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;f.arrayBuffer().then(b=>{rawBytes=b;decode();if(!$("rules").tBodies[0].rows.length)data.head.forEach(h=>addRow({name:h,expr:`{${h}}`,tr:[],rep:""}));else{$("rules").querySelectorAll(".ins").forEach(s=>s.innerHTML=`<option value="">列を挿入…</option>`+data.head.map(h=>`<option>${esc(h)}</option>`).join(""));}fillSelects();});};
+for(const id of ["inEnc","inDelim","hasHeader","skip"])$(id).onchange=decode;
+$("addCol").onclick=()=>{addRow();};
+$("copyAll").onclick=()=>{data.head.forEach(h=>addRow({name:h,expr:`{${h}}`,tr:[],rep:""}));fillSelects();};
+$("clearCols").onclick=()=>{$("rules").tBodies[0].innerHTML="";fillSelects();};
+refreshList();
+if(typeof module!=="undefined")module.exports={parseCSV,applyTr,evalExpr,repMap,toDate,hankana};
+</script>
+</body>
+</html>
