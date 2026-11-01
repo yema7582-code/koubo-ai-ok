@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>robots.txt AIクローラー許可チェッカー（ネットショップ向け・無料・ブラウザ内で完結）</title>
+<meta name="description" content="robots.txtを貼り付けるだけで、ChatGPT検索（OAI-SearchBot）、Googlebot、Bingbot、Perplexity、Claude、Appleなど主なAI・検索クローラーが商品ページを読めるかを一覧表示します。ブラックフライデー・年末商戦前の確認に。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-robots-check.html">
+<meta property="og:title" content="robots.txt AIクローラー許可チェッカー">
+<meta property="og:description" content="AI検索・AI学習・通常検索のクローラーごとに、商品ページへのアクセス可否を判定。無料、ブラウザ内で完結。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yema7582-code.github.io/koubo-ai-ok/ai-robots-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.6em}
+textarea{width:100%;height:200px;font-family:monospace}input[type=text]{width:100%;font-family:monospace}
+table{border-collapse:collapse;width:100%;font-size:.88em;margin-top:12px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3}.bad{color:#b00020;font-weight:bold}.warn{color:#8a5a00}.good{color:#1b6e1b}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}.box{background:#f5f8ff;padding:10px 12px;border-radius:8px}
+button{padding:6px 14px;margin:6px 6px 0 0}code{background:#f3f3f3;padding:0 3px}
+</style>
+</head>
+<body>
+<h1>robots.txt AIクローラー許可チェッカー</h1>
+<p>ChatGPTの検索やPerplexity、Copilot、Geminiなどで「おすすめの商品」を聞かれたとき、ショップの商品ページを読めないAIはその商品を紹介できません。robots.txtでAIのクローラーを知らないうちに止めているネットショップは珍しくありません。ショップの <code>https://お店のドメイン/robots.txt</code> を開いて中身を貼り付けると、クローラーごとに商品ページを読めるかどうかを判定します。</p>
+<p class="note">処理はすべてこのブラウザの中で行われ、貼り付けた内容はどこにも送信されません。判定はrobots.txtの標準仕様（RFC 9309：一致する一番長いルールを採用、同じ長さなら Allow を優先、<code>*</code> と <code>$</code> に対応）に沿ったものです。CloudflareなどのWAFやボット対策でAIクローラーを止めている場合は、robots.txtで許可していても読めません。そちらは管理画面で別に確認してください。</p>
+
+<h2>1. robots.txt を貼り付け</h2>
+<textarea id="src" placeholder="User-agent: *
+Disallow: /cart
+Disallow: /checkout
+Sitemap: https://example.com/sitemap.xml"></textarea>
+<h2>2. 確認したいページのパス（1行に1つ）</h2>
+<textarea id="paths" style="height:110px">/
+/products/sample-item
+/collections/all
+/pages/shipping
+/cart</textarea>
+<button id="run">チェックする</button><button id="sample">見本を入れる</button>
+<div id="sum"></div>
+<div id="out"></div>
+
+<h2>クローラーの種類について</h2>
+<ul>
+<li><strong>AI検索・回答</strong>（OAI-SearchBot、PerplexityBot、Claude-SearchBot など）：止めると、AIの回答の中で商品が紹介・リンクされにくくなります。売上に直結しやすいので、商品ページは許可しておくのが一般的です。</li>
+<li><strong>ユーザー操作での取得</strong>（ChatGPT-User、Perplexity-User、Claude-User）：利用者がAIに「このページを見て」と頼んだときのアクセスです。運営会社によってはrobots.txtの扱いが他と異なると説明しています。</li>
+<li><strong>AI学習</strong>（GPTBot、ClaudeBot、CCBot、Google-Extended、Applebot-Extended など）：モデルの学習用です。止めても通常の検索やAI検索での表示には基本的に影響しないため、止めるかどうかはお店の方針次第です。</li>
+<li><strong>通常の検索</strong>（Googlebot、Bingbot、Applebot）：止めると検索結果だけでなく、GoogleのAIによる概要やCopilotの回答にも出にくくなります。</li>
+</ul>
+<p>Shopifyの標準のrobots.txtはカートやチェックアウトなどを止め、商品ページは許可しています。テーマやアプリ、<code>robots.txt.liquid</code> の編集で変わることがあるので、商戦前の確認をおすすめします。</p>
+<p class="box">商品データやページの見直し、日本語・英語・中国語の商品説明の作成と翻訳のご相談は shinji-work@mail.grokbot.com までどうぞ。<br><a href="catalog-check.html">商品データ AIショッピング対応チェッカー（Shopify CSV）</a> ／ <a href="index.html">無料ツール一覧</a></p>
+
+<script>
+const BOTS=[
+['OAI-SearchBot','OpenAI（ChatGPTの検索）','AI検索'],
+['ChatGPT-User','OpenAI（ユーザー操作）','ユーザー取得'],
+['GPTBot','OpenAI（学習）','AI学習'],
+['Googlebot','Google検索（AIによる概要を含む）','通常検索'],
+['Google-Extended','Gemini等の学習・利用の制御用','AI学習'],
+['Bingbot','Bing検索・Copilot','通常検索'],
+['PerplexityBot','Perplexity（検索）','AI検索'],
+['Perplexity-User','Perplexity（ユーザー操作）','ユーザー取得'],
+['Claude-SearchBot','Anthropic（検索）','AI検索'],
+['Claude-User','Anthropic（ユーザー操作）','ユーザー取得'],
+['ClaudeBot','Anthropic（学習）','AI学習'],
+['Applebot','Apple（Siri・Spotlight検索）','通常検索'],
+['Applebot-Extended','Apple（AI学習の制御用）','AI学習'],
+['CCBot','Common Crawl（学習データ）','AI学習'],
+['meta-externalagent','Meta（学習）','AI学習'],
+['Bytespider','ByteDance','AI学習'],
+['Amazonbot','Amazon（Alexa等）','AI検索']];
+function parse(t){const groups=[];let cur=null,lastUA=false;const sitemaps=[];
+ t.replace(/\r/g,'').split('\n').forEach(raw=>{const line=raw.replace(/#.*/,'').trim();if(!line)return;const m=line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);if(!m)return;
+  const k=m[1].toLowerCase(),v=m[2].trim();
+  if(k==='user-agent'){if(!lastUA||!cur){cur={uas:[],rules:[]};groups.push(cur)}cur.uas.push(v.toLowerCase());lastUA=true}
+  else{lastUA=false;if(k==='sitemap'){sitemaps.push(v);return}if(!cur)return;if(k==='allow'||k==='disallow')cur.rules.push({allow:k==='allow',p:v})}});
+ return{groups,sitemaps}}
+function groupFor(groups,bot){const b=bot.toLowerCase();let hit=groups.filter(g=>g.uas.some(u=>u!=='*'&&b===u));
+ if(!hit.length)hit=groups.filter(g=>g.uas.some(u=>u!=='*'&&b.startsWith(u)&&u.length>2));
+ if(hit.length)return{rules:hit.flatMap(g=>g.rules),name:'専用'};
+ hit=groups.filter(g=>g.uas.includes('*'));return{rules:hit.flatMap(g=>g.rules),name:hit.length?'*':'なし'}}
+function toRe(p){let end=p.endsWith('$');if(end)p=p.slice(0,-1);return new RegExp('^'+p.split('*').map(s=>s.replace(/[.+?^${}()|[\]\\]/g,'\\$&')).join('.*')+(end?'$':''))}
+function decide(rules,path){let best=null;for(const r of rules){if(r.p===''){continue}if(toRe(r.p).test(path)){const len=r.p.length;if(!best||len>best.len||(len===best.len&&r.allow&&!best.allow))best={len,allow:r.allow,p:r.p}}}
+ return best?best:{allow:true,p:'（該当ルールなし）'}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+document.getElementById('sample').onclick=()=>{document.getElementById('src').value='User-agent: *\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search\n\nUser-agent: GPTBot\nUser-agent: OAI-SearchBot\nDisallow: /\n\nUser-agent: Bytespider\nDisallow: /\n\nSitemap: https://example.com/sitemap.xml'};
+document.getElementById('run').onclick=()=>{const t=document.getElementById('src').value;if(!t.trim()){alert('robots.txtの内容を貼り付けてください');return}
+ const {groups,sitemaps}=parse(t);const paths=document.getElementById('paths').value.split('\n').map(s=>s.trim()).filter(Boolean).map(s=>s.startsWith('/')?s:'/'+s);
+ let html='<table><tr><th>クローラー</th><th>種類</th><th>適用グループ</th>'+paths.map(p=>'<th>'+esc(p)+'</th>').join('')+'</tr>';const warns=[];
+ BOTS.forEach(([ua,who,kind])=>{const g=groupFor(groups,ua);html+='<tr><td><code>'+ua+'</code><br><small>'+who+'</small></td><td>'+kind+'</td><td>'+g.name+'</td>';
+  paths.forEach(p=>{const d=decide(g.rules,p);html+='<td class="'+(d.allow?'good':'bad')+'">'+(d.allow?'許可':'拒否')+'<br><small>'+esc(d.p)+'</small></td>';
+   if(!d.allow&&/^\/(products|collections|pages|)\/?/.test(p)&&!/cart|checkout|account|search/.test(p)&&kind!=='AI学習')warns.push(ua+' が '+p+' を読めません（'+kind+'）')});html+='</tr>'});
+ html+='</table>';const uniq=[...new Set(warns)];
+ let s='<h2>結果</h2>';if(!groups.length)s+='<p class="warn">User-agent の行が見つかりません。全クローラーが全ページを読める扱いになります。</p>';
+ s+=uniq.length?'<p class="bad">要確認：AI検索・通常検索のクローラーが商品関連ページを読めない設定があります。</p><ul>'+uniq.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul>':'<p class="good">AI検索・通常検索のクローラーは、指定した商品関連ページを読める設定です（AI学習用の拒否は方針次第なので警告していません）。</p>';
+ s+=sitemaps.length?'<p class="good">Sitemap 指定あり：'+sitemaps.map(esc).join('、')+'</p>':'<p class="warn">Sitemap の指定がありません。商品の見つけやすさのため追加を検討してください。</p>';
+ document.getElementById('sum').innerHTML=s;document.getElementById('out').innerHTML=html};
+</script>
+</body>
+</html>
