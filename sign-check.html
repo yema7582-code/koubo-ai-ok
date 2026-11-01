@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>署名・承認（approve / Permit）内容チェッカー：ウォレットの署名依頼を日本語で確認（無料）</title>
+<meta name="description" content="MetaMaskなどで出てくる署名依頼（EIP-712のJSON）やトランザクションのデータ（0x…）を貼り付けると、approve・無制限承認・setApprovalForAll・Permit・Permit2・Seaport注文などを日本語で説明し、危ない点を警告します。ウォレット接続なし、データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/sign-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea{width:100%;height:170px;font-family:monospace;font-size:13px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top;word-break:break-all}th{background:#f3f3f3;width:28%}
+.ng{color:#b00020;font-weight:bold}.warn{color:#a15c00}.ok{color:#1b7f3a}code{background:#f3f3f3;padding:0 3px}
+</style>
+</head>
+<body>
+<h1>署名・承認（approve / Permit）内容チェッカー</h1>
+<p>ウォレットの「署名」や「承認」を押すだけで資産を抜かれる詐欺（ドレイナー）は、たいてい<b>トークンの使用許可（approve・Permit）</b>や<b>NFTの一括許可（setApprovalForAll）</b>、<b>0円で出品する注文の署名</b>です。署名依頼のJSON、またはトランザクションのデータ（<code>0x</code>で始まる16進数）を貼り付けると、何を許可しようとしているのかを日本語で説明します。</p>
+<p class="note">ウォレット接続は不要で、貼り付けた内容はこのページの中だけで処理され、どこにも送信されません。秘密鍵やシードフレーズ（12〜24個の英単語）は<b>絶対に</b>どこにも貼らないでください。このツールは目安です。最終判断はご自身でお願いします。</p>
+<textarea id="in" placeholder='例1：0x095ea7b3000000000000000000000000...（トランザクションのデータ）&#10;例2：{"types":{...},"primaryType":"Permit","domain":{...},"message":{...}}（署名依頼のJSON）'></textarea>
+<button id="go">チェックする</button><button id="ex1">例：無制限approve</button><button id="ex2">例：Permit2署名</button><button id="ex3">例：NFT一括許可</button>
+<div id="out"></div>
+<h2>よくある危ないパターン</h2>
+<ul>
+<li><b>無制限の承認</b>：金額が最大値（約1.15×10<sup>77</sup>、Permit2では約1.46×10<sup>48</sup>）。相手のコントラクトがいつでも全額を動かせます。</li>
+<li><b>setApprovalForAll(true)</b>：そのコレクションのNFTを全部動かす許可。ミントやエアドロ受け取りで求められたら、ほぼ詐欺です。</li>
+<li><b>Permit / Permit2 の署名</b>：ガス代がかからず「ただの署名」に見えますが、approveと同じ効果があります。</li>
+<li><b>Seaport などの注文署名</b>：受け取る側（consideration）が0や自分以外なら、NFTをタダで渡す注文です。</li>
+<li><b>知らない相手（spender / operator）</b>：公式サイトのURLから来た依頼か、アドレスをエクスプローラーで確認しましょう。</li>
+</ul>
+<p>関連：<a href="crypto-tax-calc.html">暗号資産の税金計算</a>。承認を取り消すには、エクスプローラーの「Token Approvals」画面（Etherscan など）や revoke.cash のような取り消しツールを使います。</p>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MAX=(1n<<256n)-1n, BIG=1n<<128n;
+const KNOWN={"0x000000000022d473030f116ddee9f6b43ac78ba3":"Uniswap Permit2（公式の共通承認コントラクト）",
+"0x00000000000000adc04c56bf30ac9d3c0aaf14dc":"OpenSea Seaport 1.5","0x0000000000000068f116a894984e2db1123eb395":"OpenSea Seaport 1.6"};
+const who=a=>{a=String(a).toLowerCase();return esc(a)+(KNOWN[a]?" <span class='ok'>（"+KNOWN[a]+"）</span>":" <span class='warn'>（不明な相手。公式アドレスか確認を）</span>");};
+const amt=v=>{let n;try{n=BigInt(v)}catch(e){return esc(v)}
+ if(n===MAX||n>=BIG)return "<span class='ng'>無制限（最大値）："+n+"</span>";if(n===0n)return "<span class='ok'>0（取り消し）</span>";
+ return n+"（最小単位。USDCなら÷10^6、多くのトークンは÷10^18）";};
+const dl=v=>{let n;try{n=Number(BigInt(v))}catch(e){return esc(v)}if(!isFinite(n)||n>4e12)return "<span class='warn'>実質無期限："+esc(v)+"</span>";
+ const d=new Date(n*1000);const days=Math.round((n*1000-Date.now())/864e5);return d.toLocaleString("ja-JP")+"（"+(days>=0?"あと約"+days+"日":"期限切れ")+")"+(days>60?" <span class='warn'>長すぎる期限</span>":"");};
+const word=(h,i)=>h.slice(8+64*i,8+64*(i+1));const addr=w=>"0x"+w.slice(24);const u=w=>BigInt("0x"+w);
+const SEL={
+"095ea7b3":["approve(spender, amount)",h=>[["相手（spender）",who(addr(word(h,0)))],["許可額",amt(u(word(h,1)))]],h=>u(word(h,1))>=BIG?"ng":"warn","トークンを相手が使える許可を出します。"],
+"39509351":["increaseAllowance(spender, added)",h=>[["相手（spender）",who(addr(word(h,0)))],["追加の許可額",amt(u(word(h,1)))]],h=>u(word(h,1))>=BIG?"ng":"warn","許可額を増やします。"],
+"a22cb465":["setApprovalForAll(operator, approved)",h=>[["相手（operator）",who(addr(word(h,0)))],["許可",u(word(h,1))?"<span class='ng'>true：このコレクションのNFTを全部動かせる</span>":"<span class='ok'>false：許可の取り消し</span>"]],h=>u(word(h,1))?"ng":"ok","NFTコレクション全体の操作を許可・取り消しします。"],
+"a9059cbb":["transfer(to, amount)",h=>[["送り先",who(addr(word(h,0)))],["金額",amt(u(word(h,1)))]],()=>"warn","トークンを送金します。送り先が正しいか確認してください。"],
+"23b872dd":["transferFrom(from, to, amount/tokenId)",h=>[["from",esc(addr(word(h,0)))],["to",who(addr(word(h,1)))],["金額 / tokenId",esc(u(word(h,2)))]],()=>"warn","トークンやNFTを移動します。"],
+"42842e0e":["safeTransferFrom(from, to, tokenId)",h=>[["from",esc(addr(word(h,0)))],["to",who(addr(word(h,1)))],["tokenId",esc(u(word(h,2)))]],()=>"warn","NFTを移動します。"],
+"d505accf":["permit(owner, spender, value, deadline, v, r, s)",h=>[["owner",esc(addr(word(h,0)))],["相手（spender）",who(addr(word(h,1)))],["許可額",amt(u(word(h,2)))],["期限",dl(u(word(h,3)))]],h=>u(word(h,2))>=BIG?"ng":"warn","署名済みのPermitを使って許可を確定させます。"],
+"87517c45":["Permit2.approve(token, spender, amount, expiration)",h=>[["トークン",esc(addr(word(h,0)))],["相手（spender）",who(addr(word(h,1)))],["許可額",amt(u(word(h,2)))],["期限",dl(u(word(h,3)))]],()=>"warn","Permit2経由の許可です。"],
+"cc53287f":["Permit2.lockdown(...)",()=>[],()=>"ok","Permit2の許可を取り消します。"]};
+function calldata(s){let h=s.replace(/^0x/i,"").replace(/\s+/g,"").toLowerCase();
+ if(!/^[0-9a-f]*$/.test(h)||h.length<8)return "<p class='ng'>16進数のデータとして読めませんでした。</p>";
+ const sel=h.slice(0,8),f=SEL[sel];
+ if(!f)return "<p class='warn'>関数 0x"+sel+" はこのツールの一覧にありません。4byte.directory などで関数名を調べ、approve・permit・setApprovalForAll が中に含まれていないか確認してください。</p>"+(h.includes("095ea7b3")||h.includes("a22cb465")?"<p class='ng'>データの中に approve / setApprovalForAll らしき部分が含まれています（multicall など）。</p>":"");
+ if((h.length-8)%64)return "<p class='warn'>データの長さが半端です。コピーが途中で切れていないか確認してください。</p>";
+ const lv=f[2](h);return "<h2>"+(lv=="ng"?"<span class='ng'>危険度：高</span>":lv=="ok"?"<span class='ok'>危険度：低</span>":"<span class='warn'>危険度：要確認</span>")+"</h2><p>"+esc(f[0])+"："+f[3]+"</p><table>"+f[1](h).map(r=>"<tr><th>"+r[0]+"</th><td>"+r[1]+"</td></tr>").join("")+"</table>";}
+function typed(j){const m=j.message||{},d=j.domain||{},p=j.primaryType||"";let rows=[["種類（primaryType）",esc(p)],["相手サイトの名前（domain.name）",esc(d.name||"-")],["チェーンID",esc(d.chainId||"-")],["検証コントラクト",d.verifyingContract?who(d.verifyingContract):"-"]];let lv="warn",msg="";
+ if(p==="Permit"){lv=BigInt(m.value||0)>=BIG?"ng":"warn";msg="EIP-2612 Permit：ガス代なしでトークンの使用許可を出す署名です。approveと同じ効果があります。";rows.push(["相手（spender）",who(m.spender)],["許可額",amt(m.value)],["期限",dl(m.deadline)]);}
+ else if(/^Permit(Single|Batch)$/.test(p)){msg="Uniswap Permit2の許可署名です。相手が期限までトークンを動かせます。";const ds=[].concat(m.details||[]);ds.forEach((x,i)=>rows.push(["トークン"+(i+1),esc(x.token)],["許可額"+(i+1),amt(x.amount)],["期限"+(i+1),dl(x.expiration)]));rows.push(["相手（spender）",who(m.spender)],["署名の有効期限",dl(m.sigDeadline)]);if(ds.some(x=>BigInt(x.amount||0)>=BIG))lv="ng";}
+ else if(/^PermitTransferFrom|PermitBatchTransferFrom|PermitWitnessTransferFrom/.test(p)){msg="Permit2の送金署名です。署名すると相手がその金額を引き出せます。";[].concat(m.permitted||[]).forEach((x,i)=>rows.push(["トークン"+(i+1),esc(x.token)],["金額"+(i+1),amt(x.amount)]));rows.push(["相手（spender）",who(m.spender)],["期限",dl(m.deadline)]);lv="ng";}
+ else if(p==="OrderComponents"||p==="Order"){msg="NFTマーケット（Seaport等）の注文署名です。出す物（offer）と受け取る物（consideration）を確認してください。";const of=[].concat(m.offer||[]),co=[].concat(m.consideration||[]);of.forEach((x,i)=>rows.push(["出す物"+(i+1),"token "+esc(x.token)+" / id "+esc(x.identifierOrCriteria)+" / 量 "+esc(x.startAmount)]));
+  const me=String(m.offerer||"").toLowerCase();let toMe=0n;co.forEach((x,i)=>{rows.push(["受け取る物"+(i+1),"token "+esc(x.token)+" / 量 "+esc(x.startAmount)+" / 受取人 "+who(x.recipient)]);if(String(x.recipient).toLowerCase()===me){try{toMe+=BigInt(x.startAmount)}catch(e){}}});
+  rows.push(["注文者（offerer）",esc(m.offerer)],["注文の期限",dl(m.endTime)]);if(toMe===0n){lv="ng";msg+=" <span class='ng'>注文者が受け取る分が0です。タダで渡す注文の可能性が高いです。</span>";}}
+ else if(p==="SetApprovalForAll"||/approv/i.test(p)){lv="ng";msg="承認に関する署名です。内容をよく確認してください。";}
+ else{msg="一般的な署名です。中身（message）に spender・amount・approve などの言葉がないか確認してください。";if(/spender|operator|approv/i.test(JSON.stringify(m)))lv="ng";}
+ return "<h2>"+(lv=="ng"?"<span class='ng'>危険度：高</span>":"<span class='warn'>危険度：要確認</span>")+"</h2><p>"+msg+"</p><table>"+rows.map(r=>"<tr><th>"+r[0]+"</th><td>"+r[1]+"</td></tr>").join("")+"</table><p class='warn'>サイト名（domain.name）は詐欺サイトでも自由に名乗れます。相手のアドレスで判断してください。</p>";}
+function check(){const s=$("in").value.trim();let h;
+ if(/\b([a-z]+\s+){11,23}[a-z]+\b/.test(s)&&!s.startsWith("{")&&!s.startsWith("0x"))h="<p class='ng'>シードフレーズのような英単語の並びに見えます。どこにも貼らないでください。この内容は使いません。</p>";
+ else if(s.startsWith("{")){try{let j=JSON.parse(s);if(j.params)j=JSON.parse([].concat(j.params).find(x=>typeof x==="string"&&x.startsWith("{"))||"{}");h=typed(j)}catch(e){h="<p class='ng'>JSONとして読めませんでした："+esc(e.message)+"</p>"}}
+ else h=calldata(s);$("out").innerHTML=h;}
+$("go").onclick=check;
+const A="000000000000000000000000",SP="1111111254eeb25477b68fb85ed929f73a960582";
+$("ex1").onclick=()=>{$("in").value="0x095ea7b3"+A+SP+"f".repeat(64);check()};
+$("ex2").onclick=()=>{$("in").value=JSON.stringify({primaryType:"PermitSingle",domain:{name:"Permit2",chainId:1,verifyingContract:"0x000000000022D473030F116dDEE9F6B43aC78BA3"},message:{details:{token:"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",amount:"1461501637330902918203684832716283019655932542975",expiration:"1924905600",nonce:"0"},spender:"0x"+SP,sigDeadline:"1924905600"}},null,1);check()};
+$("ex3").onclick=()=>{$("in").value="0xa22cb465"+A+SP+"0".repeat(63)+"1";check()};
+</script>
+</body>
+</html>
