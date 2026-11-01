@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>切り取り教材メーカー（九九カード・分数ストリップ・時計模型／無料・A4印刷）</title>
+<meta name="description" content="はさみで切って使う算数の教材をA4で印刷できます。両面印刷用の九九カード（裏に答え）、分数ストリップ（1〜1/12）、針が動かせる時計模型の3種類。段・分母・目盛りを選べます。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kirinuki-kyozai.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}.ctl label{display:inline-block;margin:4px 14px 4px 0}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.sheet{width:186mm;margin:12px auto;background:#fff;box-shadow:0 0 0 1px #ddd}
+.sheet svg{display:block;width:186mm;height:auto}
+.br{break-before:page;page-break-before:always}
+@media print{.noprint{display:none}body{padding:0;max-width:none}.sheet{box-shadow:none;margin:0}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>切り取り教材メーカー（算数）</h1>
+<p>はさみで切って使うカードや模型をA4で印刷できます。点線で切ってください。印刷画面では「倍率100%（実際のサイズ）」を選ぶと、寸法どおりに出ます。処理はすべてブラウザの中で行われます。</p>
+<div class="ctl">
+<label>教材 <select id="kind"><option value="kuku">九九カード（両面・裏に答え）</option><option value="frac">分数ストリップ</option><option value="clock">時計模型（針つき）</option></select></label>
+<span id="o-kuku"><label>段（空欄=1〜9全部） <input id="dan" type="text" placeholder="例：6,7,8" style="width:7em"></label>
+<label>かける数 <select id="kmax"><option value="9" selected>1〜9</option><option value="12">1〜12</option></select></label>
+<label>読み方 <select id="yomi"><option value="1">表に読み方も入れる（しちはごじゅうろく）</option><option value="0">数字だけ</option></select></label>
+<label>裏面の向き <select id="flip"><option value="long">長辺とじ</option><option value="short">短辺とじ</option></select></label></span>
+<span id="o-frac" hidden><label>分母（カンマ区切り） <input id="dens" type="text" value="1,2,3,4,5,6,8,10,12" style="width:12em"></label>
+<label>表示 <select id="flab"><option value="frac">分数（1/4）</option><option value="dec">分数＋小数</option><option value="none">なし（考えさせる用）</option></select></label>
+<label>色 <select id="fcol"><option value="1">うすい色つき</option><option value="0">白黒</option></select></label></span>
+<span id="o-clock" hidden><label>大きさ <select id="csize"><option value="140">直径14cm</option><option value="170" selected>直径17cm</option></select></label>
+<label>外側の分の数字 <select id="cmin"><option value="1" selected>5,10,15…を入れる</option><option value="0">入れない</option></select></label>
+<label>目盛り <select id="ctick"><option value="1" selected>1分ごと</option><option value="5">5分ごと</option></select></label></span>
+<label>見出し <input id="title" type="text" value="" placeholder="空欄で自動" style="width:12em"></label>
+</div>
+<button id="make">作る</button><button onclick="window.print()">印刷する</button>
+<p class="note" id="hint"></p>
+</div>
+<div id="out"></div>
+<p class="noprint" style="font-size:.9em;color:#555">関連：<a href="keisan-drill.html">計算ドリル作成（答えつき）</a> ／ <a href="kanji-sheet.html">漢字・ひらがな練習シート作成</a> ／ <a href="./">AI利用OKの公募まとめ（トップ）</a></p>
+<script>
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const W=186,H=273; // printable mm area of A4 with 12mm margins
+function svg(){const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox',`0 0 ${W} ${H}`);s.setAttribute('width',W+'mm');s.setAttribute('height',H+'mm');return s;}
+function el(t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e;}
+function sheet(s,cls){const d=document.createElement('div');d.className='sheet'+(cls?' '+cls:'');d.append(s);return d;}
+const cut={fill:'none',stroke:'#888','stroke-width':.3,'stroke-dasharray':'2 1.5'};
+const FONT='"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+function head(s,t,sub){s.append(el('text',{x:0,y:6,'font-size':5,'font-family':FONT},t));if(sub)s.append(el('text',{x:W,y:6,'font-size':3.2,'text-anchor':'end','font-family':FONT,fill:'#555'},sub));}
+// ---- 九九 ----
+const KN=['','いん','に','さん','し','ご','ろく','しち','はち','く'];
+const RD={1:'いち',2:'に',3:'さん',4:'し',5:'ご',6:'ろく',7:'しち',8:'はち',9:'く'};
+const ANS={1:'いち',2:'が に',3:'が さん',4:'が し',5:'が ご',6:'が ろく',7:'が しち',8:'が はち',9:'が く',10:'じゅう'};
+function numYomi(n){if(n<10)return(RD[n]);const t=Math.floor(n/10),o=n%10;let r=(t>1?RD[t]:'')+'じゅう';if(o)r+=RD[o];return r;}
+// 定番の読み（一部の特別な読み）
+const SP={'1x1':'いんいちが いち','1x2':'いんにが に','1x3':'いんさんが さん','1x4':'いんしが し','1x5':'いんごが ご','1x6':'いんろくが ろく','1x7':'いんしちが しち','1x8':'いんはちが はち','1x9':'いんくが く','2x1':'にいちが に','2x2':'ににんが し','2x3':'にさんが ろく','2x4':'にしが はち','2x5':'にご じゅう','2x6':'にろく じゅうに','2x7':'にしち じゅうし','2x8':'にはち じゅうろく','2x9':'にく じゅうはち','3x1':'さんいちが さん','3x2':'さんにが ろく','3x3':'さざんが く','3x4':'さんし じゅうに','3x5':'さんご じゅうご','3x6':'さぶろく じゅうはち','3x7':'さんしち にじゅういち','3x8':'さんぱ にじゅうし','3x9':'さんく にじゅうしち','4x1':'しいちが し','4x2':'しにが はち','4x3':'しさん じゅうに','4x4':'しし じゅうろく','4x5':'しご にじゅう','4x6':'しろく にじゅうし','4x7':'ししち にじゅうはち','4x8':'しは さんじゅうに','4x9':'しく さんじゅうろく','5x1':'ごいちが ご','5x2':'ごに じゅう','5x3':'ごさん じゅうご','5x4':'ごし にじゅう','5x5':'ごご にじゅうご','5x6':'ごろく さんじゅう','5x7':'ごしち さんじゅうご','5x8':'ごは しじゅう','5x9':'ごっく しじゅうご','6x1':'ろくいちが ろく','6x2':'ろくに じゅうに','6x3':'ろくさん じゅうはち','6x4':'ろくし にじゅうし','6x5':'ろくご さんじゅう','6x6':'ろくろく さんじゅうろく','6x7':'ろくしち しじゅうに','6x8':'ろくは しじゅうはち','6x9':'ろっく ごじゅうし','7x1':'しちいちが しち','7x2':'しちに じゅうし','7x3':'しちさん にじゅういち','7x4':'しちし にじゅうはち','7x5':'しちご さんじゅうご','7x6':'しちろく しじゅうに','7x7':'しちしち しじゅうく','7x8':'しちは ごじゅうろく','7x9':'しちく ろくじゅうさん','8x1':'はちいちが はち','8x2':'はちに じゅうろく','8x3':'はちさん にじゅうし','8x4':'はちし さんじゅうに','8x5':'はちご しじゅう','8x6':'はちろく しじゅうはち','8x7':'はちしち ごじゅうろく','8x8':'はっぱ ろくじゅうし','8x9':'はっく しちじゅうに','9x1':'くいちが く','9x2':'くに じゅうはち','9x3':'くさん にじゅうしち','9x4':'くし さんじゅうろく','9x5':'くご しじゅうご','9x6':'くろく ごじゅうし','9x7':'くしち ろくじゅうさん','9x8':'くは しちじゅうに','9x9':'くく はちじゅういち'};
+function kuku(){
+ let dans=$('dan').value.split(/[,、\s]+/).map(Number).filter(n=>n>=1&&n<=12);if(!dans.length)dans=[1,2,3,4,5,6,7,8,9];
+ dans=[...new Set(dans)];const km=+$('kmax').value,yomi=$('yomi').value==='1',flip=$('flip').value;
+ const cards=[];dans.forEach(d=>{for(let k=1;k<=km;k++)cards.push([d,k]);});
+ const C=3,R=7,cw=W/C,top=10,ch=(H-top)/R,per=C*R,out=[];const title=$('title').value||'九九カード';
+ for(let p=0;p*per<cards.length;p++){
+  const part=cards.slice(p*per,p*per+per);
+  const f=svg(),b=svg();head(f,title+'（おもて）',`${p+1}/${Math.ceil(cards.length/per)}　点線で切る`);head(b,title+'（うら・こたえ）',flip==='long'?'長辺とじで両面印刷':'短辺とじで両面印刷');
+  part.forEach(([d,k],i)=>{const r=Math.floor(i/C),c=i%C,x=c*cw,y=top+r*ch;
+   f.append(el('rect',Object.assign({x,y,width:cw,height:ch},cut)));
+   f.append(el('text',{x:x+cw/2,y:y+ch*.55,'font-size':11,'text-anchor':'middle','font-family':FONT,'font-weight':'bold'},`${d} × ${k}`));
+   if(yomi&&SP[d+'x'+k])f.append(el('text',{x:x+cw/2,y:y+ch*.85,'font-size':3.6,'text-anchor':'middle','font-family':FONT,fill:'#555'},SP[d+'x'+k].replace(/ (\S+)$/,'')+' …'));
+   f.append(el('text',{x:x+2.5,y:y+4.5,'font-size':2.8,'font-family':FONT,fill:'#999'},d+'のだん'));
+   // back position
+   let bc=c,br=r;if(flip==='long')bc=C-1-c;else br=R-1-r;
+   const bx=bc*cw,by=top+br*ch;
+   const g=el('g',flip==='short'?{transform:`rotate(180 ${bx+cw/2} ${by+ch/2})`}:{});
+   g.append(el('rect',Object.assign({x:bx,y:by,width:cw,height:ch},cut)));
+   g.append(el('text',{x:bx+cw/2,y:by+ch*.55,'font-size':13,'text-anchor':'middle','font-family':FONT,'font-weight':'bold',fill:'#c00'},String(d*k)));
+   if(yomi&&SP[d+'x'+k])g.append(el('text',{x:bx+cw/2,y:by+ch*.85,'font-size':3.6,'text-anchor':'middle','font-family':FONT,fill:'#555'},SP[d+'x'+k]));
+   else g.append(el('text',{x:bx+cw/2,y:by+ch*.85,'font-size':3.6,'text-anchor':'middle','font-family':FONT,fill:'#555'},`${d} × ${k} = ${d*k}`));
+   if(flip==='short')b.append(g);else{[...g.childNodes].forEach(n=>b.append(n));}
+  });
+  out.push(f,b);}
+ $('hint').textContent=`${cards.length}枚・${out.length}ページ。両面印刷（${flip==='long'?'長辺':'短辺'}とじ）にすると、各カードの裏に答えが来ます。片面のプリンターなら、おもてを印刷した紙を裏返して入れ、うらのページだけ印刷してください。最初に1枚だけ試し刷りしてずれを確認すると安心です。読み方は学校でよく使われるものです（地域や教科書で少し違うことがあります）。`;
+ return out;}
+// ---- 分数 ----
+const PAL=['#ffe0e0','#ffeacc','#fff6bf','#e3f6d0','#d6f0ef','#dde8fb','#e8defa','#fbdcef','#eeeeee','#f3e9dc','#e0f0e0','#e6e6fa'];
+function gcd(a,b){return b?gcd(b,a%b):a}
+function frac(){
+ let ds=$('dens').value.split(/[,、\s]+/).map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=20);ds=[...new Set(ds)];if(!ds.length)ds=[1,2,3,4,6,8,12];
+ const lab=$('flab').value,col=$('fcol').value==='1',title=$('title').value||'分数ストリップ';
+ const top=12,gap=2.5,bh=Math.min(20,(H-top)/ds.length-gap),out=[];
+ const s=svg();head(s,title,'点線で切って、ならべてくらべよう');
+ ds.forEach((d,i)=>{const y=top+i*(bh+gap),w=W/d;
+  for(let j=0;j<d;j++){const x=j*w;
+   s.append(el('rect',{x,y,width:w,height:bh,fill:col?PAL[(d-1)%PAL.length]:'#fff',stroke:'#333','stroke-width':.35}));
+   if(lab!=='none'){const fs=Math.min(5,w/3.2);
+    if(d===1)s.append(el('text',{x:x+w/2,y:y+bh/2+fs/2.8,'font-size':fs,'text-anchor':'middle','font-family':FONT},'1'));
+    else{s.append(el('text',{x:x+w/2,y:y+bh/2-fs*.25,'font-size':fs,'text-anchor':'middle','font-family':FONT},'1'));
+     s.append(el('line',{x1:x+w/2-fs*.55,x2:x+w/2+fs*.55,y1:y+bh/2+fs*.05,y2:y+bh/2+fs*.05,stroke:'#222','stroke-width':.3}));
+     s.append(el('text',{x:x+w/2,y:y+bh/2+fs*.95,'font-size':fs,'text-anchor':'middle','font-family':FONT},String(d)));
+     if(lab==='dec'&&bh>12){const v=1/d,t=(Math.round(v*1000)/1000).toString().replace(/^0/,'0');s.append(el('text',{x:x+w/2,y:y+bh-1.5,'font-size':Math.min(3,w/4.5),'text-anchor':'middle','font-family':FONT,fill:'#555'},(1000%d===0||[1,2,4,5,8,10,20].includes(d)?'':'約')+t));}}}
+  }
+  s.append(el('rect',Object.assign({x:0,y:y-gap/2,width:W,height:bh+gap},cut)));
+ });
+ out.push(s);
+ $('hint').textContent='1本ずつ点線で切り、さらに1つ分ずつ切り分けると「1/4が2つで1/2」などを重ねて確かめられます。小数は割り切れないものに「約」をつけています。帯の幅は全部同じ長さ（印刷幅いっぱい）です。';
+ return out;}
+// ---- 時計 ----
+function clock(){
+ const D=+$('csize').value,R=D/2,mins=$('cmin').value==='1',tick=+$('ctick').value,title=$('title').value||'時計の模型';
+ const s=svg();head(s,title,'外の円と針を切り、まん中に穴をあけて割りピンでとめる');
+ const cx=W/2,ex=mins?7:2,cy=10+R+ex+2;
+ s.append(el('circle',Object.assign({cx,cy,r:R+ex},cut)));
+ s.append(el('circle',{cx,cy,r:R-1,fill:'none',stroke:'#222','stroke-width':.6}));
+ for(let m=0;m<60;m+=tick){const a=m*6*Math.PI/180,big=m%5===0,r1=R-1,r2=R-(big?6:3.5);
+  s.append(el('line',{x1:cx+r1*Math.sin(a),y1:cy-r1*Math.cos(a),x2:cx+r2*Math.sin(a),y2:cy-r2*Math.cos(a),stroke:'#222','stroke-width':big?.8:.35}));}
+ for(let h=1;h<=12;h++){const a=h*30*Math.PI/180,r=R-14,fs=R/6;
+  s.append(el('text',{x:cx+r*Math.sin(a),y:cy-r*Math.cos(a)+fs*.36,'font-size':fs,'text-anchor':'middle','font-family':FONT,'font-weight':'bold'},String(h)));
+  if(mins){const r3=R+3.6;s.append(el('text',{x:cx+r3*Math.sin(a),y:cy-r3*Math.cos(a)+1.1,'font-size':3.2,'text-anchor':'middle','font-family':FONT,fill:'#c00'},String(h*5)));}}
+ s.append(el('circle',{cx,cy,r:1.2,fill:'none',stroke:'#222','stroke-width':.4}));
+ // hands below the face, lying sideways (pivot on the left)
+ const fb=cy+R+ex;
+ function hand(px,py,len,wid,color,label){const g=el('g',{transform:`rotate(90 ${px} ${py})`});const x=px,y=py;
+  const p=`M ${x} ${y} l ${-wid/2} ${-wid*.6} l 0 ${-(len-wid*2)} l ${wid/2} ${-wid*1.4} l ${wid/2} ${wid*1.4} l 0 ${len-wid*2} z`;
+  g.append(el('path',{d:p,fill:color,stroke:'#222','stroke-width':.4}));
+  g.append(el('circle',{cx:x,cy:y,r:wid*.9,fill:color,stroke:'#222','stroke-width':.4}));
+  g.append(el('circle',{cx:x,cy:y,r:1.2,fill:'#fff',stroke:'#222','stroke-width':.4}));
+  s.append(g);
+  s.append(el('rect',Object.assign({x:px-wid*1.2,y:py-wid*1.2,width:len+wid*1.2+2,height:wid*2.4},cut)));
+  s.append(el('text',{x:px+len+6,y:py+1.2,'font-size':3.4,'font-family':FONT,fill:'#333'},label));}
+ const lm=R-9,lh=R*0.58;
+ hand(14,fb+10,lm,6,'#9ec5ff','長い針（分）');hand(14,fb+26,lh,7.5,'#ffb3b3','短い針（時）');
+ const hy=fb+26;
+ // extra: second clock face strip of practice
+ const py=hy+15;if(py+18<H){s.append(el('text',{x:0,y:py,'font-size':3.6,'font-family':FONT},'れんしゅう：先生や家の人が言った時こくに針を合わせよう。'));
+  ['7じ','3じはん','10じ15ふん','4じ50ぷん','12じ5ふん','8じ35ふん'].forEach((t,i)=>s.append(el('text',{x:(i%3)*62,y:py+8+Math.floor(i/3)*7,'font-size':4,'font-family':FONT,fill:'#333'},'□ '+t)));}
+ $('hint').textContent='厚紙に印刷するか、印刷した紙を工作用紙に貼ってから切ると長持ちします。針の丸い部分と文字盤のまん中に穴をあけ、割りピン（または画びょう＋消しゴム）でとめてください。短い針は、時こくに合わせて数字と数字の間にも動かして「何時半」の位置を確かめましょう。';
+ return [s];}
+function make(){const k=$('kind').value;['kuku','frac','clock'].forEach(n=>$('o-'+n).hidden=n!==k);
+ const pages=k==='kuku'?kuku():k==='frac'?frac():clock();const o=$('out');o.innerHTML='';
+ pages.forEach((p,i)=>o.append(sheet(p,i?'br':'')));}
+$('make').onclick=make;$('kind').onchange=make;make();
+</script>
+</body>
+</html>
