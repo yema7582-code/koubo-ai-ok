@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rETH を使う前の安全チェックリスト（日本の利用者向け・非公式）</title>
+<meta name="description" content="国内取引所で ETH を買ってから rETH を使うまでに確認したい 12 項目。偽サイト・偽トークン、ネットワーク間違い、交換ルートの違い、税金の記録。公式ドキュメント・金融庁・国税庁へのリンクつき。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/rocketpool-ja/reth-checklist.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><a href="./">トップ</a><a href="glossary.html">用語集</a><a href="reth-checklist.html">安全チェックリスト</a><a href="glossary.csv">CSV</a></nav>
+<h1>rETH を使う前の安全チェックリスト</h1>
+<p>日本で暗号資産を始めた人の多くは、金融庁に登録された国内の暗号資産交換業者で ETH を買っています。一方、rETH を扱うには、ETH を自分のウォレットに移し、自分で操作する必要があります。取引所の中にいたときとは違い、ここから先は送金ミスも詐欺の被害も、基本的に自分で防ぐしかありません。始める前に、次の 12 項目を確認してください。</p>
+<p class="note">このチェックリストは安全のための確認項目をまとめたもので、rETH の購入や保有を勧めるものではありません。rETH の価値や報酬は保証されていません。投資・税務の助言ではありません。</p>
+
+<h2>A. 始める前に</h2>
+<ol>
+<li><b>rETH は国内の取引所では扱っていない、という前提で計画する。</b><br>
+金融庁の「<a href="https://www.fsa.go.jp/menkyo/menkyoj/kasoutuka.pdf">暗号資産交換業者登録一覧</a>」（令和 8 年 9 月 30 日現在）の「取り扱う暗号資産」欄に、rETH や RPL は載っていません。そのため「国内取引所で ETH を買う → 自分のウォレットへ送る → ウォレットから交換する」という流れになります。ETH を買う取引所がこの一覧に載っているかも確認しましょう。「代わりに買っておきます」「この海外サイトなら簡単」という誘いには乗らないでください。</li>
+<li><b>まずは Hoodi テストネットで練習する。</b><br>
+公式ドキュメントでは、本物の ETH を使わずに <a href="https://testnet.rocketpool.net/">testnet.rocketpool.net</a> でステーキングを練習する手順が案内されています（<a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">Staking Directly via Rocket Pool</a>、<a href="https://docs.rocketpool.net/en/node-staking/testnet/overview">テスト用 ETH の入手方法</a>）。テストネットで使う ETH には価値がありません。<b>本物の ETH をテストネットに送ると取り戻せません。</b></li>
+<li><b>ウォレットのシードフレーズ（復元用の単語）を守る。</b><br>
+紙に書いてオフラインで保管し、写真やクラウドには残さないこと。シードフレーズを聞いてくる人は、サポート担当を名乗っていても例外なく詐欺です。Ethereum 公式サイトの<a href="https://ethereum.org/ja/security/">セキュリティの基本</a>も一読をおすすめします。</li>
+</ol>
+
+<h2>B. サイトとアドレスを確かめる</h2>
+<ol start="4">
+<li><b>ステーキング画面の URL は自分で確認する。</b><br>
+公式ドキュメントが案内しているのは <code>https://stake.rocketpool.net</code> です。検索広告、SNS の返信、DM で送られてきたリンクからは開かず、ブックマークから開くようにしましょう。</li>
+<li><b>rETH のコントラクトアドレスを公式の一覧と照らし合わせる。</b><br>
+名前や記号が「rETH」でも、偽のトークンは誰でも作れます。ウォレットに追加する前、取引する前に、<a href="https://docs.rocketpool.net/en/protocol/contracts-integrations">公式の Contracts &amp; Integrations</a> と一致するか確認してください。たとえば次のとおりです（参照時点）。
+<ul>
+<li>Ethereum メインネット：<code>0xae78736Cd615f374D3085123A210448E74Fc6393</code></li>
+<li>Arbitrum：<code>0xec70dcb4a1efa46b8f2d97c310c9c4790ba5ffa8</code></li>
+<li>Optimism：<code>0x9bcef72be871e61ed4fbbc7630889bee758eb81d</code></li>
+<li>Base：<code>0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c</code></li>
+</ul>
+「rETH のエアドロップ」「受け取りにはウォレット接続が必要」といった案内は疑ってかかりましょう。</li>
+<li><b>送る前に、ネットワークを確認する。</b><br>
+同じ rETH でも、メインネットと各レイヤー2 ではアドレスが違います。取引所から ETH を出金するときは、出金先のネットワークを取引所が対応しているかを確認し、最初は少額でテスト送金してください。</li>
+</ol>
+
+<h2>C. 交換するとき</h2>
+<ol start="7">
+<li><b>交換ルートの違いを知っておく。</b><br>
+公式ドキュメントによると、ステーキング画面には 2 つのルートがあります（<a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">出典</a>）。
+<ul>
+<li>プロトコル経由：Rocket Pool のコントラクトと直接やり取りします。スリッページはなく、ETH の価値に見合った rETH を受け取れます（0.05% のデポジット手数料を除く）。ガス代がかかり、デポジットプールの上限の影響を受けます。</li>
+<li>CoW Swap 経由（メインネットのみ）：Rocket Pool プロトコルの一部ではない第三者の仕組みです。スリッページや価格への影響などのリスクがあり、注文には期限があります。</li>
+</ul>
+ほかに L1 や <a href="https://docs.rocketpool.net/en/liquid-staking/via-l2">レイヤー2</a> の DEX で買う方法もありますが、手数料とスリッページはそれぞれ違います。</li>
+<li><b>最初は少額で、一連の流れを確かめる。</b><br>
+交換する → ウォレットに rETH が表示される → ETH に戻す、までを少額で試し、ガス代が金額に対して高すぎないか確認してから本番に進みましょう。</li>
+<li><b>承認（approve）の相手と範囲を確認する。</b><br>
+CoW Swap などでは、トークンを動かす許可を最初に与えます。承認する相手のアドレスと金額をウォレットの画面で確かめ、身に覚えのない承認要求には署名しないでください。</li>
+</ol>
+
+<h2>D. 持っているあいだ・戻すとき</h2>
+<ol start="10">
+<li><b>rETH は「枚数が増える」トークンではない。</b><br>
+rETH は保有枚数が変わらず、ETH に対する交換レートが上がっていく仕組みです（レートの更新は約 24 時間ごと／<a href="https://docs.rocketpool.net/en/liquid-staking/overview">出典</a>）。「枚数が毎日増える」「固定で年○％」とうたう勧誘やサイトは、Rocket Pool の仕組みとは別物です。スマートコントラクトのリスクなども含め、価値が保証されているわけではありません。</li>
+<li><b>ETH に戻すときの制約を知っておく。</b><br>
+プロトコル経由で rETH を ETH に戻せるのは、デポジットプールに十分な ETH があるときだけです。足りないときは CoW Swap や DEX を使うことになり、手数料やプレミアムがかかる場合があります（<a href="https://docs.rocketpool.net/en/liquid-staking/overview">出典</a>）。</li>
+</ol>
+
+<h2>E. 税金の記録</h2>
+<ol start="12">
+<li><b>取引の記録を残し、課税関係は国税庁の情報で確認する。</b><br>
+日時、数量、取引ハッシュ、そのときの円換算額を記録しておきましょう。公式ドキュメントも、ETH を rETH に換えることが課税対象になる国があり、各国で扱いが異なると述べています（<a href="https://docs.rocketpool.net/en/liquid-staking/overview#tax-implications">出典</a>）。日本での扱いは、国税庁の<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1524.htm">タックスアンサー No.1524</a> と<a href="https://www.nta.go.jp/publication/pamph/shotoku/kakuteishinkokukankei/kasoutuka/index.htm">「暗号資産等に関する税務上の取扱い及び計算書について」</a>を確認し、判断に迷う場合は税務署や税理士に相談してください。このページでは個別の税務判断は行いません。</li>
+</ol>
+<div class="en"><p><b>English summary.</b> 12-item safety checklist for Japanese users moving from an FSA-registered domestic exchange to self-custody before using rETH: rETH/RPL are not listed in the FSA registry's "crypto-assets handled" column (as of 2026-09-30); practise on Hoodi first; verify stake.rocketpool.net and the official rETH contract addresses per network; understand the protocol route (0.05% deposit fee) vs the third-party CoW Swap route; test with small amounts; check approvals; rETH grows by exchange rate, not balance; protocol unstaking depends on deposit-pool liquidity; keep records and consult the National Tax Agency pages. Not financial or tax advice.</p></div>
+<hr>
+<p><small>出典：Rocket Pool 公式ドキュメント（<a href="https://github.com/rocket-pool/docs.rocketpool.net/tree/cb86b077bc37d35489d6947750a2bbdd9b29e24f">docs.rocketpool.net リポジトリ コミット <code>cb86b077bc37</code></a>、2026-10-29 時点）。本ページは Rocket Pool の公式資料ではなく、コミュニティによる非公式の補助資料です。投資・税務・法律の助言ではありません。<br>
+ライセンス：<a href="https://creativecommons.org/licenses/by/4.0/deed.ja">CC BY 4.0</a>（クレジット表記：中崎 慎二 / Shinji Nakasaki）。誤りの報告：<a href="https://github.com/yema7582-code/koubo-ai-ok/issues">GitHub Issues</a> または <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a></small></p>
+</body></html>

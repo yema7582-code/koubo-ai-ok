@@ -1,0 +1,6 @@
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.8;color:#222}
+h1{font-size:1.4em;line-height:1.4}h2{font-size:1.12em;margin-top:1.6em;border-bottom:1px solid #ddd}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #ccc;padding:5px 7px;vertical-align:top}th{background:#f3f3f3}
+.note{background:#fff8e1;padding:10px 14px;border-radius:8px}.en{background:#f4f7fb;padding:10px 14px;border-radius:8px}
+code{background:#f2f2f2;padding:1px 4px;border-radius:4px;font-size:13px;word-break:break-all}
+li{margin:6px 0}small{color:#555}nav a{margin-right:12px}

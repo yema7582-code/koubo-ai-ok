@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rocket Pool 日英用語集（58 語・出典つき）｜非公式</title>
+<meta name="description" content="rETH、メガプール、ボンド、スムージングプールなど Rocket Pool の用語 58 語を日本語と英語で対照。各語に公式ドキュメントへのリンクつき。CC BY 4.0。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/rocketpool-ja/glossary.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><a href="./">トップ</a><a href="glossary.html">用語集</a><a href="reth-checklist.html">安全チェックリスト</a><a href="glossary.csv">CSV</a></nav>
+<h1>Rocket Pool 日英用語集（58 語）</h1>
+<p>Rocket Pool の英語ドキュメントや Discord、フォーラムで出てくる用語を、日本語の訳語と短い説明つきでまとめました。訳語は、カタカナ語として定着しているものはそのまま使い、意味が伝わりにくいものには補足を添えています。説明の根拠は右端の公式ドキュメント（英語版）です。</p>
+<p class="note">数値（4 ETH、0.05%、5%、9%、28 日など）は、参照時点（docs コミット <code>cb86b077bc37</code>）の公式ドキュメントの記載です。ボンド額やコミッションは pDAO の投票で変わることがあるので、使う前に必ず最新のドキュメントを確認してください。</p>
+<table>
+<thead><tr><th>#</th><th>English</th><th>日本語</th><th>説明</th><th>出典（docs.rocketpool.net/en/）</th></tr></thead>
+<tbody>
+<tr><td>1</td><td lang="en">rETH</td><td>rETH（アールイーサ）</td><td>Rocket Pool に ETH を預けると受け取れるトークン。保有枚数は増えず、ETH に対する交換レートが上がっていく形で報酬が反映される。ERC-20 なので DeFi でも使える。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>2</td><td lang="en">RPL</td><td>RPL（Rocket Pool のプロトコルトークン）</td><td>ガバナンス（pDAO の投票）に使われ、ノードにステークすることもできるトークン。rETH とは別物なので混同しないこと。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>3</td><td lang="en">Liquid staking</td><td>リキッドステーキング</td><td>ETH をステーキングに回しつつ、その持ち分をトークン（rETH）として受け取り、売買や移動ができるようにする仕組み。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>4</td><td lang="en">Staking</td><td>ステーキング</td><td>Beacon Chain 上でバリデーターを作り、維持することで Ethereum の安全性に貢献すること。rETH の保有も Rocket Pool 経由のステーキングにあたる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>5</td><td lang="en">Validator</td><td>バリデーター</td><td>ブロックの正しさを確認・投票し、ときにブロックを提案する Beacon Chain 上の参加者。1 つあたり 32 ETH が必要。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>6</td><td lang="en">Attestation</td><td>アテステーション（証明投票）</td><td>提案されたブロックが正しいことをバリデーターが確認し、投票すること。スケジュールに沿って割り当てられる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>7</td><td lang="en">Beacon Chain / Consensus layer</td><td>ビーコンチェーン／コンセンサスレイヤー</td><td>The Merge 以降の Ethereum で、バリデーターがブロックの正しさを決める側のチェーン。旧称 ETH2。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>8</td><td lang="en">Execution layer</td><td>実行レイヤー（エグゼキューションレイヤー）</td><td>取引データを持つ側のチェーン（旧称 ETH1）。優先手数料や MEV 報酬はこちら側で支払われる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>9</td><td lang="en">Execution client</td><td>実行クライアント</td><td>実行レイヤーを動かすソフトウェア。ノード運用ではコンセンサスクライアントと組み合わせて使う。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>10</td><td lang="en">Consensus client</td><td>コンセンサスクライアント</td><td>コンセンサスレイヤー（Beacon Chain）を動かすソフトウェア。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>11</td><td lang="en">Node</td><td>ノード</td><td>Ethereum のクライアントソフトを動かしているコンピューター。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>12</td><td lang="en">Node operator (NO)</td><td>ノードオペレーター（NO）</td><td>Rocket Pool のソフトとバリデーターを自分のマシンで動かし、ETH をボンドとして預ける人。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>13</td><td lang="en">Smart Node</td><td>Smart Node（スマートノード）</td><td>Rocket Pool のノード運用ソフト一式。インストール・設定・CLI 操作のガイドは公式ドキュメントにある。</td><td><a href="https://docs.rocketpool.net/en/node-staking/megapools/overview">node-staking/megapools/overview</a></td></tr>
+<tr><td>14</td><td lang="en">Node wallet</td><td>ノードウォレット</td><td>Smart Node 上で作成・読み込みするウォレット。コントラクト操作のガス代などに使う。ニーモニックの保管が最重要。</td><td><a href="https://docs.rocketpool.net/en/node-staking/prepare-node">node-staking/prepare-node</a></td></tr>
+<tr><td>15</td><td lang="en">Primary withdrawal address</td><td>プライマリ引き出しアドレス</td><td>報酬の請求やバリデーター終了時に ETH・RPL が送られるアドレス。初期値はノードウォレットだが、ハードウェアウォレットなどコールドウォレットで管理する別アドレスへの変更が強く推奨されている。</td><td><a href="https://docs.rocketpool.net/en/node-staking/prepare-node">node-staking/prepare-node</a></td></tr>
+<tr><td>16</td><td lang="en">RPL withdrawal address</td><td>RPL 引き出しアドレス</td><td>RPL の受け取り先を ETH 側と分けたい場合に設定する、別の引き出しアドレス。</td><td><a href="https://docs.rocketpool.net/en/node-staking/prepare-node">node-staking/prepare-node</a></td></tr>
+<tr><td>17</td><td lang="en">Megapool</td><td>メガプール</td><td>Saturn 1 で導入された、ノードオペレーターごとに 1 つのスマートコントラクト。複数のバリデーターの引き出しアドレスを兼ねる。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>18</td><td lang="en">Megapool validator</td><td>メガプール・バリデーター</td><td>メガプールの下で作られるバリデーター。Beacon Chain から見ると通常のバリデーターと同じ。</td><td><a href="https://docs.rocketpool.net/en/node-staking/megapools/overview">node-staking/megapools/overview</a></td></tr>
+<tr><td>19</td><td lang="en">Minipool</td><td>ミニプール（旧方式）</td><td>Saturn 1 以前の方式で、バリデーター 1 つにつき 1 つのコントラクトを使っていた。新規作成はできず、メガプールへの移行ガイドがある。</td><td><a href="https://docs.rocketpool.net/en/protocol/faq">protocol/faq</a></td></tr>
+<tr><td>20</td><td lang="en">Bond / bonded ETH</td><td>ボンド（ノードオペレーターが預ける ETH）</td><td>バリデーター 1 つにつきノードオペレーターが自分で預ける ETH。Saturn 1 時点では 4 ETH。pDAO が変更できるパラメーター。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>21</td><td lang="en">Borrowed ETH</td><td>プールから割り当てられる ETH（borrowed ETH）</td><td>ボンドと組み合わせて 32 ETH にするため、rETH 保有者の預け入れから割り当てられる ETH。4 ETH ボンドの場合は 28 ETH。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>22</td><td lang="en">Bond curve (Saturn 2, planned)</td><td>ボンドカーブ（Saturn 2 で計画中）</td><td>最初の 2 バリデーターは 4 ETH、それ以降は 1.5 ETH とする計画（RPIP-42）。まだ計画段階である点に注意。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>23</td><td lang="en">Deposit pool</td><td>デポジットプール</td><td>rETH と交換で預けられた ETH が、ノードオペレーターに割り当てられるまで待機している場所。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>24</td><td lang="en">Staking pool</td><td>ステーキングプール</td><td>複数の ETH 保有者の資金を合わせてバリデーターを動かす仕組み。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>25</td><td lang="en">Deposit fee</td><td>デポジット手数料</td><td>プロトコル経由で ETH を rETH に換えるときにかかる手数料。執筆時点のドキュメントでは 0.05%。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>26</td><td lang="en">rETH:ETH exchange rate</td><td>rETH と ETH の交換レート</td><td>1 rETH が何 ETH にあたるかを示すレート。ドキュメントによれば約 24 時間ごとに更新される。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>27</td><td lang="en">Protocol route</td><td>プロトコル経由（Protocol Route）</td><td>Rocket Pool のコントラクトと直接やり取りして ETH⇄rETH を交換する方法。スリッページはないが、ガス代とプールの残量に左右される。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>28</td><td lang="en">CoW Swap route</td><td>CoW Swap 経由</td><td>ステーキング画面から選べる、外部のアグリゲーター CoW Swap を使う方法（メインネットのみ）。Rocket Pool プロトコルの一部ではなく、第三者のリスクがある。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>29</td><td lang="en">WETH (Wrapped ETH)</td><td>WETH（ラップド ETH）</td><td>ETH を ERC-20 形式にしたトークン。1 WETH = 1 ETH。CoW Swap 経由では自動でラップ／アンラップされる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>30</td><td lang="en">Slippage</td><td>スリッページ</td><td>注文時の想定価格と実際の約定価格のずれ。DEX や CoW Swap を使うときに発生しうる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>31</td><td lang="en">Gas fee</td><td>ガス代</td><td>Ethereum 上で取引を実行するために支払う手数料。少額のステーキングでは割高になりやすい。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>32</td><td lang="en">Token approval</td><td>トークンの承認（approve）</td><td>コントラクトに自分のトークンを動かす許可を与える操作。CoW Swap などで初回に必要になる。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-rp">liquid-staking/via-rp</a></td></tr>
+<tr><td>33</td><td lang="en">DEX (decentralized exchange)</td><td>分散型取引所（DEX）</td><td>Balancer や Uniswap のように、ウォレットから直接トークンを交換できる取引所。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-l1">liquid-staking/via-l1</a></td></tr>
+<tr><td>34</td><td lang="en">Layer 2 (L2)</td><td>レイヤー2（L2）</td><td>Arbitrum や Optimism など、Ethereum 上に構築された別のネットワーク。手数料は安いが、ブリッジなど追加の手順が必要。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-l2">liquid-staking/via-l2</a></td></tr>
+<tr><td>35</td><td lang="en">Bridge</td><td>ブリッジ</td><td>トークンをメインネットと L2 などのネットワーク間で移す仕組み。偽サイトや送り先ネットワークの間違いに注意。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/via-l2">liquid-staking/via-l2</a></td></tr>
+<tr><td>36</td><td lang="en">Hoodi testnet</td><td>Hoodi テストネット</td><td>本物の ETH を使わずに練習できるテスト用ネットワーク。rETH のステーキング練習は testnet.rocketpool.net で行う。</td><td><a href="https://docs.rocketpool.net/en/node-staking/testnet/overview">node-staking/testnet/overview</a></td></tr>
+<tr><td>37</td><td lang="en">Faucet</td><td>フォーセット</td><td>テストネット用の ETH（価値はない）を配布するサービス。</td><td><a href="https://docs.rocketpool.net/en/node-staking/testnet/overview">node-staking/testnet/overview</a></td></tr>
+<tr><td>38</td><td lang="en">Oracle DAO (oDAO)</td><td>オラクル DAO（oDAO）</td><td>Beacon Chain の情報（報酬の合計など）を実行レイヤーに中継するオラクルノードの集まり。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>39</td><td lang="en">Protocol DAO (pDAO)</td><td>プロトコル DAO（pDAO）</td><td>RPL 保有者で構成される DAO。コミッションやボンド額などのパラメーターを投票で決める。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>40</td><td lang="en">RPIP</td><td>RPIP（Rocket Pool 改善提案）</td><td>Rocket Pool の仕様変更を提案・記録する文書。rpips.rocketpool.net で公開されている。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>41</td><td lang="en">Saturn 0</td><td>Saturn 0</td><td>2024 年 10 月 28 日にデプロイされたアップグレード。ETH だけで作れるミニプールを可能にし、RPL の 10% 担保要件を撤廃した。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>42</td><td lang="en">Saturn 1</td><td>Saturn 1</td><td>メガプール、4 ETH ボンド、UARS などを導入したアップグレード。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>43</td><td lang="en">UARS (Universal Adjustable Revenue Split)</td><td>UARS（調整可能な収益配分）</td><td>プロトコルの ETH 収益を、ノードオペレーター、RPL ステーカー、トレジャリー、rETH 保有者の間で分ける仕組み。各割合は pDAO が変更できる。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>44</td><td lang="en">Base commission</td><td>基本コミッション</td><td>メガプールのノードオペレーター全員に支払われる分。Saturn 1 開始時点では 5%。</td><td><a href="https://docs.rocketpool.net/en/protocol/faq">protocol/faq</a></td></tr>
+<tr><td>45</td><td lang="en">Voter share</td><td>ボーターシェア（投票者シェア）</td><td>メガプールに RPL をステークしているノードオペレーターに、ステーク量に応じて配分される分。Saturn 1 開始時点では 9%。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>46</td><td lang="en">Node commission</td><td>ノードコミッション</td><td>通常のステーカーが受け取る報酬から差し引かれ、ノードオペレーターに支払われる ETH。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>47</td><td lang="en">Smoothing Pool</td><td>スムージングプール</td><td>参加したノードの優先手数料などをまとめ、報酬期間ごとに参加者と rETH 側に均して配分する任意参加のコントラクト。</td><td><a href="https://docs.rocketpool.net/en/node-staking/fee-distrib-sp">node-staking/fee-distrib-sp</a></td></tr>
+<tr><td>48</td><td lang="en">Fee recipient</td><td>フィー受取先（Fee Recipient）</td><td>ブロック提案時の優先手数料や MEV 報酬を受け取る実行レイヤーのアドレス。</td><td><a href="https://docs.rocketpool.net/en/node-staking/fee-distrib-sp">node-staking/fee-distrib-sp</a></td></tr>
+<tr><td>49</td><td lang="en">Fee distributor</td><td>フィーディストリビューター</td><td>ノードごとに作られる手数料受取用コントラクト。たまった優先手数料を rETH 側とノードの引き出しアドレスに分配する。分配は誰でも実行できる。</td><td><a href="https://docs.rocketpool.net/en/node-staking/fee-distrib-sp">node-staking/fee-distrib-sp</a></td></tr>
+<tr><td>50</td><td lang="en">Priority fee</td><td>優先手数料（プライオリティフィー）</td><td>ブロックに取引を入れてもらうために支払われるチップ。ブロック提案者が受け取る。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>51</td><td lang="en">MEV reward</td><td>MEV 報酬</td><td>ブロックビルダーが作ったブロックを提案したときに、ビルダーから支払われる追加のチップ。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>52</td><td lang="en">Rewards interval / checkpoint</td><td>報酬期間／チェックポイント</td><td>RPL やスムージングプールの報酬を計算する区切り。メインネットでは現在 28 日ごと。</td><td><a href="https://docs.rocketpool.net/en/node-staking/rewards">node-staking/rewards</a></td></tr>
+<tr><td>53</td><td lang="en">Skimming</td><td>スキミング</td><td>Beacon Chain 上の報酬が、引き出し先の実行レイヤーアドレスに定期的に自動送金されること（Shapella 以降）。</td><td><a href="https://docs.rocketpool.net/en/liquid-staking/overview">liquid-staking/overview</a></td></tr>
+<tr><td>54</td><td lang="en">Express queue / ticket</td><td>エクスプレスキュー／チケット</td><td>バリデーター作成の待ち行列のうち、チケットを使って早く処理される方の列。</td><td><a href="https://docs.rocketpool.net/en/upgrades/saturn-1/whats-new">upgrades/saturn-1/whats-new</a></td></tr>
+<tr><td>55</td><td lang="en">Deposit credit</td><td>デポジットクレジット</td><td>不要になったボンドの ETH などを記録するクレジット。そのまま ETH として戻ってくるのではなく、同額の rETH と交換するか、新しいバリデーターの作成に使う。</td><td><a href="https://docs.rocketpool.net/en/node-staking/megapools/credit">node-staking/megapools/credit</a></td></tr>
+<tr><td>56</td><td lang="en">Fallback client</td><td>フォールバッククライアント</td><td>メインのクライアントが止まったときに代わりに使う予備のクライアント（任意）。</td><td><a href="https://docs.rocketpool.net/en/node-staking/fallback">node-staking/fallback</a></td></tr>
+<tr><td>57</td><td lang="en">Non-custodial</td><td>ノンカストディアル</td><td>サービス側が利用者の鍵を預からない形態。Rocket Pool はノンカストディアルなステーキングサービス。</td><td><a href="https://docs.rocketpool.net/en/protocol/glossary">protocol/glossary</a></td></tr>
+<tr><td>58</td><td lang="en">Exit (megapool validator)</td><td>イグジット（バリデーターの終了）</td><td>バリデーターの運用を終えて Beacon Chain から資金を引き出す手続き。</td><td><a href="https://docs.rocketpool.net/en/node-staking/megapools/exit-megapool-validator">node-staking/megapools/exit-megapool-validator</a></td></tr></tbody></table>
+<p><small>English: JA↔EN glossary of 58 Rocket Pool terms. Each definition is a short Japanese paraphrase of the linked official English docs page. Machine-readable version: <a href="glossary.csv">glossary.csv</a> (UTF-8).</small></p>
+<hr>
+<p><small>出典：Rocket Pool 公式ドキュメント（<a href="https://github.com/rocket-pool/docs.rocketpool.net/tree/cb86b077bc37d35489d6947750a2bbdd9b29e24f">docs.rocketpool.net リポジトリ コミット <code>cb86b077bc37</code></a>、2026-10-29 時点）。本ページは Rocket Pool の公式資料ではなく、コミュニティによる非公式の補助資料です。投資・税務・法律の助言ではありません。<br>
+ライセンス：<a href="https://creativecommons.org/licenses/by/4.0/deed.ja">CC BY 4.0</a>（クレジット表記：中崎 慎二 / Shinji Nakasaki）。誤りの報告：<a href="https://github.com/yema7582-code/koubo-ai-ok/issues">GitHub Issues</a> または <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a></small></p>
+</body></html>
