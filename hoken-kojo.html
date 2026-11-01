@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>令和8年分 年末調整 生命保険料控除・地震保険料控除 計算（23歳未満の扶養親族の特例対応）｜無料</title>
+<meta name="description" content="令和8年分の年末調整・確定申告向けに、生命保険料控除（一般・介護医療・個人年金、新旧制度）と地震保険料控除を計算する無料ツール。令和8年から始まった23歳未満の扶養親族がいる場合の一般生命保険料控除の特例（最高6万円）に対応。住民税の控除額も目安として表示します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/hoken-kojo.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+input[type=number]{width:9em;font-size:1em;text-align:right}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+td.n{text-align:right;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.tot{font-weight:bold;background:#eef6ee}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>令和8年分 生命保険料控除・地震保険料控除 計算</h1>
+<p>保険会社から届いた「控除証明書」の<b>年間（または申告額）の保険料</b>を区分ごとに合計して入れると、年末調整の「保険料控除申告書」に書く控除額を計算します。<b>令和8年分から始まった「23歳未満の扶養親族がいる場合の特例」</b>（新制度の一般生命保険料控除が最高6万円）にも対応しています。入力はこのブラウザの中だけで計算し、どこにも送信しません。</p>
+
+<div class="box">
+<h2>生命保険料（区分ごとの合計額・円）</h2>
+<table>
+<tr><th>区分</th><th>新制度（平成24年以降の契約）</th><th>旧制度（平成23年以前の契約）</th></tr>
+<tr><td>一般の生命保険料</td><td><input type="number" id="gn" min="0" step="1"></td><td><input type="number" id="go" min="0" step="1"></td></tr>
+<tr><td>介護医療保険料</td><td><input type="number" id="kn" min="0" step="1"></td><td><small>旧制度の区分はありません</small></td></tr>
+<tr><td>個人年金保険料</td><td><input type="number" id="pn" min="0" step="1"></td><td><input type="number" id="po" min="0" step="1"></td></tr>
+</table>
+<p><label><input type="checkbox" id="u23"> 23歳未満の扶養親族（その年12月31日時点）がいる <small>（令和8・9年分の所得税だけの特例。夫婦の両方が使えます）</small></label></p>
+<h2>地震保険料（合計額・円）</h2>
+<table>
+<tr><td>地震保険料</td><td><input type="number" id="eq" min="0" step="1"></td></tr>
+<tr><td>旧長期損害保険料 <small>（平成18年末までに結んだ10年以上の契約などで、平成19年以降に契約変更していないもの）</small></td><td><input type="number" id="lt" min="0" step="1"></td></tr>
+</table>
+<p><small>1つの契約で地震保険料と旧長期損害保険料の両方に当てはまる場合は、どちらか一方を選んで入れてください。</small></p>
+</div>
+
+<div class="box" id="out"></div>
+
+<div class="note">
+<b>計算のしかた（国税庁「年末調整のしかた 令和8年版」・タックスアンサーNo.1140、No.1145による）</b><br>
+・新制度（計算式Ⅰ）：2万円以下は全額、4万円以下は 保険料×1/2＋1万円、8万円以下は ×1/4＋2万円、それを超えると4万円。<br>
+・23歳未満の扶養親族がいる場合の新生命保険料（計算式Ⅱ）：3万円以下は全額、6万円以下は ×1/2＋1.5万円、12万円以下は ×1/4＋3万円、それを超えると6万円。<br>
+・旧制度（計算式Ⅲ）：2.5万円以下は全額、5万円以下は ×1/2＋1.25万円、10万円以下は ×1/4＋2.5万円、それを超えると5万円。<br>
+・新と旧の両方があるときは「新だけ」「旧だけ」「新＋旧（上限4万円、特例は一般のみ6万円）」のうち一番大きい額。3区分の合計は最高12万円です。1円未満の端数は切り上げます。<br>
+・地震保険料控除：地震保険料は5万円まで全額。旧長期損害保険料は1万円以下は全額、2万円以下は ×1/2＋5千円、それを超えると1.5万円。合わせて最高5万円です。<br>
+・住民税の控除額は目安です（特例は所得税だけで、住民税の計算は変わりません）。<br>
+・保険料は、その年に実際に払った額から剰余金・割戻金を引いた額を区分ごとに合計します。10月ごろの証明書の「申告額」は12月までの見込み額のことがあります。<br>
+・23歳未満の扶養親族には所得の要件があります。申告書の裏面の注意書きを確認してください。<br>
+最終的な判断は勤務先・税務署の案内に従ってください。このツールは税務相談ではありません。<a href="gensen-calc.html">フリーランス源泉徴収税額計算</a>、<a href="keihi-check.html">経費・請求書CSVチェッカー</a>もあります。
+</div>
+
+<script>
+const ceil=x=>Math.ceil(x-1e-9);
+function f1(x){if(x<=0)return 0;if(x<=20000)return x;if(x<=40000)return ceil(x/2+10000);if(x<=80000)return ceil(x/4+20000);return 40000}
+function f2(x){if(x<=0)return 0;if(x<=30000)return x;if(x<=60000)return ceil(x/2+15000);if(x<=120000)return ceil(x/4+30000);return 60000}
+function f3(x){if(x<=0)return 0;if(x<=25000)return x;if(x<=50000)return ceil(x/2+12500);if(x<=100000)return ceil(x/4+25000);return 50000}
+// 住民税
+function r1(x){if(x<=0)return 0;if(x<=12000)return x;if(x<=32000)return ceil(x/2+6000);if(x<=56000)return ceil(x/4+14000);return 28000}
+function r3(x){if(x<=0)return 0;if(x<=15000)return x;if(x<=40000)return ceil(x/2+7500);if(x<=70000)return ceil(x/4+17500);return 35000}
+function pick(n,o,fn,fo,cap){
+  if(n>0&&o>0){const a=fn(n),b=fo(o),c=Math.min(a+b,cap);const m=Math.max(a,b,c);return {v:m,how:m===c&&c>Math.max(a,b)?'新＋旧の合算':(m===b&&b>=a?'旧制度のみ':'新制度のみ')}}
+  if(n>0)return {v:fn(n),how:'新制度'};if(o>0)return {v:fo(o),how:'旧制度'};return {v:0,how:'-'}}
+function calc(v){
+  const u=v.u23;
+  const g=pick(v.gn,v.go,u?f2:f1,f3,u?60000:40000);
+  const k={v:f1(v.kn),how:v.kn>0?'新制度':'-'};
+  const p=pick(v.pn,v.po,f1,f3,40000);
+  const life=Math.min(g.v+k.v+p.v,120000);
+  const eqA=Math.min(v.eq,50000);
+  const lt=v.lt<=0?0:v.lt<=10000?v.lt:v.lt<=20000?ceil(v.lt/2+5000):15000;
+  const quake=Math.min(eqA+lt,50000);
+  const rg=pick(v.gn,v.go,r1,r3,28000),rk=r1(v.kn),rp=pick(v.pn,v.po,r1,r3,28000);
+  const rlife=Math.min(rg.v+rk+rp.v,70000);
+  const reqA=Math.min(ceil(v.eq/2),25000);
+  const rlt=v.lt<=0?0:v.lt<=5000?v.lt:v.lt<=15000?ceil(v.lt/2+2500):10000;
+  const rquake=Math.min(reqA+rlt,25000);
+  return {g,k,p,life,eqA,lt,quake,rlife,rquake}
+}
+if(typeof module!=='undefined')module.exports={calc,f1,f2,f3};
+if(typeof document!=='undefined'){
+const ids=['gn','go','kn','pn','po','eq','lt'];
+const yen=x=>x.toLocaleString('ja-JP')+' 円';
+function run(){
+  const v={u23:document.getElementById('u23').checked};
+  ids.forEach(i=>{const n=Math.floor(Number(document.getElementById(i).value)||0);v[i]=n>0?n:0});
+  const r=calc(v);
+  document.getElementById('out').innerHTML='<h2>計算結果（所得税・年末調整）</h2><table>'+
+  `<tr><td>一般の生命保険料控除${v.u23?'（特例適用）':''}</td><td class="n">${yen(r.g.v)}</td><td>${r.g.how}</td></tr>`+
+  `<tr><td>介護医療保険料控除</td><td class="n">${yen(r.k.v)}</td><td>${r.k.how}</td></tr>`+
+  `<tr><td>個人年金保険料控除</td><td class="n">${yen(r.p.v)}</td><td>${r.p.how}</td></tr>`+
+  `<tr class="tot"><td>生命保険料控除 合計（最高12万円）</td><td class="n">${yen(r.life)}</td><td></td></tr>`+
+  `<tr><td>地震保険料分 / 旧長期損害保険料分</td><td class="n">${yen(r.eqA)} / ${yen(r.lt)}</td><td></td></tr>`+
+  `<tr class="tot"><td>地震保険料控除（最高5万円）</td><td class="n">${yen(r.quake)}</td><td></td></tr>`+
+  '</table><h2>住民税の控除額（目安）</h2><table>'+
+  `<tr><td>生命保険料控除（最高7万円）</td><td class="n">${yen(r.rlife)}</td></tr>`+
+  `<tr><td>地震保険料控除（最高2.5万円）</td><td class="n">${yen(r.rquake)}</td></tr></table>`;
+}
+ids.concat(['u23']).forEach(i=>document.getElementById(i).addEventListener('input',run));run();}
+</script>
+</body>
+</html>
