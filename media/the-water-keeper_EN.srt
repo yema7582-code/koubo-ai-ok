@@ -1,0 +1,107 @@
+1
+00:00:04,500 --> 00:00:06,933
+Starting log.
+
+2
+00:00:07,383 --> 00:00:10,328
+April, 2039.
+
+3
+00:00:10,778 --> 00:00:19,025
+I am SZ-7, a water-management drone.
+In this valley they call me "Shizuku" (Droplet).
+
+4
+00:00:21,517 --> 00:00:29,753
+There are 120 terraced paddies in this valley.
+Fourteen years ago, thirty people looked after them.
+
+5
+00:00:30,203 --> 00:00:32,370
+Now there is one.
+
+6
+00:00:35,267 --> 00:00:39,930
+A machine, keeping the water? Don't make me laugh.
+
+7
+00:00:40,380 --> 00:00:46,376
+Shigeru, 82.
+The last water-keeper in this valley.
+
+8
+00:00:48,492 --> 00:00:58,733
+By my calculation, the right answer was to send
+the water to the paddies with the highest yield.
+
+9
+00:00:59,183 --> 00:01:07,056
+No. Water goes from the top down, a little to each.
+
+10
+00:01:07,506 --> 00:01:12,350
+If the top gets greedy, the bottom dries up.
+
+11
+00:01:16,258 --> 00:01:22,222
+After that, I walked the ridges with Shigeru every morning.
+
+12
+00:01:22,672 --> 00:01:29,361
+Move a single stone at the inlet, and the flow changes.
+
+13
+00:01:29,811 --> 00:01:37,994
+When the frogs go quiet, rain is coming.
+None of it was in my data.
+
+14
+00:01:42,292 --> 00:01:45,824
+September. A typhoon came.
+
+15
+00:01:46,274 --> 00:01:52,537
+The forecast model told me to open every inlet.
+
+16
+00:01:52,987 --> 00:02:02,535
+Close just the top one.
+If that one breaks, everything below goes with it.
+
+17
+00:02:02,985 --> 00:02:10,645
+The model had no such answer.
+I trusted Shigeru.
+
+18
+00:02:14,942 --> 00:02:21,450
+Morning. Of the 120 paddies,
+zero had collapsed.
+
+19
+00:02:24,133 --> 00:02:30,289
+Shizuku. You've become a fine water-keeper.
+
+20
+00:02:33,192 --> 00:02:40,724
+The next spring, children from the town
+started coming to help plant the rice.
+
+21
+00:02:41,174 --> 00:02:50,626
+Water goes from the top down, a little to each.
+If the top gets greedy, the bottom dries up.
+
+22
+00:02:51,076 --> 00:02:57,787
+Everything I can teach them,
+I learned from Shigeru.
+
+23
+00:03:00,100 --> 00:03:09,669
+2040. This valley's water-keepers are now
+one person, one drone, and twelve children.
+
+24
+00:03:10,119 --> 00:03:12,723
+Ending log.
