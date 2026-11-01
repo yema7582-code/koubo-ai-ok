@@ -59,7 +59,7 @@ $('run').onclick=()=>{
  const strong=['ノークレーム','ノーリターン','NCNR','即購入禁止','即購入不可','値下げ不可','値下げ交渉不可','プロフ必読','神経質な方','すり替え'];
  strong.forEach(w=>{if(all.includes(w)) warn.push(`「${w}」は強い印象を与えます。理由を具体的に書くか、やわらかい表現にすると購入されやすくなります。`)});
  if(/(新品|未使用)/.test(t)&&/(使用感|傷|キズ|汚れ|数回使用|使用しました)/.test(d)) ng.push('タイトルは「新品・未使用」ですが、説明に使用や傷の記述があります。状態の表記をそろえてください。');
- const sym=(t.match(/[★☆◆◇■□●○◎※♪!！【】]/g)||[]).length + (t.match(/\p{Extended_Pictographic}/gu)||[]).length;
+ const sym=(t.match(/[★☆◆◇■□●○◎※♪!！【】]|\p{Extended_Pictographic}/gu)||[]).length;
  if(sym>4) warn.push(`タイトルに記号・絵文字が${sym}個あります。検索に使われる言葉に文字数を回したほうが見つかりやすくなります。`);
  const words=t.split(/[\s　/／・,、]+/).filter(w=>len(w)>=2); const dup=[...new Set(words.filter((w,i)=>words.indexOf(w)!==i))];
  if(dup.length) warn.push('タイトルで同じ言葉が繰り返されています：'+dup.map(esc).join('、'));
