@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アンケート クロス集計・カイ二乗検定ツール｜CSVを読み込むだけで無料・ブラウザ内で集計</title>
+<meta name="description" content="アンケート結果のCSV（Googleフォーム・Excel書き出し、Shift_JIS可）を読み込み、2つの設問のクロス集計表（件数・行%・列%）、カイ二乗検定のp値、クラメールのV、残差分析（有意に多い・少ないセル）を出す無料ツール。複数回答・ウエイト列にも対応。データは外部に送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/cross-tab.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;height:11em;font-size:.95em}select,input{font-size:1em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{background:#ffecec;padding:8px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;font-size:.9em;margin:8px 0}td,th{border:1px solid #ccc;padding:4px 8px}td.n{text-align:right;white-space:nowrap}
+td.hi{background:#dcecff}td.lo{background:#ffe3e3}
+button{font-size:1em;padding:6px 14px}label{margin-right:12px}
+</style>
+</head>
+<body>
+<h1>アンケート クロス集計・カイ二乗検定ツール</h1>
+<p>「年代によって満足度は違うのか」「男女で選ばれた理由に差はあるのか」を、CSVを読み込むだけで確かめるためのツールです。2つの設問を選ぶと、クロス集計表（件数・行％・列％）、<b>カイ二乗検定のp値</b>、関連の強さ（クラメールのV）、<b>残差分析で「有意に多い／少ない」セル</b>を色分けして出します。<strong>計算はすべてこのブラウザ内で行い、データはどこにも送信しません。</strong></p>
+
+<div class="box">
+<p><input type="file" id="f" accept=".csv,.tsv,.txt">（UTF-8・Shift_JIS 自動判別）または下に貼り付け（1行目は見出し行、カンマかタブ区切り）</p>
+<textarea id="t" placeholder="年代,性別,満足度,選んだ理由
+20代,女性,満足,価格;立地
+30代,男性,やや不満,品ぞろえ
+..."></textarea>
+<p>表側（行）：<select id="rv"></select>　表頭（列）：<select id="cv"></select>　ウエイト列（任意）：<select id="wv"><option value="">なし</option></select></p>
+<p><label><input type="checkbox" id="ma"> 表頭は複数回答（区切り文字 <input id="sep" size="3" value=";、,/">のどれかで区切る）</label></p>
+<p><label><input type="checkbox" id="dropna" checked> 空欄・無回答を除く</label>
+<label>表示：<select id="pct"><option value="row">行％（横100％）</option><option value="col">列％（縦100％）</option><option value="n">件数のみ</option></select></label></p>
+<p>選択肢の並び順（任意・読点区切り、例「満足、やや満足、どちらでもない、やや不満、不満」）：<br><input id="order" style="width:100%"></p>
+<p><button id="go">集計する</button> <button id="dl" disabled>結果をCSVで保存（Excel用）</button></p>
+</div>
+<div id="out"></div>
+
+<div class="note">
+<p><b>読み方</b>：p値が0.05未満なら「2つの設問は無関係」とは言いにくい（関連がある可能性が高い）という意味です。どのセルが差を生んでいるかは色で示します（青＝期待より有意に多い、赤＝有意に少ない。調整済み残差の絶対値が1.96以上＝5％水準、2.58以上は▲▼を2つ）。クラメールのVは0.1前後で弱い、0.3前後で中くらい、0.5以上で強い関連の目安です。</p>
+<p><b>注意</b>：期待度数が5未満のセルが2割を超えると検定の精度が落ちるので、警告を出します。その場合は選択肢をまとめる（例「やや満足」と「満足」）か、件数を増やしてください。複数回答の表頭は1人が複数列に入るため、カイ二乗検定は行わず、割合と各選択肢ごとの2×2検定（その選択肢を選んだか否か）を参考値として出します。必要な回答数の見積もりは<a href="sample-size.html">サンプルサイズ・誤差計算</a>、自由記述は<a href="jiyu-kaito.html">自由回答 集計ツール</a>、列の並べ替えや文字コード変換は<a href="csv-henkan.html">CSV列変換ツール</a>をどうぞ。</p>
+<p>アンケートの設計、集計・クロス分析、報告書づくり、日本語・英語・中国語の調査票翻訳のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ（中崎）。</p>
+</div>
+<p><a href="./">← AI利用OKの公募まとめ・無料ツール一覧へ</a></p>
+
+<script>
+function parseCSV(s){s=s.replace(/^\uFEFF/,'');const first=(s.split('\n')[0]||'');const d=(first.split('\t').length>first.split(',').length)?'\t':',';const rows=[];let r=[],f='',q=false;for(let i=0;i<s.length;i++){const c=s[i];if(q){if(c=='"'){if(s[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else{if(c=='"'&&f==='')q=true;else if(c==d){r.push(f);f=''}else if(c=='\n'){r.push(f);rows.push(r);r=[];f=''}else if(c!='\r')f+=c}}if(f!==''||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()!==''))}
+// regularized upper incomplete gamma Q(a,x)
+function lnGamma(z){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(z<0.5)return Math.log(Math.PI/Math.sin(Math.PI*z))-lnGamma(1-z);z-=1;let x=c[0];for(let i=1;i<g+2;i++)x+=c[i]/(z+i);const t=z+g+0.5;return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x)}
+function gammaQ(a,x){if(x<=0)return 1;if(x<a+1){let s=1/a,t=s;for(let n=1;n<500;n++){t*=x/(a+n);s+=t;if(Math.abs(t)<Math.abs(s)*1e-15)break}return Math.max(0,1-s*Math.exp(-x+a*Math.log(x)-lnGamma(a)))}let b=x+1-a,c=1/1e-300,d=1/b,h=d;for(let i=1;i<500;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-15)break}return Math.min(1,Math.exp(-x+a*Math.log(x)-lnGamma(a))*h)}
+function chiP(x2,df){return gammaQ(df/2,x2/2)}
+function chiTest(M){const R=M.length,C=M[0].length;const rs=M.map(r=>r.reduce((a,b)=>a+b,0)),cs=M[0].map((_,j)=>M.reduce((a,r)=>a+r[j],0)),N=rs.reduce((a,b)=>a+b,0);let x2=0,small=0,cells=0,minE=Infinity;const E=[],Z=[];for(let i=0;i<R;i++){E.push([]);Z.push([]);for(let j=0;j<C;j++){const e=rs[i]*cs[j]/N;E[i].push(e);cells++;if(e<5)small++;minE=Math.min(minE,e);x2+=e>0?(M[i][j]-e)**2/e:0;const v=e*(1-rs[i]/N)*(1-cs[j]/N);Z[i].push(v>0?(M[i][j]-e)/Math.sqrt(v):0)}}const df=(R-1)*(C-1);return{x2,df,p:df>0?chiP(x2,df):1,V:df>0&&N>0?Math.sqrt(x2/(N*Math.min(R-1,C-1))):0,E,Z,rs,cs,N,smallShare:small/cells,minE}}
+let data=[],lastCSV='';
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function load(){data=parseCSV(document.getElementById('t').value);const h=data[0]||[];['rv','cv','wv'].forEach(id=>{const s=document.getElementById(id);s.innerHTML=id=='wv'?'<option value="">なし</option>':'';h.forEach((x,i)=>s.add(new Option(x||('列'+(i+1)),i)))});if(h.length>1)document.getElementById('cv').value=1}
+document.getElementById('t').addEventListener('input',load);
+document.getElementById('f').addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const s=rd.result;if(s.includes('\uFFFD')){const r2=new FileReader();r2.onload=()=>{document.getElementById('t').value=r2.result;load()};r2.readAsText(file,'shift_jis');return}document.getElementById('t').value=s;load()};rd.readAsText(file,'utf-8')});
+const NA=/^(|無回答|未回答|n\/a|na|-|ー|－)$/i;
+function norm(v){return (v||'').normalize('NFKC').trim()}
+function sortCats(cats,order){const o=order.split(/[、,，]/).map(norm).filter(Boolean);return cats.sort((a,b)=>{const ia=o.indexOf(a),ib=o.indexOf(b);if(ia>=0||ib>=0)return(ia<0?1e9:ia)-(ib<0?1e9:ib);return a.localeCompare(b,'ja',{numeric:true})})}
+function fmtP(p){return p<0.001?'p < 0.001':'p = '+p.toFixed(3)}
+function mark(z){return z>=2.58?' ▲▲':z>=1.96?' ▲':z<=-2.58?' ▼▼':z<=-1.96?' ▼':''}
+function q(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function run(){if(!data.length)load();if(data.length<2){document.getElementById('out').innerHTML='<p class="warn">データが読み込めていません。</p>';return}
+const ri=+document.getElementById('rv').value,ci=+document.getElementById('cv').value,wv=document.getElementById('wv').value,wi=wv===''?-1:+wv;
+const ma=document.getElementById('ma').checked,dropna=document.getElementById('dropna').checked,mode=document.getElementById('pct').value,order=document.getElementById('order').value;
+const sepChars=document.getElementById('sep').value.replace(/\s/g,'')||';';const sepRe=new RegExp('['+sepChars.replace(/[\]\\^-]/g,'\\$&')+']');
+const H=data[0];const recs=[];let badW=0,skipped=0;
+data.slice(1).forEach(r=>{let a=norm(r[ri]),b=norm(r[ci]);let w=1;if(wi>=0){w=parseFloat(norm(r[wi]).replace(/,/g,''));if(!(w>=0)){badW++;return}}
+if(NA.test(a)){if(dropna){skipped++;return}a='(無回答)'}
+let bs=ma?b.split(sepRe).map(norm).filter(x=>!NA.test(x)):[b];bs=[...new Set(bs)];
+if(!bs.length||(!ma&&NA.test(b))){if(dropna){skipped++;return}bs=['(無回答)']}
+recs.push({a,bs,w})});
+if(!recs.length){document.getElementById('out').innerHTML='<p class="warn">集計できる行がありません。</p>';return}
+const rc=sortCats([...new Set(recs.map(x=>x.a))],order),cc=sortCats([...new Set(recs.flatMap(x=>x.bs))],order);
+if(rc.length>60||cc.length>60){document.getElementById('out').innerHTML='<p class="warn">選択肢が60種類を超えています（自由記述の列かもしれません）。設問を選び直してください。</p>';return}
+const M=rc.map(()=>cc.map(()=>0)),resp=rc.map(()=>0);recs.forEach(x=>{const i=rc.indexOf(x.a);resp[i]+=x.w;x.bs.forEach(b=>M[i][cc.indexOf(b)]+=x.w)});
+const totalResp=resp.reduce((a,b)=>a+b,0);const dec=wi>=0?1:0;const f=v=>v.toFixed(dec);
+let h=`<h2>${esc(H[ri]||'行')} × ${esc(H[ci]||'列')}</h2><p>集計対象 ${f(totalResp)} ${wi>=0?'（ウエイト後）':'件'}`+(skipped?`、無回答等で除外 ${skipped} 件`:'')+(badW?`、ウエイトが数値でない ${badW} 件を除外`:'')+`。</p>`;
+let T=null;
+if(!ma&&rc.length>1&&cc.length>1){T=chiTest(M)}
+let csv=[[H[ri]+' \\ '+H[ci],...cc,'合計'].map(q).join(',')];
+h+='<table><tr><th></th>'+cc.map(c=>`<th>${esc(c)}</th>`).join('')+`<th>${ma?'回答者数':'合計'}</th></tr>`;
+rc.forEach((r,i)=>{const base=ma?resp[i]:M[i].reduce((a,b)=>a+b,0);h+=`<tr><th style="text-align:left">${esc(r)}</th>`;const line=[r];
+cc.forEach((c,j)=>{const n=M[i][j];const colTot=M.reduce((a,rr)=>a+rr[j],0);const pv=mode=='row'?(base?100*n/base:0):mode=='col'?(colTot?100*n/colTot:0):null;
+const z=T?T.Z[i][j]:null;const cls=z==null?'':z>=1.96?' hi':z<=-1.96?' lo':'';
+h+=`<td class="n${cls}">${pv==null?f(n):pv.toFixed(1)+'%<br><small>'+f(n)+'</small>'}${z==null?'':mark(z)}</td>`;line.push(pv==null?f(n):pv.toFixed(1)+'% ('+f(n)+')')});
+h+=`<td class="n">${f(base)}</td></tr>`;line.push(f(base));csv.push(line.map(q).join(','))});
+const colTots=cc.map((_,j)=>M.reduce((a,r)=>a+r[j],0));const allBase=ma?totalResp:colTots.reduce((a,b)=>a+b,0);
+h+='<tr><th style="text-align:left">全体</th>'+colTots.map(n=>`<td class="n">${mode=='n'?f(n):(mode=='row'?(100*n/allBase).toFixed(1):'100.0')+'%<br><small>'+f(n)+'</small>'}</td>`).join('')+`<td class="n">${f(allBase)}</td></tr></table>`;
+csv.push(['全体',...colTots.map(n=>mode=='n'?f(n):(mode=='row'?(100*n/allBase).toFixed(1)+'%':'100.0%')+' ('+f(n)+')'),f(allBase)].map(q).join(','));
+if(T){const sig=T.p<0.05;h+=`<p><b>カイ二乗検定</b>：χ² = ${T.x2.toFixed(2)}、自由度 ${T.df}、<b>${fmtP(T.p)}</b>（${sig?'5％水準で有意。'+esc(H[ri]||'行')+'によって'+esc(H[ci]||'列')+'の分布に差がある可能性が高い':'5％水準で有意な差は見られない'}）、クラメールのV = ${T.V.toFixed(3)}</p>`;
+csv.push('');csv.push(q(`カイ二乗=${T.x2.toFixed(3)} 自由度=${T.df} ${fmtP(T.p)} クラメールV=${T.V.toFixed(3)}`));
+if(T.smallShare>0.2)h+=`<p class="warn">期待度数5未満のセルが ${(100*T.smallShare).toFixed(0)}％あります（最小 ${T.minE.toFixed(2)}）。検定結果は参考程度にして、選択肢をまとめるか回答数を増やしてください。</p>`;
+if(wi>=0)h+='<p class="warn">ウエイトをかけた件数でそのまま検定しています。ウエイトの合計が実際の回答数と大きく違うとp値がずれるので、ウエイトは平均1になるよう調整したものを使ってください。</p>';
+const sigCells=[];rc.forEach((r,i)=>cc.forEach((c,j)=>{const z=T.Z[i][j];if(Math.abs(z)>=1.96)sigCells.push(`「${esc(r)}」で「${esc(c)}」が${z>0?'多い':'少ない'}（調整済み残差 ${z.toFixed(2)}）`)}));
+if(sigCells.length)h+='<p><b>残差分析で目立つセル</b>：<br>'+sigCells.slice(0,15).join('<br>')+(sigCells.length>15?'<br>…ほか':'')+'</p>'}
+else if(ma&&rc.length>1){const lines=[];cc.forEach((c,j)=>{const m2=rc.map((_,i)=>[M[i][j],resp[i]-M[i][j]]);const t=chiTest(m2);if(t.p<0.05)lines.push(`「${esc(c)}」を選んだ割合は${esc(H[ri]||'行')}によって差あり（${fmtP(t.p)}${t.smallShare>0.2?'、度数が少なく参考値':''}）`)});
+h+='<p><b>複数回答の参考検定</b>（選択肢ごとに「選んだ／選ばない」で2×k検定）：<br>'+(lines.length?lines.join('<br>'):'5％水準で差のある選択肢はありません')+'</p><p class="warn">複数回答は1人が複数の列に入るため、表全体のカイ二乗検定は行っていません。行％の合計は100％を超えます。</p>'}
+document.getElementById('out').innerHTML=h;lastCSV=csv.join('\r\n');document.getElementById('dl').disabled=false}
+document.getElementById('go').addEventListener('click',run);
+document.getElementById('dl').addEventListener('click',()=>{const b=new Blob(['\uFEFF'+lastCSV],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cross-tab.csv';a.click()});
+</script>
+</body>
+</html>
