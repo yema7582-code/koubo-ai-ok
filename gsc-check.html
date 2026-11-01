@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search Console CSV 改善候補チェッカー（あと一歩の順位・低CTR・共食い／無料）</title>
+<meta name="description" content="Googleサーチコンソールの検索パフォーマンス（クエリ・ページ）CSVを読み込み、11〜20位の「あと一歩」キーワード、順位のわりにクリック率が低いクエリ、同じクエリで複数ページが競合する共食い、質問型クエリを優先度つきで一覧にします。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/gsc-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea{width:100%;height:150px;font-family:monospace;font-size:13px}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}td.n{text-align:right;white-space:nowrap}
+.ng{color:#b00020}.warn{color:#a15c00}.ok{color:#1b7f3a}
+</style>
+</head>
+<body>
+<h1>Search Console CSV 改善候補チェッカー</h1>
+<p>Googleサーチコンソールの「検索パフォーマンス」から書き出したCSVを入れると、手を入れる価値が高いクエリだけを優先度順に並べます。処理はすべてブラウザの中で行われ、データはどこにも送信されません。</p>
+<p>書き出し方：サーチコンソール →「検索結果のパフォーマンス」→ 右上「エクスポート」→「CSVをダウンロード」→ ZIPの中の <b>クエリ.csv</b>（英語表示なら Queries.csv）。クエリとページが同じ行にあるCSV（Looker Studio や API で出したもの）なら、共食いチェックもできます。</p>
+<p><input type="file" id="file" accept=".csv,text/csv"> または下に貼り付け（1行目は見出し）</p>
+<textarea id="src" placeholder="上位のクエリ,クリック数,表示回数,CTR,掲載順位
+加古川 整体 おすすめ,12,940,1.28%,6.3
+腰痛 ストレッチ 寝ながら,3,1210,0.25%,14.8"></textarea>
+<label>表示回数がこれ未満の行は無視 <input type="number" id="minimp" value="50" min="0" style="width:5em"></label>
+<label>あと一歩とみなす順位 <input type="number" id="pfrom" value="8" min="1" style="width:3.5em"> 〜 <input type="number" id="pto" value="20" min="1" style="width:3.5em">位</label>
+<label>サイト名・ブランド名（指名検索を分ける。カンマ区切り） <input type="text" id="brand" style="width:14em"></label>
+<br><button id="run">チェックする</button><button id="dl" disabled>結果CSVを保存</button>
+<div id="out"></div>
+<p class="note">見ているもの：①<b>あと一歩</b>：平均掲載順位が指定範囲（初期値8〜20位）で表示回数が多いクエリ。1ページ目上位に上がると伸びやすい候補です。②<b>低CTR</b>：順位から見込まれるクリック率の半分未満のクエリ。タイトルと説明文（meta description）の書き直し候補で、「見込みとの差」は取りこぼしているクリック数のおおよその目安です。③<b>共食い</b>：同じクエリで2つ以上のページが表示されている場合（ページ列があるCSVのみ）。④<b>質問型</b>：「とは」「方法」「なぜ」「how」などを含むクエリ。FAQや、AI検索に引用されやすい「最初に答えを書く」段落の候補です。見込みクリック率は一般的な目安（1位約28%、3位約10%、10位約2%）で、業種や検索の種類で大きく変わります。順位やクリックが上がることを約束するものではありません。</p>
+<p>サイト全体の改善計画、記事の書き直し、日本語・英語・中国語のタイトル改善などをまとめて頼みたい場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください。</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script>
+const $=id=>document.getElementById(id);let RES=[];
+function parseCSV(t){t=t.replace(/^\uFEFF/,"");const rows=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','||c=='\t'){row.push(f);f=""}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);f="";if(row.some(x=>x.trim()!==""))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x.trim()!==""))rows.push(row);return rows}
+function nk(s){return (s||"").normalize("NFKC").trim()}
+function num(s){s=nk(s).replace(/[,%\s]/g,"");return s===""||isNaN(+s)?null:+s}
+const COLS={q:/クエリ|query|検索キーワード|キーワード/i,p:/ページ|page|url|ランディング/i,c:/クリック|clicks?/i,i:/表示回数|impressions?|インプレッション/i,ctr:/ctr|クリック率/i,pos:/掲載順位|position|順位|平均/i};
+function expCTR(p){const t=[0,.28,.155,.105,.075,.056,.043,.034,.028,.023,.019];if(p<1)p=1;if(p<=10){const a=Math.floor(p),b=Math.min(10,a+1),f=p-a;return t[a]+(t[b]-t[a])*f}return Math.max(.003,.019*Math.pow(.82,p-10))}
+const QRE=/とは|方法|やり方|なぜ|何|どう|いつ|どこ|いくら|料金|費用|違い|おすすめ|比較|できる|\?|？|^(how|what|why|when|where|which|can|is|does|best)\b|怎么|什么|为什么|多少/i;
+function analyze(text,o){const rows=parseCSV(text);if(rows.length<2)return {err:"見出し行とデータ行が必要です。"};const h=rows[0].map(nk);const idx={};for(const k in COLS){idx[k]=h.findIndex((x,j)=>COLS[k].test(x)&&!Object.values(idx).includes(j))}
+if(idx.q<0||idx.i<0||idx.pos<0)return {err:"クエリ・表示回数・掲載順位の列が見つかりません（見出し："+h.join(" / ")+"）"};
+const brands=o.brand.split(/[,、]/).map(s=>nk(s).toLowerCase()).filter(Boolean);const data=[];
+for(const r of rows.slice(1)){const q=nk(r[idx.q]);const imp=num(r[idx.i]);const pos=num(r[idx.pos]);if(!q||imp==null||pos==null)continue;let clk=idx.c>=0?num(r[idx.c]):null;let ctr=idx.ctr>=0?num(r[idx.ctr]):null;if(ctr!=null&&ctr>1)ctr/=100;if(ctr==null&&clk!=null)ctr=imp?clk/imp:0;if(clk==null&&ctr!=null)clk=Math.round(ctr*imp);data.push({q,p:idx.p>=0?nk(r[idx.p]):"",clk:clk||0,imp,ctr:ctr||0,pos})}
+const pages={};if(idx.p>=0)for(const d of data){(pages[d.q]=pages[d.q]||[]).push(d)}
+const out=[];
+for(const d of data){if(d.imp<o.minimp)continue;const tags=[];let score=0;const isBrand=brands.some(b=>d.q.toLowerCase().includes(b));const e=expCTR(d.pos);const lost=Math.max(0,Math.round(d.imp*(e-d.ctr)));
+if(d.pos>=o.pfrom&&d.pos<=o.pto){tags.push("あと一歩");score+=d.imp*expCTR(Math.max(1,d.pos-7))*0.6}
+if(d.pos<=10&&d.ctr<e*0.5&&!isBrand){tags.push("低CTR");score+=lost}
+if(pages[d.q]&&new Set(pages[d.q].filter(x=>x.imp>=Math.max(5,o.minimp/5)).map(x=>x.p)).size>=2){tags.push("共食い");score+=d.imp*0.01}
+if(QRE.test(d.q)){tags.push("質問型");score+=d.imp*0.003}
+if(!tags.length)continue;if(isBrand)tags.push("指名");
+const todo=[];if(tags.includes("低CTR"))todo.push("タイトル先頭にこの語句と具体的な数字・地名・対象を入れ、説明文に答えの要点を書く");if(tags.includes("あと一歩"))todo.push("このクエリ用の見出しと段落を追加し、関連ページから内部リンクを張る");if(tags.includes("共食い"))todo.push("どのページで上位を狙うか1つ決め、他方は統合か別の意図に書き分ける");if(tags.includes("質問型"))todo.push("見出しを質問文にして、直後の1〜2文で答えを言い切る（FAQ）");
+out.push({...d,exp:e,lost,tags,score,todo:todo.join("／")})}
+const seen=new Set();const res=out.sort((a,b)=>b.score-a.score).filter(x=>{const k=x.q+"\t"+(x.tags.includes("共食い")?"":x.p);if(seen.has(k))return false;seen.add(k);return true});
+return {res,total:data.length,hasPage:idx.p>=0,pages}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function pct(x){return (x*100).toFixed(1)+"%"}
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let t=r.result;if(/\uFFFD/.test(t)){const r2=new FileReader();r2.onload=()=>{$("src").value=r2.result};r2.readAsText(f,"Shift_JIS")}else $("src").value=t};r.readAsText(f,"UTF-8")};
+$("run").onclick=()=>{const o={minimp:+$("minimp").value||0,pfrom:+$("pfrom").value||8,pto:+$("pto").value||20,brand:$("brand").value};const a=analyze($("src").value,o);if(a.err){$("out").innerHTML='<p class="ng">'+esc(a.err)+'</p>';return}RES=a.res;$("dl").disabled=!RES.length;
+const cnt=t=>RES.filter(x=>x.tags.includes(t)).length;const lost=RES.filter(x=>x.tags.includes("低CTR")).reduce((s,x)=>s+x.lost,0);
+let h='<h2>結果</h2><p>読み取った行：'+a.total+'件 → 改善候補：'+RES.length+'件（あと一歩 '+cnt("あと一歩")+'／低CTR '+cnt("低CTR")+'／共食い '+(a.hasPage?cnt("共食い"):"ページ列なし")+'／質問型 '+cnt("質問型")+'）。低CTRクエリの取りこぼし目安：約'+lost+'クリック（期間内）。</p>';
+if(!RES.length)h+='<p class="ok">条件に当てはまるクエリはありませんでした。表示回数の下限を下げてみてください。</p>';
+else{h+='<table><tr><th>#</th><th>クエリ</th>'+(a.hasPage?'<th>ページ</th>':'')+'<th>表示</th><th>クリック</th><th>CTR</th><th>順位</th><th>見込みとの差</th><th>種類</th><th>やること</th></tr>';RES.slice(0,300).forEach((x,i)=>{h+='<tr><td class="n">'+(i+1)+'</td><td>'+esc(x.q)+'</td>'+(a.hasPage?'<td>'+esc(x.tags.includes("共食い")?a.pages[x.q].map(y=>y.p).filter((v,j,s)=>s.indexOf(v)==j).join("\n"):x.p).replace(/\n/g,"<br>")+'</td>':'')+'<td class="n">'+x.imp+'</td><td class="n">'+x.clk+'</td><td class="n">'+pct(x.ctr)+'</td><td class="n">'+x.pos.toFixed(1)+'</td><td class="n">'+(x.tags.includes("低CTR")?"−"+x.lost:"")+'</td><td class="'+(x.tags.includes("低CTR")?"ng":"warn")+'">'+x.tags.join("・")+'</td><td>'+esc(x.todo)+'</td></tr>'});h+='</table>';if(RES.length>300)h+='<p>上位300件を表示しています。全件は結果CSVに入ります。</p>'}
+$("out").innerHTML=h};
+$("dl").onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const L=[["優先順","クエリ","ページ","表示回数","クリック数","CTR","掲載順位","見込みCTR","取りこぼし目安","種類","やること"].map(q).join(",")];RES.forEach((x,i)=>L.push([i+1,x.q,x.p,x.imp,x.clk,pct(x.ctr),x.pos.toFixed(1),pct(x.exp),x.lost,x.tags.join("・"),x.todo].map(q).join(",")));const b=new Blob(["\uFEFF"+L.join("\r\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="gsc_improvement_candidates.csv";a.click()};
+if(typeof module!=="undefined")module.exports={analyze};
+</script>
+</body>
+</html>
