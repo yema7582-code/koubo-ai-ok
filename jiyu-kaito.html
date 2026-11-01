@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アンケート自由回答 集計ツール｜CSVを貼るだけで頻出語・属性別の違いを無料で集計</title>
+<meta name="description" content="アンケートの自由記述（自由回答）をCSVや貼り付けで読み込み、頻出キーワード、回答例、属性（年代・満足度など）ごとの出現率の違いをブラウザ内で集計する無料ツール。データは外部に送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/jiyu-kaito.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;height:12em;font-size:.95em}select,input{font-size:1em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;font-size:.9em;margin:8px 0}td,th{border:1px solid #ccc;padding:4px 8px}td.n{text-align:right}
+.ex{color:#555;font-size:.88em}
+button{font-size:1em;padding:6px 14px}
+</style>
+</head>
+<body>
+<h1>アンケート自由回答 集計ツール</h1>
+<p>アンケートの自由記述欄を、ざっと読む前に「何がよく書かれているか」「どの属性の人がそれを書いているか」をつかむためのツールです。CSV（Excel・Googleフォームの書き出し）を貼るか読み込むだけで、頻出キーワード、その語を含む回答例、属性別の出現率を出します。<strong>計算はすべてこのブラウザ内で行い、データはどこにも送信しません。</strong></p>
+
+<div class="box">
+<p><input type="file" id="f" accept=".csv,.txt"> または下に貼り付け（1行目は見出し行。1列だけの貼り付けも可）</p>
+<textarea id="t" placeholder="年代,満足度,ご意見
+30代,満足,スタッフの対応が丁寧でした。駐車場が狭いのが残念
+40代,不満,待ち時間が長い。予約システムがわかりにくい
+..."></textarea>
+<p>自由回答の列：<select id="col"></select>　属性の列（任意）：<select id="grp"><option value="">なし</option></select></p>
+<p>除外する語（読点区切り）：<input id="stop" size="40" value="特に,なし,ない,思う,思います,こと,もの,です,ます"></p>
+<p><button id="go">集計する</button></p>
+</div>
+<div id="out"></div>
+
+<div class="note">
+<p><b>しくみと注意</b>：日本語は単語の区切りがないため、漢字・カタカナ・英数字のまとまり（例「待ち時間」→「待」「時間」ではなく連続した漢字列）と、ひらがなを除いた語を数えています。形態素解析ほど正確ではないので、「同じ意味の別表現（予約しづらい／予約がわかりにくい）」はまとめて読む必要があります。回答数が少ない属性の差（数件の違い）は偶然のこともあるので、<a href="sample-size.html">サンプルサイズ・誤差計算</a>もあわせてどうぞ。</p>
+<p>自由回答の分類（コード化）、日本語・英語・中国語の回答の翻訳と集計、報告書づくりのご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ（中崎）。</p>
+</div>
+<p><a href="./">← AI利用OKの公募まとめ・無料ツール一覧へ</a></p>
+
+<script>
+function parseCSV(s){const rows=[];let r=[],f='',q=false;for(let i=0;i<s.length;i++){const c=s[i];if(q){if(c=='"'){if(s[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else{if(c=='"')q=true;else if(c==','||c=='\t'){r.push(f);f=''}else if(c=='\n'){r.push(f);rows.push(r);r=[];f=''}else if(c!='\r')f+=c}}if(f!==''||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()!==''))}
+let data=[];
+function load(){data=parseCSV(document.getElementById('t').value);const h=data[0]||[];const col=document.getElementById('col'),grp=document.getElementById('grp');col.innerHTML='';grp.innerHTML='<option value="">なし</option>';
+let best=0,bl=-1;h.forEach((x,i)=>{col.add(new Option(x||('列'+(i+1)),i));grp.add(new Option(x||('列'+(i+1)),i));const L=data.slice(1).reduce((a,r)=>a+(r[i]||'').length,0);if(L>bl){bl=L;best=i}});col.value=best}
+document.getElementById('t').addEventListener('input',load);
+document.getElementById('f').addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{let s=rd.result;if(s.includes('\uFFFD')){const r2=new FileReader();r2.onload=()=>{document.getElementById('t').value=r2.result;load()};r2.readAsText(file,'shift_jis');return}document.getElementById('t').value=s;load()};rd.readAsText(file,'utf-8')});
+function words(s,stop){s=s.normalize('NFKC').toLowerCase();const m=s.match(/[\u4E00-\u9FFF\u3005]+(?:[ちりきしみけびつい](?=[\u4E00-\u9FFF]))?[\u4E00-\u9FFF\u3005]*|[\u30A0-\u30FFー]{2,}|[a-z0-9][a-z0-9\-\.]+/g)||[];const out=new Set();m.forEach(w=>{w=w.replace(/[\u3041-\u3093]$/,'');if(w.length>=2&&!stop.has(w))out.add(w)});return out}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+document.getElementById('go').addEventListener('click',()=>{if(!data.length)load();const ci=+document.getElementById('col').value,gv=document.getElementById('grp').value,gi=gv===''?-1:+gv;
+const stop=new Set(document.getElementById('stop').value.split(/[、,]/).map(x=>x.trim()).filter(Boolean));
+const rows=data.slice(1).filter(r=>(r[ci]||'').trim()&&!/^(特になし|なし|ない|特にない|-|ー)$/.test((r[ci]||'').trim()));
+const cnt={},ex={},gN={},gC={};rows.forEach(r=>{const g=gi>=0?(r[gi]||'(空欄)').trim():'';gN[g]=(gN[g]||0)+1;words(r[ci],stop).forEach(w=>{cnt[w]=(cnt[w]||0)+1;(ex[w]=ex[w]||[]).length<3&&ex[w].push(r[ci]);if(gi>=0){gC[w]=gC[w]||{};gC[w][g]=(gC[w][g]||0)+1}})});
+const top=Object.entries(cnt).filter(x=>x[1]>=2||rows.length<20).sort((a,b)=>b[1]-a[1]).slice(0,40);
+const groups=Object.keys(gN).sort();
+let h=`<h2>結果</h2><p>有効回答 ${rows.length} 件（空欄・「特になし」等を除く）。上位 ${top.length} 語。</p><table><tr><th>語</th><th>回答数</th><th>割合</th>`;
+if(gi>=0)groups.forEach(g=>h+=`<th>${esc(g)}<br><small>n=${gN[g]}</small></th>`);h+='<th>回答例</th></tr>';
+top.forEach(([w,c])=>{h+=`<tr><td>${esc(w)}</td><td class="n">${c}</td><td class="n">${(100*c/rows.length).toFixed(1)}%</td>`;
+if(gi>=0){const rates=groups.map(g=>((gC[w]||{})[g]||0)/gN[g]);const mx=Math.max(...rates);groups.forEach((g,k)=>{const v=rates[k];h+=`<td class="n"${v===mx&&v>0&&groups.length>1?' style="background:#e3f0ff"':''}>${(100*v).toFixed(0)}%</td>`})}
+h+=`<td class="ex">${ex[w].map(x=>esc(x.length>60?x.slice(0,60)+'…':x)).join('<br>')}</td></tr>`});h+='</table>';
+if(gi>=0)h+='<p class="ex">青色は、その語の出現率がいちばん高い属性です。各属性の回答数（n）が小さいときは差を過信しないでください。</p>';
+const csv='語,回答数\n'+top.map(x=>`"${x[0]}",${x[1]}`).join('\n');h+=`<p><a download="keywords.csv" href="data:text/csv;charset=utf-8,\uFEFF${encodeURIComponent(csv)}">キーワード表をCSVで保存</a></p>`;
+document.getElementById('out').innerHTML=h});
+</script>
+</body>
+</html>
