@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>入稿画像 解像度・塗り足しチェッカー｜名刺・はがき・ポスター（無料）</title>
+<meta name="description" content="画像を選んで仕上がりサイズ（名刺・はがき・A4・B1など）を指定すると、実効解像度(dpi)、塗り足し3mm込みで足りるか、縦横比のずれ、350dpiに必要なピクセル数、JPEGのCMYK/RGBを確認。仕上がり線と文字の安全範囲をプレビュー表示。年賀状・ポスター公募の入稿前に。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/print-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}.mid{color:#8a5a00}
+table{border-collapse:collapse;font-size:.92em}td,th{border:1px solid #ddd;padding:3px 8px;text-align:left}
+label{margin-right:10px;white-space:nowrap}input[type=number]{width:5em}
+canvas{max-width:100%;border:1px solid #ddd;background:#eee}
+</style>
+</head>
+<body>
+<h1>入稿画像 解像度・塗り足しチェッカー</h1>
+<p>名刺・はがき・チラシ・ポスターなどを画像（PNG・JPG）で入稿する前に、印刷に足りる解像度か、塗り足しを含めたサイズになっているか、縦横比がずれていないかを確認します。画像はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<p><input type="file" id="f" accept="image/png,image/jpeg,image/webp"></p>
+<p><label>仕上がりサイズ <select id="preset">
+<option value="91x55">名刺 91×55mm</option>
+<option value="100x148" selected>はがき 100×148mm</option>
+<option value="89x127">L判写真 89×127mm</option>
+<option value="182x257">B5 182×257mm</option>
+<option value="210x297">A4 210×297mm</option>
+<option value="297x420">A3 297×420mm</option>
+<option value="364x515">B3 364×515mm</option>
+<option value="515x728">B2 515×728mm</option>
+<option value="728x1030">B1 728×1030mm</option>
+<option value="custom">自由入力</option>
+</select></label>
+<label>幅 <input type="number" id="w" value="100" step="0.1">mm</label>
+<label>高さ <input type="number" id="h" value="148" step="0.1">mm</label></p>
+<p><label>塗り足し（片側） <input type="number" id="bleed" value="3" step="0.5" min="0">mm</label>
+<label>文字の安全範囲（仕上がり線の内側） <input type="number" id="safe" value="3" step="0.5" min="0">mm</label>
+<label>目標解像度 <input type="number" id="target" value="350" step="10">dpi</label></p>
+<p><label><input type="radio" name="mode" value="with" checked> 画像は塗り足し込みで作った</label>
+<label><input type="radio" name="mode" value="without"> 画像は仕上がりサイズぴったり（塗り足しなし）</label></p>
+</div>
+<div id="res" hidden>
+<h2>結果</h2>
+<div id="out"></div>
+<h2>プレビュー</h2>
+<p><small>赤い線が仕上がり線（ここで断裁）、青い点線が文字やロゴを入れてよい安全範囲です。赤線の外側は断裁で落ちる塗り足し部分です。</small></p>
+<canvas id="cv"></canvas>
+</div>
+<div class="note">
+<p><b>目安</b>：写真やイラストは原寸で300〜350dpiあれば一般的な印刷で十分です。150dpiを切ると粗さが目立ちやすくなります。大判ポスター（B2以上）は離れて見るので200dpi前後で受け付ける印刷所もあります。最終的には入稿先の指定を優先してください。</p>
+<p>画像を後から拡大してもdpiの数字が増えるだけで、細部は戻りません。足りない場合は元データ（大きな解像度）から書き出し直してください。PNGやRGBのJPGは印刷時にCMYKへ変換され、鮮やかな青や緑がくすむことがあります。</p>
+</div>
+<p><small>関連：<a href="logo-check.html">ロゴ 縮小・白黒チェッカー</a> ／ <a href="silhouette-svg.html">画像→シルエットSVG変換</a> ／ <a href="mochu-bunrei.html">喪中はがき・寒中見舞い 文例メーカー</a> ／ <a href="./">AI利用OKの公募まとめ</a>。入稿データの作り直し（塗り足し追加・サイズ調整）、チラシや名刺の日英中の翻訳は shinji-work@mail.grokbot.com までご相談ください。</small></p>
+<script>
+const $=id=>document.getElementById(id);
+let img=null,meta={};
+function jpegInfo(buf){const d=new DataView(buf);const r={};if(d.getUint16(0)!==0xFFD8)return r;let p=2;
+ while(p+4<d.byteLength){if(d.getUint8(p)!==0xFF){p++;continue}const m=d.getUint8(p+1);if(m===0xD8||m===0x01||(m>=0xD0&&m<=0xD7)){p+=2;continue}
+  const len=d.getUint16(p+2);
+  if(m===0xE0&&len>=16&&d.getUint32(p+4)===0x4A464946){const u=d.getUint8(p+11),x=d.getUint16(p+12),y=d.getUint16(p+14);if(u===1)r.dpi=[x,y];else if(u===2)r.dpi=[Math.round(x*2.54),Math.round(y*2.54)]}
+  if(m===0xEE&&len>=12){r.adobe=true}
+  if((m>=0xC0&&m<=0xCF)&&m!==0xC4&&m!==0xC8&&m!==0xCC){r.comp=d.getUint8(p+9);break}
+  if(m===0xDA)break;p+=2+len}
+ return r}
+function pngInfo(buf){const d=new DataView(buf);const r={};let p=8;
+ while(p+8<d.byteLength){const len=d.getUint32(p),t=String.fromCharCode(d.getUint8(p+4),d.getUint8(p+5),d.getUint8(p+6),d.getUint8(p+7));
+  if(t==='pHYs'&&d.getUint8(p+16)===1){r.dpi=[Math.round(d.getUint32(p+8)*0.0254),Math.round(d.getUint32(p+12)*0.0254)]}
+  if(t==='IHDR'){r.ctype=d.getUint8(p+17)}
+  if(t==='IDAT')break;p+=12+len}
+ return r}
+$('f').onchange=e=>{const file=e.target.files[0];if(!file)return;const fr=new FileReader();
+ fr.onload=()=>{const b=fr.result;meta={name:file.name,size:file.size,type:file.type};
+  try{if(file.type==='image/jpeg')Object.assign(meta,jpegInfo(b));else if(file.type==='image/png')Object.assign(meta,pngInfo(b))}catch(_){}
+  const url=URL.createObjectURL(file);const im=new Image();im.onload=()=>{img=im;run()};
+  im.onerror=()=>{$('res').hidden=false;$('out').innerHTML='<p class="warn">この画像はブラウザで表示できませんでした。CMYKのJPGは一部のブラウザで開けないことがあります（CMYKであること自体は印刷向きです）。</p>'};im.src=url};
+ fr.readAsArrayBuffer(file)};
+$('preset').onchange=()=>{const v=$('preset').value;if(v!=='custom'){const[a,b]=v.split('x');$('w').value=a;$('h').value=b}run()};
+['w','h','bleed','safe','target'].forEach(id=>$(id).oninput=run);
+document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=run);
+function grade(dpi,t){if(dpi>=t)return['ok','十分'];if(dpi>=300)return['ok','おおむね十分'];if(dpi>=200)return['mid','やや不足（大判なら可の場合あり）'];if(dpi>=150)return['warn','不足ぎみ'];return['warn','不足']}
+function run(){if(!img)return;$('res').hidden=false;
+ let W=+$('w').value,H=+$('h').value;const bl=+$('bleed').value||0,sf=+$('safe').value||0,t=+$('target').value||350;
+ const mode=document.querySelector('input[name=mode]:checked').value;
+ const pw=img.naturalWidth,ph=img.naturalHeight;let rot=false;
+ if((pw>ph)!==(W>H)&&W!==H){[W,H]=[H,W];rot=true}
+ const cw=mode==='with'?W+2*bl:W,ch=mode==='with'?H+2*bl:H;
+ const dx=pw/(cw/25.4),dy=ph/(ch/25.4),dpi=Math.min(dx,dy);
+ const ratioImg=pw/ph,ratioDoc=cw/ch,diff=(ratioImg/ratioDoc-1)*100;
+ const need=[Math.ceil((W+2*bl)/25.4*t),Math.ceil((H+2*bl)/25.4*t)];
+ const g=grade(dpi,t);let h='<table>';
+ h+=`<tr><th>画像</th><td>${esc(meta.name)}：${pw}×${ph}px、${(meta.size/1024/1024).toFixed(2)}MB</td></tr>`;
+ h+=`<tr><th>想定サイズ</th><td>${mode==='with'?`塗り足し込み ${fmt(cw)}×${fmt(ch)}mm（仕上がり ${fmt(W)}×${fmt(H)}mm）`:`${fmt(W)}×${fmt(H)}mm（塗り足しなし）`}${rot?'（画像の向きに合わせて縦横を入れ替えました）':''}</td></tr>`;
+ h+=`<tr><th>実効解像度</th><td class="${g[0]}">${Math.round(dpi)}dpi（横${Math.round(dx)}／縦${Math.round(dy)}）…${g[1]}</td></tr>`;
+ h+=`<tr><th>縦横比のずれ</th><td class="${Math.abs(diff)<1?'ok':Math.abs(diff)<3?'mid':'warn'}">${diff>=0?'+':''}${diff.toFixed(1)}%${Math.abs(diff)<1?'（ほぼ一致）':diff>0?'（画像が横長。左右が切れるか余白が出ます）':'（画像が縦長。上下が切れるか余白が出ます）'}</td></tr>`;
+ h+=`<tr><th>${t}dpiに必要なサイズ</th><td>塗り足し${bl}mm込みで ${need[0]}×${need[1]}px</td></tr>`;
+ if(meta.dpi)h+=`<tr><th>ファイル内のdpi値</th><td>${meta.dpi[0]}dpi<small>（ただの記録値です。印刷の細かさはピクセル数と仕上がりサイズで決まります）</small></td></tr>`;
+ let cm='';if(meta.type==='image/jpeg'&&meta.comp){cm=meta.comp===4?'<span class="ok">CMYK</span>':meta.comp===1?'グレースケール':'RGB（印刷時にCMYK変換されます）'}else if(meta.type==='image/png'){cm='RGB系（PNGはCMYKを持てません）'}
+ if(cm)h+=`<tr><th>カラー</th><td>${cm}</td></tr>`;
+ h+='</table>';
+ const tips=[];
+ if(mode==='without'&&bl>0)tips.push(`背景が端まである場合、塗り足しなしだと断裁のずれで白いすじが出ることがあります。画像を各辺${bl}mmずつ広げ、${need[0]}×${need[1]}px程度で作り直すのがおすすめです。`);
+ if(dpi<300)tips.push('解像度が足りません。元データから大きく書き出すか、仕上がりサイズを小さくしてください。');
+ if(Math.abs(diff)>=1)tips.push('縦横比が仕上がりと合っていません。トリミングか余白追加で比率を合わせてから入稿すると、意図しない位置で切られずに済みます。');
+ if(tips.length)h+='<ul>'+tips.map(x=>`<li>${x}</li>`).join('')+'</ul>';else h+='<p class="ok">大きな問題は見つかりませんでした。入稿先の指定（ファイル形式・カラーモード・塗り足し幅）も確認してください。</p>';
+ $('out').innerHTML=h;draw(cw,ch,W,H,mode==='with'?bl:0,sf)}
+function draw(cw,ch,W,H,bl,sf){const c=$('cv'),max=640,s=Math.min(max/cw,max/ch);c.width=Math.round(cw*s);c.height=Math.round(ch*s);
+ const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
+ const ir=img.naturalWidth/img.naturalHeight,cr=c.width/c.height;let dw,dh;if(ir>cr){dh=c.height;dw=dh*ir}else{dw=c.width;dh=dw/ir}
+ x.drawImage(img,(c.width-dw)/2,(c.height-dh)/2,dw,dh);
+ if(bl>0){x.fillStyle='rgba(255,255,255,.45)';const b=bl*s;x.fillRect(0,0,c.width,b);x.fillRect(0,c.height-b,c.width,b);x.fillRect(0,b,b,c.height-2*b);x.fillRect(c.width-b,b,b,c.height-2*b)}
+ x.strokeStyle='#e00';x.lineWidth=1.5;x.strokeRect(bl*s,bl*s,W*s,H*s);
+ x.setLineDash([5,4]);x.strokeStyle='#06c';x.strokeRect((bl+sf)*s,(bl+sf)*s,(W-2*sf)*s,(H-2*sf)*s);x.setLineDash([])}
+function fmt(n){return(+n.toFixed(1)).toString()}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+</script>
+</body>
+</html>
