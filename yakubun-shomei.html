@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>翻訳証明書（訳文証明）メーカー｜日本語・英語の Certificate of Translation を無料作成</title>
+<meta name="description" content="戸籍謄本・住民票・在職証明書などを自分や家族が翻訳したときに添える「翻訳証明書（Certificate of Translation Accuracy）」を、日本語・英語で作成して印刷できる無料ツール。翻訳者名・連絡先・原本の書類名・ページ数・日付を入れるだけ。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yakubun-shomei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin:6px 0}input,select{font-size:1em;padding:4px;width:100%;box-sizing:border-box}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}small{color:#555}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+#sheet{border:1px solid #999;padding:28px 34px;background:#fff;font-family:"Times New Roman","Hiragino Mincho ProN","Yu Mincho",serif;line-height:1.8}
+#sheet h3{text-align:center;font-size:1.2em;margin:0 0 1em}
+#sheet .sig{margin-top:2.2em}
+@media print{body>*:not(#sheet){display:none!important}#sheet{border:none;padding:0}body{max-width:none}}
+</style>
+</head>
+<body>
+<h1>翻訳証明書（訳文証明）メーカー</h1>
+<p>外国語の書類を役所・大使館・学校・会社に出すとき、訳文に「この翻訳は原文どおり正確です」と翻訳者が署名した証明書を添えるよう求められることがあります。翻訳者の名前・連絡先と原本の情報を入れると、英語・日本語・英日併記の証明書をその場で作り、そのまま印刷できます。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<div class="row">
+<label>証明書の言語<select id="lang"><option value="en">英語（海外の機関・大使館向け）</option><option value="ja">日本語（日本の役所・会社向け）</option><option value="both">英日併記</option></select></label>
+<label>日付<input id="date" type="date"></label>
+</div>
+<div class="row">
+<label>原文の言語<select id="src"><option>Japanese</option><option>English</option><option>Chinese</option><option>Korean</option><option>Other</option></select></label>
+<label>訳文の言語<select id="tgt"><option>English</option><option>Japanese</option><option>Chinese</option><option>Korean</option><option>Other</option></select></label>
+</div>
+<label>原本の書類名（英語）<input id="docEn" value="Certified Copy of Family Register (Koseki Tohon)"></label>
+<label>原本の書類名（日本語）<input id="docJa" value="戸籍謄本"></label>
+<div class="row">
+<label>原本の発行元・日付（任意）<input id="issuer" placeholder="例：〇〇市長 2026年10月1日発行"></label>
+<label>訳文のページ数<input id="pages" type="number" min="1" value="1"></label>
+</div>
+<div class="row">
+<label>翻訳者の氏名（ローマ字）<input id="nameEn" placeholder="Taro Yamada"></label>
+<label>翻訳者の氏名（漢字）<input id="nameJa" placeholder="山田 太郎"></label>
+</div>
+<label>翻訳者の住所（任意）<input id="addr"></label>
+<div class="row">
+<label>電話（任意）<input id="tel"></label>
+<label>メール（任意）<input id="mail"></label>
+</div>
+<label>本人・家族との関係<select id="rel"><option value="pro">第三者の翻訳者（依頼を受けて翻訳）</option><option value="self">本人が翻訳</option><option value="family">家族が翻訳</option></select></label>
+<label>翻訳者の経歴・資格（任意、英語）<input id="qual" placeholder="e.g. freelance Japanese-English translator, 5+ years"></label>
+<button onclick="make()">証明書を作成</button><button onclick="window.print()">印刷する</button>
+<div id="warn" class="warn"></div>
+</div>
+
+<div id="sheet"></div>
+
+<h2>出す前に確認したいこと</h2>
+<ul>
+<li>提出先ごとに決まりが違います。「本人の翻訳でもよいか」「翻訳会社の印が必要か」「公証が必要か」を、必ず提出先の案内で確認してください。このページは書式を作るだけで、受理を保証するものではありません。</li>
+<li>米国移民局（USCIS）は、外国語の書類に完全な英訳と、翻訳者が「両言語に通じていて、訳が完全かつ正確である」と述べた証明を付けるよう求めています（8 CFR 103.2(b)(3)）。英語版の文面はこの要件に沿う形にしています。</li>
+<li>訳文は原本のレイアウトに近い形で、印影・手書き・空欄も「[Seal: 〇〇市長之印]」「[Blank]」のように省かず書くのが基本です。</li>
+<li>人名・地名のローマ字はパスポートと同じ綴りにそろえます。和暦は西暦に直すか併記します（例：令和8年 = 2026）。</li>
+<li>機械翻訳やAIの訳をそのまま出すと、固有名詞・和暦・続柄の誤りが残りがちです。署名する前に原本と一行ずつ突き合わせてください。</li>
+</ul>
+
+<div class="note">
+<p>戸籍謄本・住民票・在職証明書・成績証明書・契約書などの日本語⇄英語⇄中国語（簡体字・繁体字）翻訳と、翻訳証明書つきの納品をお手伝いします。ご自分で訳した原稿や、AI翻訳の結果をチェックするだけのご依頼も受け付けます。ご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）まで。</p>
+</div>
+<p><small><a href="./">ほかの無料ツール一覧</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+$('date').valueAsDate=new Date();
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fmtEn(d){if(!d)return'';const t=new Date(d+'T00:00');return t.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
+function fmtJa(d){if(!d)return'';const [y,m,dd]=d.split('-').map(Number);let w='';if(y>=2019)w='（令和'+(y-2018===1?'元':y-2018)+'年）';return y+'年'+m+'月'+dd+'日'+w}
+function make(){
+ const v=k=>$(k).value.trim();const w=[];
+ if(!v('nameEn')&&!v('nameJa'))w.push('翻訳者の氏名を入れてください。');
+ if($('src').value===$('tgt').value)w.push('原文と訳文の言語が同じになっています。');
+ if(/[^\x00-\x7F]/.test(v('nameEn')))w.push('ローマ字氏名に全角文字が入っています。パスポートの綴りに合わせてください。');
+ if(/[^\x00-\x7F]/.test(v('docEn')))w.push('英語の書類名に全角文字が入っています。');
+ $('warn').innerHTML=w.join('<br>');
+ const n=v('nameEn')||v('nameJa'),pg=v('pages')||'1',rel=$('rel').value;
+ const relEn=rel==='self'?' I am the person named in the original document.':rel==='family'?' I am a family member of the person named in the original document.':'';
+ const relJa=rel==='self'?'なお、私は原本に記載された本人です。':rel==='family'?'なお、私は原本に記載された本人の家族です。':'';
+ const contactEn=[v('addr'),v('tel'),v('mail')].filter(Boolean).map(esc).join('<br>');
+ const en=`<h3>CERTIFICATE OF TRANSLATION ACCURACY</h3>
+<p>I, ${esc(n)}, certify that I am competent to translate from ${esc($('src').value)} into ${esc($('tgt').value)}${v('qual')?' ('+esc(v('qual'))+')':''}, and that the attached ${esc(pg)}-page ${esc($('tgt').value)} translation of the document titled “${esc(v('docEn'))}”${v('issuer')?' ('+esc(v('issuer'))+')':''} is complete and accurate to the best of my knowledge and ability.${relEn}</p>
+<div class="sig">Signature: ______________________________<br>Name: ${esc(n)}<br>${contactEn?contactEn+'<br>':''}Date: ${esc(fmtEn(v('date')))}</div>`;
+ const nj=v('nameJa')||v('nameEn');
+ const ja=`<h3>翻訳証明書</h3>
+<p>私、${esc(nj)}は、添付の「${esc(v('docJa')||v('docEn'))}」${v('issuer')?'（'+esc(v('issuer'))+'）':''}の訳文（全${esc(pg)}ページ）が、原文を省略・改変することなく正確に翻訳したものであることを証明します。${relJa}</p>
+<div class="sig">翻訳者氏名：${esc(nj)}　　　　印・署名：<br>${v('addr')?'住所：'+esc(v('addr'))+'<br>':''}${v('tel')?'電話：'+esc(v('tel'))+'<br>':''}${v('mail')?'メール：'+esc(v('mail'))+'<br>':''}日付：${esc(fmtJa(v('date')))}</div>`;
+ const l=$('lang').value;
+ $('sheet').innerHTML=l==='en'?en:l==='ja'?ja:en+'<hr style="margin:2em 0">'+ja;
+}
+make();
+</script>
+</body>
+</html>
