@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>セール「通常価格」表示 チェッカー（二重価格表示・8週間ルール／無料・ブラウザ内で完結）</title>
+<meta name="description" content="セールで「通常価格」「セール前価格」と並べて表示してよいかを、消費者庁の価格表示ガイドラインの目安（さかのぼる8週間の過半・通算2週間以上・最後の販売日から2週間未満）で判定します。セール期間中の毎日もチェック。ブラックフライデー・年末セールの準備に。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nijuu-kakaku.html">
+<meta property="og:title" content="セール「通常価格」表示 チェッカー（二重価格表示・8週間ルール）">
+<meta property="og:description" content="価格の履歴を入れるだけで、比較対照価格に使えるかを日ごとに判定。無料、ブラウザ内で完結。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yema7582-code.github.io/koubo-ai-ok/nijuu-kakaku.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.6em}
+textarea{width:100%;height:170px;font-family:monospace}input{font-size:1em}input[type=number]{width:9em}
+table{border-collapse:collapse;width:100%;font-size:.88em;margin-top:12px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3}.bad{color:#b00020;font-weight:bold}.warn{color:#8a5a00}.good{color:#1b6e1b;font-weight:bold}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}.box{background:#f5f8ff;padding:10px 12px;border-radius:8px}
+button{padding:6px 14px;margin:6px 6px 0 0}code{background:#f3f3f3;padding:0 3px}label{margin-right:14px;display:inline-block}
+.bar{display:flex;height:18px;margin:6px 0;border:1px solid #ccc}.bar span{flex:1}
+</style>
+</head>
+<body>
+<h1>セール「通常価格」表示 チェッカー（二重価格表示・8週間ルール）</h1>
+<p>「通常価格 5,980円 → セール価格 3,980円」のように、過去の値段と並べて安さを見せる表示（二重価格表示）は、その「通常価格」で<strong>最近、相当の期間</strong>売っていた実績がないと、景品表示法の有利誤認表示に当たるおそれがあります。商品の価格の履歴とセールの予定を入れると、消費者庁「価格表示ガイドライン」の一般的な目安に照らして、その価格を比較対照価格に使えるかを判定します。</p>
+<p class="note">判定の目安（ガイドライン第4の2(1)ア(ウ)）：①セール開始からさかのぼる8週間（販売期間が8週間未満ならその期間）のうち、その価格で売っていた期間が<strong>過半</strong>　②その価格で売っていた期間が<strong>通算2週間以上</strong>　③その価格で売った<strong>最後の日から2週間以上たっていない</strong>。実際の判断は商品の価格変動や販売形態も含めて個別に行われるため、この結果は目安です。セールが決まってから売り出した商品の「セール前価格」は、期間を書いても不当表示のおそれがあるとされています。入力内容はどこにも送信されません。</p>
+
+<h2>1. 価格の履歴（1行に「開始日,終了日,税込価格」）</h2>
+<p style="margin:0;font-size:.9em">終了日は売っていた最後の日です。期間が重なったときは下の行を優先します。どの行にも入っていない日は「販売していない日」として数えません。</p>
+<textarea id="hist"></textarea>
+<h2>2. セールと表示したい価格</h2>
+<label>セール開始日 <input type="date" id="ss"></label>
+<label>セール終了日 <input type="date" id="se"></label><br>
+<label>表示したい通常価格（比較対照価格） <input type="number" id="cp" min="1"> 円</label>
+<label>セール価格 <input type="number" id="sp" min="1"> 円</label>
+<label>うたいたい割引率（任意） <input type="number" id="claim" min="0" max="99" style="width:5em"> %OFF</label><br>
+<label><input type="checkbox" id="each" checked> セール期間中の毎日もチェックする（長いセールや、セール中に通常価格表示を続ける場合）</label><br>
+<button id="run">チェックする</button><button id="sample">見本を入れる</button>
+<div id="out"></div>
+
+<h2>よくある「だめな例」</h2>
+<ul>
+<li>いつもセールをしていて、実際にはセール価格の期間のほうが長い（「当店通常価格」がほとんど使われていない）。</li>
+<li>通常価格で売ったのは発売直後の1週間だけで、その後ずっと値下げしている。</li>
+<li>2か月前まで売っていた高い価格を、直前に別の価格をはさんだうえで「通常価格」として出す。</li>
+<li>「メーカー希望小売価格」と書いているが、メーカーがその価格を公表していない。</li>
+<li>セール開始を決めてから新商品を出し、数日だけ高い価格で並べてから「セール前価格」として値下げする。</li>
+</ul>
+<p>条件を満たさない価格を使うときは、「○月○日～○月○日の販売価格」のように<strong>いつ、どれくらいの期間</strong>売っていた価格かを正確に書く方法があります（ただし上の最後の例は書いてもだめとされています）。</p>
+<p class="box">セール前の商品ページ・価格表示の見直し、商品説明の日本語・英語・中国語での作成や翻訳のご相談は shinji-work@mail.grokbot.com までどうぞ。<br><a href="ai-robots-check.html">robots.txt AIクローラー許可チェッカー</a> ／ <a href="catalog-check.html">商品データ AIショッピング対応チェッカー</a> ／ <a href="index.html">無料ツール一覧</a></p>
+<p style="font-size:.85em">出典：消費者庁「不当な価格表示についての景品表示法上の考え方」（価格表示ガイドライン）第4の2。法的な助言ではありません。迷う場合は消費者庁・都道府県の景品表示法の窓口にご相談ください。</p>
+
+<script id="logic">
+function dnum(s){var m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(String(s).trim());if(!m)return null;return Math.round(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5);}
+function dstr(n){var d=new Date(n*864e5);return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2);}
+function parseHist(text){var rows=[],errs=[];String(text).split(/\r?\n/).forEach(function(line,i){var t=line.trim();if(!t||t.charAt(0)==='#')return;var p=t.split(/[,\t、，]+/).map(function(x){return x.trim();});if(p.length<3){errs.push((i+1)+'行目: 「開始日,終了日,価格」の形になっていません');return;}var a=dnum(p[0]),b=dnum(p[1]),pr=Number(p[2].replace(/[円¥￥,\s]/g,''));if(a==null||b==null||!(pr>0)){errs.push((i+1)+'行目: 日付または価格を読めません');return;}if(b<a){errs.push((i+1)+'行目: 終了日が開始日より前です');return;}rows.push({a:a,b:b,p:pr});});return{rows:rows,errs:errs};}
+function priceMap(rows){var m={};rows.forEach(function(r){for(var d=r.a;d<=r.b;d++)m[d]=r.p;});return m;}
+// evaluate on day `ev` (the day the double-price display is shown). map: day->price (sale days included as sale price).
+function evaluate(map,cp,ev){var first=null;for(var k in map){k=+k;if(k<ev&&(first===null||k<first))first=k;}
+ var from=ev-56;var winStart=Math.max(from,first===null?ev:first);var sold=0,at=0;
+ for(var d=from;d<ev;d++){if(map[d]!==undefined){sold++;if(map[d]===cp)at++;}}
+ var last=null;for(var k2 in map){k2=+k2;if(k2<ev&&map[k2]===cp&&(last===null||k2>last))last=k2;}
+ var since=last===null?null:ev-last;
+ var r={day:ev,winFrom:from,winStart:winStart,sold:sold,at:at,last:last,since:since};
+ r.majority=sold>0&&at*2>sold;r.twoWeeks=at>=14;r.recent=last!==null&&since<14;r.ok=r.majority&&r.twoWeeks&&r.recent;
+ r.shortHistory=first!==null&&first>from;return r;}
+function checkAll(rows,cp,sp,ss,se,each){var base=priceMap(rows);var res={start:evaluate(base,cp,ss),days:[]};
+ if(each&&se>=ss){var m=priceMap(rows);for(var d=ss;d<=se;d++){var e=evaluate(m,cp,d);res.days.push(e);m[d]=sp;}}
+ var fails=res.days.filter(function(x){return!x.ok;});res.firstFail=fails.length?fails[0].day:null;return res;}
+function discount(cp,sp){return{yen:cp-sp,pct:(cp-sp)/cp*100,safe:Math.floor((cp-sp)/cp*100)};}
+if(typeof module!=='undefined')module.exports={dnum:dnum,dstr:dstr,parseHist:parseHist,priceMap:priceMap,evaluate:evaluate,checkAll:checkAll,discount:discount};
+</script>
+<script>
+if(typeof document!=='undefined'){
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function yen(n){return Number(n).toLocaleString('ja-JP')+'円';}
+function mark(b){return b?'<span class="good">OK</span>':'<span class="bad">NG</span>';}
+function bar(map,cp,from,to){var h='';for(var d=from;d<to;d++){var p=map[d];var c=p===undefined?'#eee':(p===cp?'#4c9a4c':'#e0a040');h+='<span title="'+dstr(d)+' '+(p===undefined?'販売なし':yen(p))+'" style="background:'+c+'"></span>';}return '<div class="bar">'+h+'</div><div style="font-size:.8em">緑＝通常価格で販売　橙＝ほかの価格　灰＝販売なし（'+dstr(from)+' ～ '+dstr(to-1)+'）</div>';}
+$('sample').onclick=function(){$('hist').value='2026-08-01,2026-09-30,4980\n2026-10-01,2026-10-14,3980\n2026-10-15,2026-11-26,4980';$('ss').value='2026-11-27';$('se').value='2026-12-25';$('cp').value=4980;$('sp').value=3480;$('claim').value=30;};
+$('run').onclick=function(){var ph=parseHist($('hist').value);var ss=dnum($('ss').value),se=dnum($('se').value)||ss,cp=Number($('cp').value),sp=Number($('sp').value),claim=$('claim').value;var h='';
+ if(ph.errs.length)h+='<p class="warn">'+ph.errs.map(esc).join('<br>')+'</p>';
+ if(ss==null||!(cp>0)||!(sp>0)){$('out').innerHTML=h+'<p class="bad">セール開始日・通常価格・セール価格を入れてください。</p>';return;}
+ if(sp>=cp)h+='<p class="bad">セール価格が通常価格以上です。</p>';
+ var res=checkAll(ph.rows,cp,sp,ss,se,$('each').checked);var s=res.start;var base=priceMap(ph.rows);
+ h+='<h2>結果（セール開始日 '+dstr(ss)+' 時点）</h2>';
+ h+=s.ok?'<p class="good">'+yen(cp)+' は「通常価格」「セール前価格」として表示できる目安を満たしています。</p>':'<p class="bad">'+yen(cp)+' は目安を満たしていません。「通常価格」とだけ書くのは避け、いつ・どれくらいの期間売っていた価格かを正確に書くか、比較表示をやめることを検討してください。</p>';
+ h+=bar(base,cp,s.winFrom,ss);
+ h+='<table><tr><th>条件</th><th>判定</th><th>内容</th></tr>';
+ h+='<tr><td>① 8週間の過半</td><td>'+mark(s.majority)+'</td><td>'+dstr(s.winFrom)+'～'+dstr(ss-1)+' のうち販売していた '+s.sold+'日中、'+yen(cp)+'で '+s.at+'日（過半は '+(Math.floor(s.sold/2)+1)+'日以上）'+(s.shortHistory?'<br><span class="warn">販売開始が8週間より後なので、販売していた期間だけで判定しています。</span>':'')+'</td></tr>';
+ h+='<tr><td>② 通算2週間以上</td><td>'+mark(s.twoWeeks)+'</td><td>8週間のうち '+yen(cp)+' で '+s.at+'日（14日以上が必要）</td></tr>';
+ h+='<tr><td>③ 最後の販売日から2週間未満</td><td>'+mark(s.recent)+'</td><td>'+(s.last===null?'この価格で売った記録がありません':'最後に '+yen(cp)+' で売った日は '+dstr(s.last)+'（'+s.since+'日前）')+'</td></tr></table>';
+ if(res.days.length){h+='<h2>セール期間中の毎日（'+dstr(ss)+'～'+dstr(se)+'、'+res.days.length+'日）</h2>';
+  if(res.firstFail===null)h+='<p class="good">セール最終日まで目安を満たし続けます。</p>';
+  else h+='<p class="bad">'+dstr(res.firstFail)+' から目安を満たさなくなります。セールが長くなるとセール価格の日数が増え、通常価格での販売が「過半」や「最後の日から2週間未満」を満たさなくなるためです（国民生活センターの解説では、セールの各時点からさかのぼって判断するとされています）。この日以降は「通常価格」表示を外すか、期間を明記した表示に切り替えてください。</p>';
+  h+='<table><tr><th>日付</th><th>①過半</th><th>②2週間</th><th>③最後から</th><th>総合</th></tr>';
+  res.days.forEach(function(e){h+='<tr><td>'+dstr(e.day)+'</td><td>'+e.at+'/'+e.sold+'</td><td>'+(e.twoWeeks?'OK':'NG')+'</td><td>'+(e.since===null?'－':e.since+'日')+'</td><td>'+mark(e.ok)+'</td></tr>';});h+='</table>';}
+ var dc=discount(cp,sp);h+='<h2>割引の表示</h2><p>値引き額 '+yen(dc.yen)+'、割引率 '+dc.pct.toFixed(2)+'%。「○%OFF」とうたうなら <strong>'+dc.safe+'%OFF</strong> 以下にしておくと、四捨五入で実際より大きく見せることを避けられます。</p>';
+ if(claim!==''){var c=Number(claim);h+=c>dc.pct+1e-9?'<p class="bad">'+c+'%OFF は実際の割引率（'+dc.pct.toFixed(2)+'%）より大きく、表示できません。</p>':'<p class="good">'+c+'%OFF は実際の割引率の範囲内です（ただし比較対照価格そのものが①～③を満たしている必要があります）。</p>';}
+ h+='<p style="font-size:.9em">価格は消費税込みの総額で表示する必要があります（総額表示義務）。通常価格とセール価格はどちらも税込で比べてください。</p>';
+ $('out').innerHTML=h;};
+}
+</script>
+</body>
+</html>
