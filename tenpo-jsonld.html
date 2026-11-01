@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>店舗情報 構造化データ（JSON-LD）作成｜年末年始の特別営業時間にも対応</title>
+<meta name="description" content="店名・住所・電話・営業時間・定休日・年末年始の特別営業時間・料金の目安から、LocalBusiness の JSON-LD を作ります。Google や AI 検索に正しい営業情報を伝えるための無料ツール。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/tenpo-jsonld.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin:6px 0}input,select{font-size:1em;padding:3px 5px}input.w{width:100%;box-sizing:border-box}
+table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid #ccc;padding:4px 6px}
+textarea{width:100%;min-height:16em;font-family:ui-monospace,monospace;font-size:.85em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}button{font-size:1em;padding:6px 14px;margin:6px 6px 6px 0}
+</style></head><body>
+<h1>店舗情報 構造化データ（JSON-LD）作成</h1>
+<p>ChatGPT や Google の AI 回答は、店の営業時間や電話番号を古い情報のまま答えることがあります。サイトに正しい情報を機械が読める形（JSON-LD）で書いておくと、検索エンジンや AI が拾いやすくなります。年末年始・お盆の特別営業時間も入れられます。</p>
+<p class="note">入力内容は送信されません（ブラウザ内で処理）。Googleビジネスプロフィール・自社サイト・ポータルの情報を同じにしておくことが前提です。表記ゆれのチェックは <a href="nap-check.html">NAP表記ゆれチェッカー</a> へ。</p>
+
+<div class="box"><h2>基本情報</h2>
+<label>業種 <select id="type">
+<option value="LocalBusiness">一般（LocalBusiness）</option><option value="Restaurant">飲食店（Restaurant）</option><option value="CafeOrCoffeeShop">カフェ</option><option value="HairSalon">美容室</option><option value="BeautySalon">エステ・ネイル</option><option value="MedicalClinic">クリニック</option><option value="Dentist">歯科</option><option value="Store">小売店（Store）</option><option value="AutoRepair">自動車整備</option><option value="HomeAndConstructionBusiness">工務店・リフォーム</option><option value="LegalService">士業（LegalService）</option><option value="AccountingService">会計事務所</option><option value="LodgingBusiness">宿泊施設</option></select></label>
+<label>店名 <input class="w" id="name" placeholder="例：海辺のパン屋 しおさい"></label>
+<label>サイトURL <input class="w" id="url" placeholder="https://example.jp/"></label>
+<label>電話（03-1234-5678 形式） <input id="tel" placeholder="0466-00-0000"></label>
+<label>郵便番号 <input id="zip" placeholder="251-0035" size="10"> 都道府県 <input id="pref" size="8" placeholder="神奈川県"> 市区町村 <input id="city" size="12" placeholder="藤沢市"></label>
+<label>番地・建物 <input class="w" id="street" placeholder="片瀬海岸1-2-3 しおさいビル1F"></label>
+<label>緯度 <input id="lat" size="10" placeholder="35.3090"> 経度 <input id="lng" size="10" placeholder="139.4800"> <small>（任意。Googleマップで右クリックするとコピーできます）</small></label>
+<label>料金の目安 <input id="price" size="12" placeholder="¥1,000〜¥2,000"> 支払い方法 <input id="pay" size="30" placeholder="現金, クレジットカード, PayPay"></label>
+<label>画像URL（外観や店内） <input class="w" id="img" placeholder="https://example.jp/shop.jpg"></label>
+<label>SNS・ポータルのURL（1行1つ、Googleマップ・Instagram・食べログなど） <textarea id="same" style="min-height:4em"></textarea></label>
+</div>
+
+<div class="box"><h2>通常の営業時間</h2>
+<table id="hours"><tr><th>曜日</th><th>休み</th><th>開店</th><th>閉店</th><th>2部（任意）開店</th><th>閉店</th></tr></table>
+<small>深夜営業で閉店が翌日になる場合は 26:00 のように入力すると 02:00 に変換します（日付をまたぐ旨を注記に出します）。</small>
+</div>
+
+<div class="box"><h2>特別営業時間（年末年始・お盆・臨時休業）</h2>
+<div id="sp"></div>
+<button type="button" id="addsp">行を追加</button> <button type="button" id="nenmatsu">年末年始の例を入れる</button>
+<small>休みの日は「休み」にチェック。期間は開始日〜終了日（同日なら1日だけ）。</small>
+</div>
+
+<button type="button" id="gen">JSON-LD を作る</button> <button type="button" id="copy">コピー</button>
+<div id="msg"></div>
+<textarea id="out" readonly></textarea>
+<div class="note">使い方：できたコードをそのまま &lt;head&gt; か &lt;body&gt; に貼り、<a href="https://search.google.com/test/rich-results" rel="noopener">Google リッチリザルト テスト</a>で確認してください。特別営業時間は期間が過ぎたら消すか更新してください。Googleビジネスプロフィールの「特別営業時間」も同じ内容にしておくのが大事です。</div>
+<p>多言語（英語・中国語）の店舗情報ページ作成や、Googleビジネスプロフィールとサイトの情報合わせの代行も承ります：shinji-work@mail.grokbot.com</p>
+<p><a href="index.html">ツール一覧へ</a></p>
+<script>
+const D=[["Monday","月"],["Tuesday","火"],["Wednesday","水"],["Thursday","木"],["Friday","金"],["Saturday","土"],["Sunday","日"]];
+const ht=document.getElementById('hours');
+D.forEach(([en,ja],i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${ja}</td><td><input type=checkbox data-c=${i}></td><td><input data-o=${i} size=5 value="${i==2?'':'09:00'}"></td><td><input data-e=${i} size=5 value="${i==2?'':'18:00'}"></td><td><input data-o2=${i} size=5></td><td><input data-e2=${i} size=5></td>`;ht.appendChild(tr);if(i==2)tr.querySelector('[data-c]').checked=true;});
+const sp=document.getElementById('sp');
+function addSp(f='',t='',closed=false,o='',e=''){const d=document.createElement('div');d.className='sprow';d.innerHTML=`<input type=date class=f value="${f}"> 〜 <input type=date class=t value="${t}"> <label style="display:inline"><input type=checkbox class=c ${closed?'checked':''}>休み</label> <input class=o size=5 placeholder="10:00" value="${o}">〜<input class=e size=5 placeholder="15:00" value="${e}"> <button type=button>削除</button>`;d.querySelector('button').onclick=()=>d.remove();sp.appendChild(d);}
+document.getElementById('addsp').onclick=()=>addSp();
+document.getElementById('nenmatsu').onclick=()=>{const y=new Date().getFullYear();addSp(`${y}-12-30`,`${y+1}-01-03`,true);addSp(`${y+1}-01-04`,`${y+1}-01-04`,false,'10:00','15:00');};
+function normT(s){s=(s||'').trim().replace(/[０-９：]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace('：',':');if(!s)return null;const m=s.match(/^(\d{1,2}):?(\d{2})$/);if(!m)return'ERR';let h=+m[1],mi=+m[2];if(mi>59||h>47)return'ERR';const over=h>=24;h%=24;return{t:String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0'),over};}
+function v(id){return document.getElementById(id).value.trim();}
+function z2h(s){return s.replace(/[０-９－]/g,c=>c=='－'?'-':String.fromCharCode(c.charCodeAt(0)-0xFEE0));}
+function build(){
+ const warn=[];const ld={"@context":"https://schema.org","@type":v('type')};
+ if(!v('name'))warn.push('店名が空です。');ld.name=v('name');
+ if(v('url'))ld.url=v('url');
+ if(v('tel')){let t=z2h(v('tel'));if(!/^0\d{1,4}-\d{1,4}-\d{3,4}$/.test(t))warn.push('電話番号の形式を確認してください（例 03-1234-5678）。');ld.telephone='+81-'+t.replace(/^0/,'');}
+ const addr={"@type":"PostalAddress","addressCountry":"JP"};
+ if(v('zip')){let z=z2h(v('zip')).replace(/^(\d{3})(\d{4})$/,'$1-$2');if(!/^\d{3}-\d{4}$/.test(z))warn.push('郵便番号は 123-4567 形式で。');addr.postalCode=z;}
+ if(v('pref'))addr.addressRegion=v('pref');if(v('city'))addr.addressLocality=v('city');if(v('street'))addr.streetAddress=v('street');
+ if(!addr.streetAddress||!addr.addressRegion)warn.push('住所（都道府県・番地）は入れることをおすすめします。');
+ ld.address=addr;
+ if(v('lat')&&v('lng'))ld.geo={"@type":"GeoCoordinates","latitude":+v('lat'),"longitude":+v('lng')};
+ if(v('img'))ld.image=v('img');if(v('price'))ld.priceRange=v('price');if(v('pay'))ld.paymentAccepted=v('pay');
+ const same=document.getElementById('same').value.split(/\n/).map(s=>s.trim()).filter(s=>/^https?:\/\//.test(s));if(same.length)ld.sameAs=same;
+ const groups={};let overnight=false;
+ D.forEach(([en,ja],i)=>{if(document.querySelector(`[data-c="${i}"]`).checked)return;
+  for(const [a,b] of [['o','e'],['o2','e2']]){const o=normT(document.querySelector(`[data-${a}="${i}"]`).value),e=normT(document.querySelector(`[data-${b}="${i}"]`).value);
+   if(!o&&!e)continue;if(!o||!e||o=='ERR'||e=='ERR'){warn.push(`${ja}曜の時刻が読めません（例 09:30）。`);continue;}
+   if(e.over||e.t<=o.t)overnight=true;const k=o.t+'-'+e.t;(groups[k]=groups[k]||[]).push(en);}});
+ const ohs=Object.entries(groups).map(([k,days])=>{const [o,e]=k.split('-');return{"@type":"OpeningHoursSpecification","dayOfWeek":days.length==1?days[0]:days,"opens":o,"closes":e};});
+ if(!ohs.length)warn.push('営業日が1日もありません。');ld.openingHoursSpecification=ohs;
+ const sps=[];document.querySelectorAll('.sprow').forEach(r=>{const f=r.querySelector('.f').value,t=r.querySelector('.t').value||f;if(!f)return;if(t<f){warn.push(`特別営業時間 ${f}〜${t} の期間が逆です。`);return;}
+  const s={"@type":"OpeningHoursSpecification","validFrom":f,"validThrough":t};
+  if(r.querySelector('.c').checked){s.opens="00:00";s.closes="00:00";}else{const o=normT(r.querySelector('.o').value),e=normT(r.querySelector('.e').value);if(!o||!e||o=='ERR'||e=='ERR'){warn.push(`特別営業時間 ${f} の時刻を入れてください。`);return;}s.opens=o.t;s.closes=e.t;}
+  sps.push(s);});
+ if(sps.length)ld.specialOpeningHoursSpecification=sps;
+ if(overnight)warn.push('閉店が翌日にまたがる曜日があります（closes が opens より前の時刻）。schema.org ではそのまま有効です。');
+ return {ld,warn};}
+document.getElementById('gen').onclick=()=>{const {ld,warn}=build();document.getElementById('out').value='<script type="application/ld+json">\n'+JSON.stringify(ld,null,2)+'\n<\/script>';document.getElementById('msg').innerHTML=warn.map(w=>`<div class=warn>・${w}</div>`).join('')||'<div>問題は見つかりませんでした。</div>';};
+document.getElementById('copy').onclick=()=>{const o=document.getElementById('out');o.select();navigator.clipboard&&navigator.clipboard.writeText(o.value);};
+if(typeof module!=='undefined')module.exports={normT,build};
+</script>
+</body></html>
