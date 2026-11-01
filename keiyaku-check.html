@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>業務委託契約書 確認ポイント抽出ツール（損害賠償・自動更新・知財・支払期日／無料）</title>
+<meta name="description" content="業務委託契約書・NDA・利用規約の本文を貼り付けると、損害賠償の上限、自動更新、中途解約、知的財産の帰属、競業避止、支払期日、再委託、秘密保持の期間など、署名前に読み直したい条文を色分けして一覧にします。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/keiyaku-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}textarea{width:100%;height:220px;font-size:13px}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:4px 14px 4px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ng{color:#b00020;font-weight:bold}.warn{color:#a15c00}.ok{color:#1b7f3a}mark{background:#ffe08a}
+</style>
+</head>
+<body>
+<h1>業務委託契約書 確認ポイント抽出ツール</h1>
+<p>契約書の本文を貼り付けると、署名する前に読み直したほうがよい条文を拾い出して一覧にします。「この契約は有利・不利」と判定する道具ではなく、見落としやすい箇所に印をつける道具です。処理はすべてブラウザの中で行われ、本文はどこにも送信されません。</p>
+<p><label>あなたの立場 <select id="side"><option value="v">受注者（仕事を受ける側）</option><option value="c">発注者（仕事を頼む側）</option></select></label>
+<label>納品・役務提供日から支払までの上限 <input type="number" id="days" value="60" min="1" max="365" style="width:4em">日</label></p>
+<textarea id="src" placeholder="第1条（目的）……
+第8条（損害賠償）乙は、本契約に関して甲に生じた一切の損害を賠償する。
+第12条（有効期間）本契約の有効期間は1年とし、期間満了の1か月前までに申し出がない場合は同一条件で更新する。"></textarea>
+<button id="run">確認ポイントを抽出</button><button id="dl" disabled>一覧をCSVで保存</button><button id="cp" disabled>質問リストをコピー</button>
+<div id="out"></div>
+<p class="note">拾い出す項目：損害賠償（上限の有無、「一切の損害」「逸失利益」）、契約不適合・瑕疵担保の期間、自動更新と解約の申し出期限、中途解約・即時解除、知的財産権の帰属と著作者人格権の不行使、成果物の二次利用、競業避止・引抜き禁止、秘密保持の期間、再委託、支払期日・支払サイト・振込手数料、源泉徴収、検収期間、遅延損害金、反社条項、準拠法・管轄裁判所、一方的な変更、印紙・費用負担。日数は条文中の「◯日」「◯か月」を拾っているだけなので、必ず原文で確かめてください。<br>このツールは法律相談ではありません。金額が大きい契約や判断に迷う条文は、弁護士・行政書士など専門家に確認してください。フリーランス法（特定受託事業者に係る取引の適正化等に関する法律）の取引条件は<a href="freelance-terms-check.html">取引条件チェックリスト</a>も使えます。</p>
+<p>英文契約（NDA・MSA）を日本語で要点整理したい、相手への修正依頼文を作りたい、という場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください（日本語・英語・中国語）。</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script>
+const $=id=>document.getElementById(id);let RES=[];
+const z2h=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+const kan={〇:0,一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9};
+function kanNum(s){if(/^\d+$/.test(s))return +s;let n=0,cur=0;for(const c of s){if(c==='十'){n+=(cur||1)*10;cur=0}else if(c==='百'){n+=(cur||1)*100;cur=0}else if(c in kan)cur=kan[c];else return NaN}return n+cur}
+function splitClauses(t){t=z2h(t).replace(/\r/g,'');
+ const parts=t.split(/\n(?=\s*(?:第\s*[0-9一二三四五六七八九十百]+\s*条|Article\s+\d+|\d+\.\s))/);
+ return parts.map(p=>p.trim()).filter(Boolean).map(p=>{const m=p.match(/^\s*(第\s*[0-9一二三四五六七八九十百]+\s*条(?:\s*[（(][^）)]{1,20}[）)])?)/);return{head:m?m[1].replace(/\s/g,''):p.slice(0,18)+'…',body:p}})}
+function days(s){const out=[];const re=/([0-9一二三四五六七八九十百]+)\s*(日|か月|ヶ月|ケ月|カ月|箇月|年)/g;let m;while(m=re.exec(s)){const n=kanNum(m[1]);if(isNaN(n))continue;const u=m[2];out.push(u==='日'?n:u==='年'?n*365:n*30)}return out}
+const RULES=[
+{k:'損害賠償',re:/損害賠償|賠償/,f:(s,side)=>{const cap=/上限|を限度|を超えない|委託料.{0,10}(相当額|総額|の範囲)|直接かつ現実/.test(s);const all=/一切の損害|全ての損害|すべての損害|逸失利益|間接損害|特別損害|弁護士費用/.test(s);
+ if(side==='v'&&!cap)return['ng','賠償額の上限が見当たりません。受注者側なら「委託料の総額を上限」「直接かつ現実に生じた通常損害に限る」などを入れられないか確認を。'];
+ if(all&&side==='v')return['warn','「一切の損害」「逸失利益」「弁護士費用」など範囲が広い表現があります。'];return['ok','上限または範囲の限定があります。金額を確認してください。']},q:'損害賠償の上限（委託料総額など）と対象範囲を入れてもらえますか。'},
+{k:'契約不適合・瑕疵',re:/契約不適合|瑕疵|追完|担保責任/,f:s=>{const d=days(s);const mx=Math.max(0,...d);if(!d.length)return['warn','責任を負う期間が書かれていない可能性があります（民法の原則は知った時から1年以内の通知）。'];return[mx>365?'warn':'ok','期間の記載：約'+mx+'日相当。']},q:'契約不適合責任の期間を検収後◯か月に限定できますか。'},
+{k:'自動更新',re:/自動更新|同一条件で(更新|継続)|更新されるものとし|申し出がない(場合|とき)/,f:s=>{const d=days(s);return['warn','自動更新の条項です。解約の申し出期限'+(d.length?'（記載の日数：'+d.join('・')+'日相当）':'')+'をカレンダーに入れておくと安全です。']},q:'更新しない場合の通知期限と方法（メール可か）を確認させてください。'},
+{k:'中途解約・解除',re:/中途解約|解約|解除/,f:(s,side)=>{const imm=/催告(を要せず|なく)|直ちに|即時/.test(s);const one=/甲は.{0,30}(いつでも|自由に).{0,20}(解約|解除)/.test(s);
+ if(one&&side==='v')return['ng','発注者だけがいつでも解約できる書き方です。それまでの作業分の支払いがあるか確認を。'];if(imm)return['warn','催告なしの即時解除があります。解除事由が広すぎないか確認を。'];return['ok','解約・解除の条文です。予告期間と精算方法を確認してください。']},q:'中途解約の場合、それまでの作業分（出来高）はどう精算されますか。'},
+{k:'知的財産・著作権',re:/知的財産|著作権|特許|ノウハウ|成果物の権利/,f:(s,side)=>{const tr=/(移転|譲渡|帰属)/.test(s);const a27=/27条|第二十七条|28条|第二十八条/.test(s);const jin=/人格権.{0,15}行使しない/.test(s);
+ const pre=/既存|従前|あらかじめ保有|汎用/.test(s);let m=[];if(tr)m.push('権利の移転・帰属の記載があります');if(a27)m.push('著作権法27条・28条の権利も含まれます');if(jin)m.push('著作者人格権の不行使があります');
+ if(side==='v'&&tr&&!pre)m.push('受注者が前から持っている素材・ツールの扱い（既存の知財の除外）が見当たりません');if(side==='v'&&!/実績|ポートフォリオ/.test(s))m.push('ポートフォリオ掲載の可否が書かれていません');
+ return[side==='v'&&tr&&!pre?'ng':'warn',m.join('。')+'。']},q:'既存の素材・ノウハウは権利移転の対象外にし、ポートフォリオへの掲載を認めてもらえますか。'},
+{k:'競業避止・引抜き禁止',re:/競業|競合|同種の業務|引き?抜|勧誘してはならない/,f:s=>{const d=days(s);return['warn','競業避止・引抜き禁止の条項です。期間'+(d.length?'（約'+Math.max(...d)+'日相当）':'の記載なし')+'・対象範囲が広すぎると他の仕事に影響します。']},q:'競業避止の対象（業務・相手先）と期間を絞れますか。'},
+{k:'秘密保持',re:/秘密保持|秘密情報|機密/,f:s=>{const d=days(s);const perm=/永久|無期限|期間の定めなく/.test(s);if(perm)return['warn','秘密保持義務が無期限です。'];return['ok','秘密保持の条文です'+(d.length?'（期間：約'+Math.max(...d)+'日相当）':'。期間を確認してください')+'。']},q:'秘密保持の存続期間（契約終了後◯年）を確認させてください。'},
+{k:'再委託',re:/再委託|第三者に委託/,f:(s,side)=>{const ban=/(してはならない|できない|禁止)/.test(s);return[ban&&side==='v'?'warn':'ok',ban?'再委託が禁止または事前承諾制です。外注や生成AIツール・クラウドの利用がこれに当たらないか確認を。':'再委託の条文です。']},q:'再委託の事前承諾は書面（メール）で足りますか。外部ツールの利用は再委託に当たりませんか。'},
+{k:'支払期日',re:/支払|対価|報酬|委託料/,f:(s,side,lim)=>{let m=[],lv='ok';const d=days(s).filter(x=>x<=365);const mx=d.length?Math.max(...d):0;
+ if(/翌々月/.test(s)){lv='ng';m.push('「翌々月」払いは納品から60日を超えることがあります')}else if(mx>lim){lv='ng';m.push('記載の日数（約'+mx+'日）が上限'+lim+'日を超えています')}
+ if(/振込手数料.{0,10}(乙|受託者|受注者)の負担/.test(s)){lv=lv==='ok'?'warn':lv;m.push('振込手数料が受注者負担です（事前の合意が必要とされています）')}
+ if(/検収/.test(s)&&!/検収.{0,20}([0-9一二三四五六七八九十]+)\s*(日|営業日)/.test(s)){lv=lv==='ok'?'warn':lv;m.push('検収の期限が見当たりません。検収が終わらず支払いが延びることがあります')}
+ if(/源泉/.test(s))m.push('源泉徴収の記載があります（<a href="gensen-calc.html">振込額の計算</a>）');
+ return[lv,(m.length?m.join('。'):'支払条件の条文です。締め日と支払日を確認してください')+'。']},q:'支払日は納品（検収完了）から何日後ですか。検収の期限は何日ですか。'},
+{k:'遅延損害金',re:/遅延損害金|遅延利息/,f:s=>['ok','遅延損害金の記載があります。年率を確認してください。'],q:''},
+{k:'一方的な変更',re:/(変更|改定)することができ|事前の通知なく|甲の判断により|甲が別途定める/,f:(s,side)=>[side==='v'?'ng':'warn','相手が一方的に内容を変えられる書き方があります。'],q:'仕様・報酬・規約の変更には双方の合意が必要、とできますか。'},
+{k:'準拠法・管轄',re:/準拠法|管轄|裁判所/,f:s=>{const f=/(米国|アメリカ|ニューヨーク|カリフォルニア|シンガポール|英国|仲裁)/.test(s);return[f?'warn':'ok',f?'外国法・外国の裁判所や仲裁が指定されています。紛争時の費用が大きくなります。':'管轄の条文です。どこの裁判所か確認してください。']},q:''},
+{k:'反社会的勢力',re:/反社会的勢力|暴力団/,f:s=>['ok','反社条項があります（一般的な条文です）。'],q:''},
+{k:'費用・印紙',re:/印紙|費用は.{0,10}負担|実費/,f:s=>['ok','費用負担の条文です。交通費・素材費・印紙代の負担者を確認してください。'],q:''}
+];
+$('run').onclick=()=>{const side=$('side').value,lim=+$('days').value||60;const cl=splitClauses($('src').value);RES=[];const seen=new Set();
+ for(const c of cl){for(const r of RULES){if(r.re.test(c.body)){const[lv,msg]=r.f(c.body,side,lim);RES.push({head:c.head,k:r.k,lv,msg,q:r.q,ex:c.body.slice(0,140)});seen.add(r.k)}}}
+ const miss=['損害賠償','支払期日','知的財産・著作権','秘密保持','中途解約・解除'].filter(k=>!seen.has(k));
+ const rank={ng:0,warn:1,ok:2};RES.sort((a,b)=>rank[a.lv]-rank[b.lv]);
+ let h='<p>条文 '+cl.length+' 件を読み取り、確認ポイント '+RES.length+' 件（<span class="ng">要確認 '+RES.filter(x=>x.lv==='ng').length+'</span>・<span class="warn">注意 '+RES.filter(x=>x.lv==='warn').length+'</span>）。</p>';
+ if(miss.length)h+='<p class="warn">見当たらない条文：'+miss.join('、')+'。書かれていないこと自体が問題になる場合があります。</p>';
+ h+='<table><tr><th>条</th><th>項目</th><th>判定</th><th>確認ポイント</th><th>原文（冒頭）</th></tr>';
+ const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+ for(const r of RES)h+='<tr><td>'+esc(r.head)+'</td><td>'+r.k+'</td><td class="'+r.lv+'">'+({ng:'要確認',warn:'注意',ok:'参考'}[r.lv])+'</td><td>'+r.msg+'</td><td>'+esc(r.ex)+'</td></tr>';
+ $('out').innerHTML=h+'</table>';$('dl').disabled=$('cp').disabled=!RES.length};
+$('dl').onclick=()=>{const q=s=>'"'+String(s).replace(/<[^>]+>/g,'').replace(/"/g,'""')+'"';const csv='\ufeff条,項目,判定,確認ポイント,原文\n'+RES.map(r=>[r.head,r.k,{ng:'要確認',warn:'注意',ok:'参考'}[r.lv],r.msg,r.ex].map(q).join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='keiyaku-check.csv';a.click()};
+$('cp').onclick=()=>{const qs=[...new Set(RES.filter(r=>r.lv!=='ok'&&r.q).map(r=>r.head+'：'+r.q))];const t='契約書について、署名の前にいくつか確認させてください。\n\n'+qs.map((x,i)=>(i+1)+'. '+x).join('\n')+'\n\nお手数ですが、ご回答または修正案をいただけますと助かります。';navigator.clipboard.writeText(t).then(()=>alert('コピーしました'),()=>prompt('コピーしてください',t))};
+</script>
+</body>
+</html>
