@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>表記ゆれ・文体チェッカー｜漢字/ひらがな・長音・全角半角・です/である混在を無料で確認</title>
+<meta name="description" content="原稿・記事・マニュアルの表記ゆれ（下さい/ください、サーバ/サーバー、全角/半角数字、行う/行なう）と、です・ます調/だ・である調の混在を一覧で確認できる無料ツール。ブラウザ内で処理し、文章は送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/hyoki-yure.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:14em;font-size:1em;box-sizing:border-box}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.warn{background:#fdecea;padding:8px 12px;border-radius:8px;margin-top:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+mark{background:#ffe08a}small{color:#555}button{font-size:1em;padding:4px 12px}
+</style>
+</head>
+<body>
+<h1>表記ゆれ・文体チェッカー</h1>
+<p>記事、マニュアル、公募原稿、翻訳の納品前に、同じ言葉が別の書き方で混ざっていないか（<b>表記ゆれ</b>）と、です・ます調とだ・である調が混ざっていないかを確かめるツールです。文章はブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<textarea id="t" placeholder="ここに文章を貼り付けてください"></textarea>
+<p><label><input type="checkbox" id="opKata" checked> カタカナ語の長音ゆれ（サーバ/サーバー）</label>
+<label><input type="checkbox" id="opWidth" checked> 全角・半角のゆれ（英数字・記号）</label>
+<label><input type="checkbox" id="opDict" checked> 漢字/ひらがな・送り仮名のゆれ（辞書）</label></p>
+<p><small>独自ルール（1行に1組、カンマ区切り。例：<code>お問い合わせ,お問合せ,お問合わせ</code>）</small><br>
+<textarea id="custom" style="min-height:4em" placeholder="お問い合わせ,お問合せ,お問合わせ"></textarea></p>
+<button id="go">チェックする</button>
+</div>
+<div id="out"></div>
+<div class="note"><b>使い方のヒント</b>：表記ゆれは「どちらが正しいか」ではなく「1つの文書の中でそろっているか」が大事です。媒体や会社の表記ルールがあればそれに合わせ、なければ多く使っている方にそろえるのが無難です。会話文や引用の中は意図的に文体を変えることもあるので、文体の判定は目安として使ってください。</div>
+<p><a href="index.html">← 無料ツール一覧へ</a> ／ <a href="moji-count.html">文字数・原稿用紙換算チェッカー</a></p>
+<script>
+const DICT=[["ください","下さい"],["いただく","頂く"],["いただき","頂き"],["いただけ","頂け"],["いたします","致します"],["こと","事"],["とき","時"],["ところ","所"],["もの","物"],["ため","為"],["など","等"],["すべて","全て"],["さまざま","様々"],["できる","出来る"],["できま","出来ま"],["ほど","程"],["まで","迄"],["よろしく","宜しく"],["ありがとう","有難う","有り難う"],["おすすめ","お勧め","お薦め","オススメ"],["わかる","分かる","解る","判る"],["わかり","分かり","解り","判り"],["ぜひ","是非"],["さらに","更に"],["また","又"],["ただし","但し"],["および","及び"],["ならびに","並びに"],["もっとも","最も"],["おこなう","行う","行なう"],["行う","行なう"],["行います","行ないます"],["申し込み","申込み","申込"],["問い合わせ","問合せ","問い合せ","問合わせ"],["受け付け","受付け","受付"],["取り扱い","取扱い","取扱"],["打ち合わせ","打合せ","打ち合せ"],["見積もり","見積り","見積"],["引っ越し","引越し","引越"],["振り込み","振込み","振込"],["売り上げ","売上げ","売上"],["お知らせ","お報せ"],["ひとつ","一つ"],["ふたつ","二つ"],["いう","言う"],["ある","有る","在る"],["ない","無い"],["ちょうど","丁度"],["たくさん","沢山"],["いろいろ","色々"],["ほとんど","殆ど"],["なお","尚"],["かつ","且つ"],["あらかじめ","予め"],["ようやく","漸く"],["すでに","既に"]];
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function count(text,w){if(!w)return 0;let n=0,i=0;while((i=text.indexOf(w,i))!==-1){n++;i+=w.length}return n}
+function countExcl(text,w,others){// count w occurrences not inside a longer variant
+ let n=0,i=0;const longer=others.filter(o=>o.length>w.length&&o.includes(w));
+ while((i=text.indexOf(w,i))!==-1){let inside=false;for(const o of longer){const off=o.indexOf(w);if(text.substr(i-off,o.length)===o){inside=true;break}}if(!inside)n++;i+=w.length}return n}
+function lineOf(text,w){const ls=text.split(/\n/);const r=[];ls.forEach((l,k)=>{if(l.includes(w)&&r.length<5)r.push(k+1)});return r}
+function z2h(s){return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))}
+function check(text,opt){
+ const groups=[];
+ if(opt.dict){for(const g of DICT.concat(opt.custom)){const cs=g.map(w=>[w,countExcl(text,w,g)]).filter(x=>x[1]>0);if(cs.length>1)groups.push({kind:"漢字/かな・送り仮名",items:cs})}}
+ if(opt.kata){const words=text.match(/[ァ-ヴー]{3,}/g)||[];const set=new Map();for(const w of words)set.set(w,(set.get(w)||0)+1);
+  const seen=new Set();for(const [w,c] of set){if(w.endsWith("ー")){const b=w.slice(0,-1);if(set.has(b)&&!seen.has(b)){seen.add(b);groups.push({kind:"長音",items:[[b,set.get(b)],[w,c]]})}}}
+  // ヴ/バ ゆれ
+  for(const [w,c] of set){if(w.includes("ヴ")){const alt=w.replace(/ヴァ/g,"バ").replace(/ヴィ/g,"ビ").replace(/ヴェ/g,"ベ").replace(/ヴォ/g,"ボ").replace(/ヴ/g,"ブ");if(alt!==w&&set.has(alt))groups.push({kind:"ヴ/バ行",items:[[w,c],[alt,set.get(alt)]]})}}}
+ if(opt.width){const tok=text.match(/[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]+/g)||[];const m=new Map();for(const t of tok){const k=z2h(t).toLowerCase();if(!m.has(k))m.set(k,new Map());const mm=m.get(k);mm.set(t,(mm.get(t)||0)+1)}
+  for(const [k,mm] of m){if(mm.size>1)groups.push({kind:"全角/半角・大文字小文字",items:[...mm]})}
+  const fw=(text.match(/[Ａ-Ｚａ-ｚ０-９]/g)||[]).length,hw=(text.match(/[A-Za-z0-9]/g)||[]).length;
+  const symZ=(text.match(/[（）！？：]/g)||[]).length,symH=(text.match(/[()!?:]/g)||[]).length;
+  groups.push({kind:"_stat",fw,hw,symZ,symH})}
+ // 文体
+ const sents=text.replace(/「[^」]*」/g,"").split(/(?<=[。！？!?])|\n/).map(s=>s.trim()).filter(s=>s.length>1);
+ const desu=[],dearu=[];
+ for(const s of sents){const e=s.replace(/[。！？!?）)」』\s]+$/,"");
+  if(/(です|ます|でした|ました|ません|でしょう|ましょう|ください|下さい|ませんか|ですか|ますか)$/.test(e))desu.push(s);
+  else if(/(だ|である|であった|だった|ない|なかった|た|る|う|しよう|だろう|であろう|のだ|のである)$/.test(e)&&!/(体言止め)/.test(e))dearu.push(s)}
+ return {groups,desu,dearu,total:sents.length};
+}
+function run(){const text=document.getElementById("t").value;
+ const custom=document.getElementById("custom").value.split(/\n/).map(l=>l.split(/[,、，]/).map(s=>s.trim()).filter(Boolean)).filter(g=>g.length>1);
+ const r=check(text,{dict:opt("opDict"),kata:opt("opKata"),width:opt("opWidth"),custom});
+ let h="";const real=r.groups.filter(g=>g.kind!=="_stat");
+ h+=`<div class="res">表記ゆれの候補：<b>${real.length}</b> 組 ／ 文の数：${r.total}（です・ます調 ${r.desu.length}、だ・である調 ${r.dearu.length}）</div>`;
+ if(real.length){h+="<h2>表記ゆれの候補</h2><table><tr><th>種類</th><th>使われている表記（回数）</th><th>出てくる行</th></tr>";
+  for(const g of real){h+=`<tr><td>${g.kind}</td><td>${g.items.sort((a,b)=>b[1]-a[1]).map(x=>`<mark>${esc(x[0])}</mark>（${x[1]}）`).join(" ／ ")}</td><td>${g.items.map(x=>esc(x[0])+": "+lineOf(text,x[0]).join(",")).join("<br>")}</td></tr>`}
+  h+="</table><p><small>回数の多い表記を左に並べています。そろえる際の目安にしてください。</small></p>"}
+ const st=r.groups.find(g=>g.kind==="_stat");
+ if(st&&st.fw&&st.hw)h+=`<div class="warn">全角英数字 ${st.fw} 字と半角英数字 ${st.hw} 字が混在しています。媒体のルールに合わせてどちらかにそろえましょう。</div>`;
+ if(st&&st.symZ&&st.symH)h+=`<div class="warn">全角の括弧・記号（${st.symZ}）と半角の括弧・記号（${st.symH}）が混在しています。</div>`;
+ const minor=Math.min(r.desu.length,r.dearu.length);
+ if(minor>0){const isDesu=r.desu.length>=r.dearu.length;const odd=isDesu?r.dearu:r.desu;
+  h+=`<h2>文体の混在</h2><div class="warn">主に<b>${isDesu?"です・ます調":"だ・である調"}</b>で書かれていますが、<b>${isDesu?"だ・である調":"です・ます調"}</b>に見える文が ${odd.length} 文あります（会話・引用・箇条書きは除外を検討してください）。</div><ul>${odd.slice(0,30).map(s=>"<li>"+esc(s)+"</li>").join("")}</ul>`}
+ else if(r.total)h+=`<p>文体は${r.desu.length?"です・ます調":"だ・である調"}でそろっているようです。</p>`;
+ document.getElementById("out").innerHTML=h}
+function opt(id){return document.getElementById(id).checked}
+document.getElementById("go").onclick=run;
+if(typeof module!=="undefined")module.exports={check};
+</script>
+</body>
+</html>
