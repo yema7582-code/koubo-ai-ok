@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>翻訳調・AI翻訳っぽさチェッカー｜機械翻訳の不自然な日本語を無料で洗い出し</title>
+<meta name="description" content="機械翻訳・AI翻訳の日本語に出やすい翻訳調（彼/彼女の多用、〜することができる、〜によって、〜を持っている、それは〜です、の連続、長すぎる文など）を一覧で表示し、言い換え案を出す無料ツール。ブラウザ内で処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/honyakucho-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:14em;font-size:1em;box-sizing:border-box}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+mark{background:#ffe08a}small{color:#555}button{font-size:1em;padding:4px 12px}
+.hl{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:10px;background:#fafafa}
+</style>
+</head>
+<body>
+<h1>翻訳調・AI翻訳っぽさチェッカー</h1>
+<p>機械翻訳やAI翻訳で作った日本語、海外製品の日本語ページ、翻訳者から納品された訳文を貼り付けると、<b>翻訳っぽく読める言い回し</b>を洗い出して、言い換えの例を出します。文章はブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<textarea id="t" placeholder="ここに日本語の文章を貼り付けてください"></textarea>
+<p><label>1文の長さの上限（文字）：<input type="number" id="maxLen" value="80" min="20" max="300" style="width:5em"></label>
+<label><input type="checkbox" id="opPron" checked> 代名詞（彼・彼女・それ・あなた）の数も見る</label></p>
+<button id="go">チェックする</button>
+</div>
+<div id="out"></div>
+<div class="note"><b>読み方のヒント</b>：ここに出るのは「翻訳調になりやすい形」で、間違いとは限りません。小説や論文では残した方がよい場合もあります。1つずつ「日本語で最初から書いたらこう書くか」を考えて直すのがコツです。数が多い場合は、文の長さと主語・代名詞から直すと全体が一気に自然になります。</div>
+<h2>よくある翻訳調と直し方</h2>
+<ul>
+<li>「〜することができます」→「〜できます」</li>
+<li>「彼は〜。彼は〜。」→ 2回目以降は主語を省くか名前で</li>
+<li>「〜を持っています」（have の直訳）→「〜があります」「〜を備えています」</li>
+<li>「〜によって作られた」（受け身＋by）→「〜が作った」</li>
+<li>「それは〜です」（It is の直訳）→ 主語を省く</li>
+<li>「〜の〜の〜」→ 1つを「にある」「による」などに言い換える</li>
+<li>「あなたの〜」→ 省くか「お客様の」「ご自身の」</li>
+</ul>
+<p>納品前の訳文チェックや、AI翻訳の日本語を自然に直す作業（英語・中国語→日本語）のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へどうぞ。</p>
+<p><a href="index.html">← 無料ツール一覧へ</a> ／ <a href="hyoki-yure.html">表記ゆれ・文体チェッカー</a> ／ <a href="i18n-check.html">翻訳ファイル（JSON/PO）チェッカー</a></p>
+<script>
+const RULES=[
+ {id:"dekiru",re:/することができ(る|ます|ない|ません|た|まし)/g,name:"〜することができる",fix:"「〜できる」に短くする"},
+ {id:"kotoga",re:/(?<!す)ることができ(る|ます|ない|ません)/g,name:"〜ることができる",fix:"可能形（読める・見られる）にする"},
+ {id:"motsu",re:/を持って(いる|います|おり|いない|いません)/g,name:"〜を持っている（have の直訳）",fix:"「〜がある」「〜を備える」"},
+ {id:"niyotte",re:/によって(作|書か|開発さ|提供さ|行わ|設計さ|撮影さ|管理さ|運営さ)/g,name:"受け身＋によって（by の直訳）",fix:"能動に戻す（「〜が作った」）"},
+ {id:"soreha",re:/(^|[。！？\n])\s*それは/g,name:"文頭の「それは」（It is の直訳）",fix:"主語を省く"},
+ {id:"anatano",re:/あなたの/g,name:"「あなたの」",fix:"省く、または「お客様の」「ご自身の」"},
+ {id:"kare",re:/(彼|彼女|彼ら)(は|が|の|を|に)/g,name:"彼・彼女の主語",fix:"名前にするか省く"},
+ {id:"tame",re:/ために/g,name:"「〜ために」の多用",fix:"「〜には」「〜よう」で言い換え"},
+ {id:"oite",re:/において/g,name:"「において」",fix:"「で」「では」"},
+ {id:"kansite",re:/に関して(は)?/g,name:"「に関して」",fix:"「について」「は」"},
+ {id:"tsuite",re:/に基づいて/g,name:"「に基づいて」",fix:"「をもとに」「に沿って」"},
+ {id:"mottomo",re:/最も[^。]{0,10}の(一つ|ひとつ|1つ)/g,name:"「最も〜の一つ」（one of the most）",fix:"「指折りの」「特に〜な」"},
+ {id:"oyobi",re:/および|及び/g,name:"「および」",fix:"話し言葉の文書なら「と」「や」"},
+ {id:"rareru",re:/(と|が)考えられ(る|ます|ています)/g,name:"「〜と考えられる」",fix:"主体を出す（「私たちは〜と考えます」）か断定"},
+ {id:"hanasu",re:/について話し(たい|ましょう|ます)/g,name:"「〜について話す」（talk about）",fix:"「ご紹介します」「説明します」"},
+ {id:"suru",re:/を確実にする|確実にしてください/g,name:"「確実にする」（make sure）",fix:"「必ず〜する」「〜をご確認ください」"},
+ {id:"sukoshi",re:/少しの(間|時間)/g,name:"「少しの間」",fix:"「しばらく」"},
+ {id:"kanojo",re:/私たちの/g,name:"「私たちの」（our の直訳）",fix:"省くか「当社の」"},
+ {id:"kana",re:/！/g,name:"感嘆符「！」",fix:"ビジネス文や説明文なら減らす"},
+ {id:"kakko",re:/“|”|"/g,name:"英文の引用符（\" “ ”）",fix:"「」に替える"},
+ {id:"comma",re:/[A-Za-z0-9]?, (?=[ぁ-んァ-ヶ一-龠])/g,name:"半角カンマ＋スペース",fix:"読点「、」に替える"},
+];
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function sentences(t){return t.split(/(?<=[。！？!?])|\n+/).map(s=>s.trim()).filter(Boolean)}
+function check(text,maxLen,pron){
+ const hits=[];const ranges=[];
+ for(const r of RULES){
+  if(!pron&&r.id==="kare")continue;
+  const list=[...text.matchAll(r.re)];
+  if(list.length){hits.push({name:r.name,fix:r.fix,n:list.length,ex:list.slice(0,3).map(m=>text.slice(Math.max(0,m.index-12),m.index+m[0].length+12).replace(/\n/g," "))});
+   for(const m of list){let s=m.index,e=m.index+m[0].length;if(r.id==="soreha"){s=e-3}ranges.push([s,e])}}
+ }
+ // の連続
+ const nos=[...text.matchAll(/[^\s。、の]{1,8}の[^\s。、の]{1,8}の[^\s。、の]{1,8}の[^\s。、]{1,8}/g)];
+ if(nos.length){hits.push({name:"「の」が3回以上続く",fix:"1つを「にある」「による」「向けの」などに",n:nos.length,ex:nos.slice(0,3).map(m=>m[0])});for(const m of nos)ranges.push([m.index,m.index+m[0].length])}
+ // 長い文
+ const sents=sentences(text);const longs=sents.filter(s=>s.length>maxLen);
+ if(longs.length)hits.push({name:`${maxLen}字を超える長い文`,fix:"2文に分ける（英語の関係代名詞を1文で訳すと長くなりがち）",n:longs.length,ex:longs.slice(0,3).map(s=>s.slice(0,60)+"…（"+s.length+"字）")});
+ // 同じ文末の連続
+ let run=1,maxRun=1,endWord="";const ends=sents.map(s=>s.replace(/[。！？!?]$/,"").slice(-2));
+ for(let i=1;i<ends.length;i++){if(ends[i]===ends[i-1]){run++;if(run>maxRun){maxRun=run;endWord=ends[i]}}else run=1}
+ if(maxRun>=3)hits.push({name:`同じ文末「〜${endWord}」が${maxRun}文続く`,fix:"文末に変化をつける（〜です／〜ます／体言止めなど）",n:1,ex:[]});
+ // 代名詞密度
+ const pronN=pron?(text.match(/彼女|彼ら|彼|あなた|それら/g)||[]).length:0;
+ return {hits,ranges,sents:sents.length,chars:text.replace(/\s/g,"").length,pronN};
+}
+function render(text,res){
+ const o=document.getElementById("out");
+ if(!text.trim()){o.innerHTML="";return}
+ const total=res.hits.reduce((a,h)=>a+h.n,0);
+ const per=res.chars?(total/res.chars*1000):0;
+ const grade=per<3?"自然に近い":per<8?"やや翻訳調":"翻訳調が強い";
+ let h=`<div class="res"><b>${grade}</b>：${res.chars}字・${res.sents}文の中に、翻訳調の候補が <b>${total}</b> か所（1000字あたり ${per.toFixed(1)}）${res.pronN?`、代名詞 ${res.pronN} 回`:""}。</div>`;
+ if(res.hits.length){h+=`<table><tr><th>パターン</th><th>回数</th><th>直し方の例</th><th>該当箇所（最大3件）</th></tr>`;
+  for(const x of res.hits.sort((a,b)=>b.n-a.n))h+=`<tr><td>${esc(x.name)}</td><td>${x.n}</td><td>${esc(x.fix)}</td><td>${x.ex.map(e=>"…"+esc(e)+"…").join("<br>")}</td></tr>`;h+="</table>"}
+ // highlight
+ const rs=res.ranges.sort((a,b)=>a[0]-b[0]);let pos=0,hl="";
+ for(const [s,e] of rs){if(s<pos)continue;hl+=esc(text.slice(pos,s))+"<mark>"+esc(text.slice(s,e))+"</mark>";pos=e}
+ hl+=esc(text.slice(pos));
+ h+=`<h2>本文（候補に色をつけています）</h2><div class="hl">${hl}</div>`;
+ o.innerHTML=h;
+}
+if(typeof document!=="undefined"){document.getElementById("go").onclick=()=>{const t=document.getElementById("t").value;render(t,check(t,+document.getElementById("maxLen").value||80,document.getElementById("opPron").checked))}}
+if(typeof module!=="undefined")module.exports={check};
+</script>
+</body>
+</html>
