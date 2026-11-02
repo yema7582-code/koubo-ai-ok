@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>入金消込チェッカー（銀行明細CSV×請求一覧の突き合わせ／振込手数料差引・まとめ入金対応／無料）</title>
+<meta name="description" content="銀行の入金明細CSVと請求一覧を突き合わせ、一致・振込手数料差引の疑い・まとめ入金・一部入金・不明入金・未入金（期日超過日数つき）に分けます。振込名義の半角カナ・法人略語（カ）（ユ）を正規化。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nyukin-keshikomi.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1050px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea{width:100%;height:150px;font-family:monospace;font-size:13px}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ok{color:#1b7f3a}.warn{color:#a15c00}.ng{color:#b00020}.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>入金消込チェッカー（銀行明細 × 請求一覧）</h1>
+<p>銀行の入金明細と、こちらが出した請求の一覧を突き合わせて、「消し込んでよい入金」と「人が確かめるべき入金・請求」に分けます。全部を自動で確定させる道具ではなく、確認の手間を減らすための下ごしらえです。処理はすべてブラウザの中で行われ、データはどこにも送信されません。</p>
+<div class="cols">
+<div>
+<h2>① 入金明細（銀行のCSV）</h2>
+<p><input type="file" id="fBank" accept=".csv,text/csv"> または貼り付け（1行目は見出し）<br>必要な列：日付・振込依頼人（摘要）・入金額</p>
+<textarea id="bank" placeholder="日付,振込依頼人,入金額
+2026/10/31,カ)サンプルシヨウジ,109560
+2026/10/31,ヤマダ タロウ,33000"></textarea>
+</div>
+<div>
+<h2>② 請求一覧</h2>
+<p><input type="file" id="fInv" accept=".csv,text/csv"> または貼り付け（1行目は見出し）<br>必要な列：請求番号・取引先名・請求額・支払期日（あれば振込名義カナ）</p>
+<textarea id="inv" placeholder="請求番号,取引先名,振込名義カナ,請求額,支払期日
+INV-101,株式会社サンプル商事,サンプルショウジ,110000,2026/10/31
+INV-102,山田太郎,ヤマダタロウ,33000,2026/10/31"></textarea>
+</div>
+</div>
+<label>振込手数料として差し引かれていてもよい上限 <input type="number" id="tol" value="880" min="0" style="width:6em">円</label>
+<label>基準日（未入金の経過日数を数える日） <input type="date" id="asof"></label>
+<label>まとめ入金を探す請求の数（同じ取引先） <input type="number" id="combo" value="4" min="1" max="6" style="width:4em">件まで</label>
+<br><button id="run">突き合わせる</button><button id="dl" disabled>結果CSVを保存</button>
+<div id="out"></div>
+<p class="note">判定の種類：<b class="ok">一致</b>（名義と金額が一致）、<b class="ok">手数料差引</b>（名義が一致し、入金が請求より上限以内で少ない。差額を支払手数料として処理するかは契約・社内ルールで判断）、<b class="ok">まとめ入金</b>（同じ取引先の複数請求の合計と一致）、<b class="warn">金額のみ一致</b>（名義が照合できない。振込名義カナ列を入れると精度が上がります）、<b class="warn">一部入金の疑い</b>／<b class="warn">過入金の疑い</b>（名義は一致、金額が合わない）、<b class="ng">不明入金</b>、<b class="ng">未入金</b>（期日を過ぎた日数つき）。<br>振込名義は全角・半角、ひらがな・カタカナ、小さい「ャュョッ」、長音、記号、法人略語（カ）（ユ）（ド）（シヤ）など、「カブシキガイシヤ」の表記を揃えてから比べます。名義に会社名の一部しか入っていない場合も、前方一致で照合します。<br>このツールは会計処理や税務の判断はしません。最終確認はご自身または顧問の税理士さんが行ってください。</p>
+<p>毎月の消込を代わりにやってほしい、英語・中国語の海外入金明細も合わせたい、督促メールの下書きまで欲しい、という場合は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください（日本語・英語・中国語）。</p>
+<p>関連ツール：<a href="keihi-check.html">経費・請求書CSV 取り込み前チェッカー</a> ／ <a href="gensen-calc.html">源泉徴収税額・振込額計算</a></p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script id="core">
+function parseCSV(t){t=t.replace(/^\uFEFF/,'');const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','||c=='\t'){row.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x.trim()!==''))rows.push(row);return rows}
+function num(s){if(s==null)return NaN;s=String(s).normalize('NFKC').replace(/[,円¥\s]/g,'');if(/^\(.*\)$/.test(s))s='-'+s.slice(1,-1);return s===''?NaN:Number(s)}
+function pdate(s){if(!s)return null;s=String(s).normalize('NFKC').trim();let m;const era={R:2018,H:1988,'令和':2018,'平成':1988};
+if(m=s.match(/^(R|H|令和|平成)\s*(\d{1,2}|元)[.\/年-](\d{1,2})[.\/月-](\d{1,2})/)){const y=era[m[1]]+(m[2]=='元'?1:+m[2]);return mk(y,+m[3],+m[4])}
+if(m=s.match(/^(\d{4})[.\/年-](\d{1,2})[.\/月-](\d{1,2})/))return mk(+m[1],+m[2],+m[3]);
+if(m=s.match(/^(\d{4})(\d{2})(\d{2})$/))return mk(+m[1],+m[2],+m[3]);
+if(m=s.match(/^(\d{1,2})[\/月](\d{1,2})日?$/)){const y=new Date().getFullYear();return mk(y,+m[1],+m[2])}return null;
+function mk(y,mo,d){const x=new Date(Date.UTC(y,mo-1,d));return x.getUTCMonth()==mo-1?x:null}}
+function fmt(d){return d?d.toISOString().slice(0,10).replace(/-/g,'/'):''}
+const SMALL={'ァ':'ア','ィ':'イ','ゥ':'ウ','ェ':'エ','ォ':'オ','ャ':'ヤ','ュ':'ユ','ョ':'ヨ','ッ':'ツ','ヮ':'ワ','ヵ':'カ','ヶ':'ケ'};
+function kana(s){if(!s)return '';s=String(s).normalize('NFKC').toUpperCase();
+s=s.replace(/[\u3041-\u3096]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+s=s.replace(/[ァィゥェォャュョッヮヵヶ]/g,c=>SMALL[c]);
+s=s.replace(/カブシキガイシヤ|カブシキカイシヤ|ユウゲンガイシヤ|ユウゲンカイシヤ|ゴウドウガイシヤ|ゴウドウカイシヤ|イツパンシヤダンホウジン|イツパンザイダンホウジン|イリヨウホウジン|トクテイヒエイリカツドウホウジン|シヤカイフクシホウジン|ガツコウホウジン/g,'');
+s=s.replace(/株式会社|有限会社|合同会社|一般社団法人|一般財団法人|医療法人|特定非営利活動法人|社会福祉法人|学校法人|\(株\)|\(有\)|\(同\)/g,'');
+s=s.replace(/\((カ|ユ|ド|シヤ|ザイ|イ|トクヒ|フク|ガク|ソ)\)|^(カ|ユ|ド|シヤ|ザイ|イ|トクヒ|フク|ガク)\)|\((カ|ユ|ド|シヤ|ザイ|イ|トクヒ|フク|ガク)$/g,'');
+s=s.replace(/[ー\-‐－―\s\.\,・()（）「」\/'"&＆]/g,'');return s}
+function nameMatch(bankName,inv){const b=kana(bankName);if(!b)return false;const cands=[inv.kana,inv.name].map(kana).filter(x=>x.length>=2);
+return cands.some(c=>b===c||(b.length>=4&&c.startsWith(b))||(c.length>=4&&b.startsWith(c)))}
+function guess(h,keys){const H=h.map(x=>String(x).normalize('NFKC').trim());for(const k of keys){const i=H.findIndex(x=>x.includes(k));if(i>=0)return i}return -1}
+function loadBank(t){const r=parseCSV(t);if(!r.length)return[];const h=r[0];const id=guess(h,['日付','取引日','入金日','年月日','Date']);const in_=guess(h,['入金額','お預り','預り金額','入金','預入','金額','Amount']);const nm=guess(h,['振込依頼人','依頼人','摘要','お取引内容','内容','名義','Description']);
+return r.slice(1).map((x,i)=>({row:i+2,date:pdate(x[id]),name:(x[nm]||'').trim(),amt:num(x[in_])})).filter(x=>x.amt>0)}
+function loadInv(t){const r=parseCSV(t);if(!r.length)return[];const h=r[0];const no=guess(h,['請求番号','請求書番号','番号','No']);const nm=guess(h,['取引先','顧客','請求先','会社','name']);const kn=guess(h,['カナ','ｶﾅ','フリガナ','名義']);const am=guess(h,['請求額','請求金額','金額','合計','Amount']);const due=guess(h,['支払期日','期日','入金予定','due']);
+return r.slice(1).map((x,i)=>({row:i+2,no:no>=0?x[no].trim():'#'+(i+2),name:nm>=0?x[nm].trim():'',kana:kn>=0&&kn!==nm?x[kn].trim():'',amt:num(x[am]),due:due>=0?pdate(x[due]):null})).filter(x=>x.amt>0)}
+function combos(arr,k,target,tol){let best=null;const n=arr.length;function rec(s,pick,sum){if(pick.length>=2&&sum>=target&&sum-target<=tol){if(!best||sum-target<best.diff)best={items:pick.slice(),diff:sum-target}}if(pick.length==k||best&&best.diff==0)return;for(let i=s;i<n;i++){if(sum+arr[i].amt-target>tol)continue;pick.push(arr[i]);rec(i+1,pick,sum+arr[i].amt);pick.pop()}}if(n<=24)rec(0,[],0);return best}
+function reconcile(bank,inv,opt){const tol=opt.tol??880,K=opt.combo??4,asof=opt.asof||new Date();const res=[];const open=new Set(inv.map((_,i)=>i));const pend=[];
+const take=(b,items,kind,diff)=>{items.forEach(it=>open.delete(inv.indexOf(it)));res.push({kind,bank:b,invs:items,diff})};
+// pass1 name+exact
+for(const b of bank){const c=[...open].map(i=>inv[i]).filter(v=>v.amt===b.amt&&nameMatch(b.name,v)).sort((a,c)=>(a.due||0)-(c.due||0));if(c.length)take(b,[c[0]],'一致',0);else pend.push(b)}
+let rest=[];for(const b of pend){const c=[...open].map(i=>inv[i]).filter(v=>v.amt>b.amt&&v.amt-b.amt<=tol&&nameMatch(b.name,v)).sort((a,c)=>(a.amt-b.amt)-(c.amt-b.amt));if(c.length)take(b,[c[0]],'手数料差引',c[0].amt-b.amt);else rest.push(b)}
+let rest2=[];for(const b of rest){const same=[...open].map(i=>inv[i]).filter(v=>nameMatch(b.name,v));const best=combos(same,K,b.amt,tol);if(best)take(b,best.items,'まとめ入金',best.diff);else rest2.push(b)}
+let rest3=[];for(const b of rest2){const c=[...open].map(i=>inv[i]).filter(v=>v.amt===b.amt);if(c.length===1){take(b,[c[0]],'金額のみ一致',0)}else if(c.length>1){res.push({kind:'金額のみ一致',bank:b,invs:[],diff:0,cands:c})}else rest3.push(b)}
+for(const b of rest3){const c=[...open].map(i=>inv[i]).filter(v=>nameMatch(b.name,v));if(c.length){const v=c.sort((a,x)=>Math.abs(a.amt-b.amt)-Math.abs(x.amt-b.amt))[0];res.push({kind:b.amt<v.amt?'一部入金の疑い':'過入金の疑い',bank:b,invs:[v],diff:v.amt-b.amt})}else res.push({kind:'不明入金',bank:b,invs:[],diff:0})}
+const used=new Set();res.forEach(r=>{if(r.kind.includes('疑い'))r.invs.forEach(v=>used.add(v))});
+for(const i of [...open].sort((a,b)=>a-b)){const v=inv[i];if(used.has(v))continue;const od=v.due?Math.floor((asof-v.due)/864e5):null;res.push({kind:'未入金',bank:null,invs:[v],diff:v.amt,overdue:od})}
+return res}
+if(typeof module!=='undefined')module.exports={parseCSV,kana,nameMatch,loadBank,loadInv,reconcile,pdate};
+</script>
+<script>
+if(typeof document!=='undefined'){const $=id=>document.getElementById(id);let OUT=[];
+$('asof').value=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+async function readFile(f,target){const buf=await f.arrayBuffer();let t=new TextDecoder('utf-8').decode(buf);if(t.includes('\uFFFD')){try{t=new TextDecoder('shift_jis').decode(buf)}catch(e){}}$(target).value=t}
+$('fBank').onchange=e=>e.target.files[0]&&readFile(e.target.files[0],'bank');$('fInv').onchange=e=>e.target.files[0]&&readFile(e.target.files[0],'inv');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const yen=n=>isFinite(n)?n.toLocaleString('ja-JP')+'円':'';
+const cls=k=>/一致$|手数料|まとめ/.test(k)&&k!=='金額のみ一致'?'ok':/不明|未入金/.test(k)?'ng':'warn';
+$('run').onclick=()=>{const bank=loadBank($('bank').value),inv=loadInv($('inv').value);if(!bank.length||!inv.length){$('out').innerHTML='<p class="ng">入金明細と請求一覧の両方に、見出し行と1行以上のデータを入れてください。</p>';return}
+const asof=pdate($('asof').value)||new Date();OUT=reconcile(bank,inv,{tol:+$('tol').value||0,combo:+$('combo').value||4,asof});
+const cnt={};OUT.forEach(r=>cnt[r.kind]=(cnt[r.kind]||0)+1);
+let h='<h2>結果</h2><p>'+Object.entries(cnt).map(([k,v])=>'<span class="'+cls(k)+'">'+k+' '+v+'件</span>').join('　')+'</p><table><tr><th>判定</th><th>入金日</th><th>振込依頼人</th><th>入金額</th><th>請求番号</th><th>取引先</th><th>請求額</th><th>差額・メモ</th></tr>';
+for(const r of OUT){const b=r.bank;const iv=r.invs.length?r.invs:(r.cands||[]);let memo='';if(r.kind==='手数料差引')memo='差額 '+yen(r.diff)+'（手数料か確認）';else if(r.kind==='まとめ入金')memo=r.invs.length+'件分'+(r.diff?'、差額 '+yen(r.diff):'');else if(r.cands)memo='同額の請求が'+r.cands.length+'件。どれか確認';else if(r.kind==='金額のみ一致')memo='名義を照合できず';else if(r.kind.includes('疑い'))memo='請求との差 '+yen(r.diff);else if(r.kind==='未入金')memo=r.overdue==null?'期日不明':r.overdue>0?'期日から'+r.overdue+'日経過':'期日まで'+(-r.overdue)+'日';
+h+='<tr><td class="'+cls(r.kind)+'">'+r.kind+'</td><td>'+(b?fmt(b.date):'')+'</td><td>'+esc(b?b.name:'')+'</td><td>'+(b?yen(b.amt):'')+'</td><td>'+esc(iv.map(v=>v.no).join(' / '))+'</td><td>'+esc([...new Set(iv.map(v=>v.name))].join(' / '))+'</td><td>'+iv.map(v=>yen(v.amt)).join(' / ')+'</td><td>'+esc(memo)+'</td></tr>'}
+$('out').innerHTML=h+'</table>';$('dl').disabled=false};
+$('dl').onclick=()=>{const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';const L=[['判定','入金日','振込依頼人','入金額','請求番号','取引先','請求額','差額','期日経過日数'].map(q).join(',')];
+for(const r of OUT){const b=r.bank,iv=r.invs.length?r.invs:(r.cands||[]);L.push([r.kind,b?fmt(b.date):'',b?b.name:'',b?b.amt:'',iv.map(v=>v.no).join(' / '),iv.map(v=>v.name).join(' / '),iv.map(v=>v.amt).join(' / '),r.diff,r.overdue??''].map(q).join(','))}
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+L.join('\r\n')],{type:'text/csv'}));a.download='keshikomi_result.csv';a.click()}}
+</script>
+</body>
+</html>

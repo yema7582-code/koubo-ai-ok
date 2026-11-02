@@ -6,3 +6,4 @@
 - [ステマ規制 PR表記チェッカー](https://yema7582-code.github.io/koubo-ai-ok/stema-check.html)
 - [内容証明 字数・行数チェック＆謄本レイアウト・料金計算](https://yema7582-code.github.io/koubo-ai-ok/naiyo-shomei.html)
 - [翻訳調・AI翻訳っぽさチェッカー](https://yema7582-code.github.io/koubo-ai-ok/honyakucho-check.html): flags translationese patterns in Japanese machine/AI translation output with rewrite suggestions (client-side).
+- [入金消込チェッカー](https://yema7582-code.github.io/koubo-ai-ok/nyukin-keshikomi.html): 銀行入金明細CSVと請求一覧を突き合わせ、一致・振込手数料差引・まとめ入金・一部入金・不明入金・未入金を判定（ブラウザ内処理）
