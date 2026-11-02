@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>内容証明 字数・行数チェック＆謄本レイアウト・料金計算｜無料</title>
+<meta name="description" content="内容証明郵便の謄本ルール（縦書き1行20字・26行、横書き20字×26行／13字×40行／26字×20行）に合わせて文章を自動で折り返し、枚数と料金（内容証明480円＋1枚ごと290円・一般書留・配達証明・速達・同文）を計算する無料ツール。括弧・丸数字・単位記号の数え方も日本郵便の説明どおり。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/naiyo-shomei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:220px;font-size:1em;font-family:inherit}
+table{border-collapse:collapse;margin-top:8px;font-size:.95em}td,th{border:1px solid #ccc;padding:4px 8px;text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#a40000}.ok{color:#176b00}
+button{font-size:.95em;margin:4px 4px 4px 0;padding:4px 10px}
+.page{border:1px solid #888;margin:10px 0;padding:10px;font-family:"Hiragino Mincho ProN","Noto Serif JP",serif;white-space:pre;overflow-x:auto;background:#fff}
+.page .ln{display:block}.page .no{color:#999;display:inline-block;width:2.5em;font-family:monospace;font-size:.8em}
+.page.tate{writing-mode:vertical-rl;height:24em;white-space:pre}
+small{color:#555}
+@media print{.noprint{display:none}.page{border:none;page-break-after:always}.page .no{display:none}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>内容証明 字数・行数チェック＆謄本レイアウト・料金計算</h1>
+<p>内容証明郵便は、郵便局に出す<b>謄本</b>に字数・行数の決まりがあります。文章を貼り付けて書式を選ぶと、日本郵便の数え方に合わせて自動で折り返し、<b>謄本の枚数</b>と<b>差出しにかかる料金</b>を出します。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<h2>1. 書式</h2>
+<label><input type="radio" name="fmt" value="20x26" checked> 縦書き 1行20字・1枚26行</label><br>
+<label><input type="radio" name="fmt" value="h20x26"> 横書き 1行20字・1枚26行</label><br>
+<label><input type="radio" name="fmt" value="h13x40"> 横書き 1行13字・1枚40行</label><br>
+<label><input type="radio" name="fmt" value="h26x20"> 横書き 1行26字・1枚20行</label><br>
+<label><input type="checkbox" id="indent"> 段落の頭を1字下げる（全角スペースを入れる）</label>　
+<label><input type="checkbox" id="kinsoku" checked> 行頭に「、。」が来ないよう前の字を送る</label>
+</div>
+
+<div class="box">
+<h2>2. 本文</h2>
+<textarea id="src" placeholder="ここに通知書の本文を貼り付けます（改行は段落の区切りとして扱います）"></textarea>
+<button id="sample">例文を入れる</button><button id="clr">消す</button>
+<div id="chk"></div>
+</div>
+
+<div class="box">
+<h2>3. 料金</h2>
+<p>郵便物 <select id="post"><option value="110">定形 50gまで 110円</option><option value="140">定形外(規格内) 50gまで 140円</option><option value="180">定形外(規格内) 100gまで 180円</option></select>
+　<label><input type="checkbox" id="haitatsu" checked> 配達証明（+350円）</label>
+　<label><input type="checkbox" id="sokutatsu"> 速達（+300円）</label>
+　同じ文面で送る相手の数 <input type="number" id="dobun" min="1" value="1" style="width:4em"> 通</p>
+<div id="fee"></div>
+</div>
+</div>
+
+<div class="box">
+<h2 class="noprint">4. 謄本のレイアウト</h2>
+<p class="noprint"><button id="copy">折り返した本文をコピー</button><button id="dl">テキストで保存</button><button onclick="window.print()">印刷</button> <small>行番号は画面表示だけで、印刷には出ません。</small></p>
+<div id="pages"></div>
+</div>
+
+<div class="note noprint">
+<b>数え方（日本郵便「内容証明 ご利用の条件等」による）</b><br>
+・記号は1個1字。括弧は開きと閉じを合わせて1字とし、開き括弧のある行に数えます（このツールでは閉じ括弧を0字として数えます）。<br>
+・㎡ や ㎏ のような単位記号は中の文字数（㎡＝2字）。<br>
+・①のような丸囲み数字は「数字＋枠」で数えます（⑤＝2字、⑩＝3字）。ただし行頭の「①」のように順番を示す記号として使うときは1字です（このツールは行頭・段落頭の丸数字を1字とします）。<br>
+・英字は固有名詞に限って使えます。<br>
+・謄本が2枚以上になるときは、つづり目に差出人の印で契印をします。<br>
+・料金は、内容証明の加算料金（1枚目480円、2枚目以降1枚ごと290円、同文内容証明の2通目以降は半額）＋郵便物の料金＋一般書留（損害要償額10万円まで480円）＋配達証明などです。料金は2026年11月時点の日本郵便の掲載額です。最新の料金と条件は<a href="https://www.post.japanpost.jp/service/send/domestic/option/syomei/use.html" rel="noopener">日本郵便の案内</a>で必ず確認してください。<br>
+・インターネットから出す「e内容証明」は様式と料金が別です。<br>
+このツールは書式と料金の目安を出すもので、法律相談ではありません。通知の内容や効力については弁護士・司法書士・行政書士にご相談ください。英文の通知書を日本語で読みたい、日本語の通知書を英語・中国語に訳したいときは shinji-work@mail.grokbot.com までご連絡ください。
+</div>
+<p class="noprint"><a href="index.html">← 無料ツール一覧</a> ／ <a href="keiyaku-kigen.html">契約の自動更新・解約通知期限 カレンダー</a> ／ <a href="keiyaku-check.html">業務委託契約書 確認ポイント抽出</a></p>
+
+<script>
+const $=s=>document.querySelector(s);
+const OPEN='（(「『【［[〔〈《｛{〘〚“‘';
+const CLOSE='）)」』】］]〕〉》｝}〙〛”’';
+const NOHEAD='、。，．,.';
+const FMT={'20x26':[20,26,true],'h20x26':[20,26,false],'h13x40':[13,40,false],'h26x20':[26,20,false]};
+function circledVal(ch){const c=ch.codePointAt(0);if(c>=0x2460&&c<=0x2473)return c-0x2460+1;if(c>=0x3251&&c<=0x325F)return c-0x3251+21;if(c>=0x32B1&&c<=0x32BF)return c-0x32B1+36;if(c>=0x2776&&c<=0x277F)return c-0x2776+1;return 0}
+function weight(ch,atHead){
+  if(CLOSE.includes(ch))return 0;
+  const v=circledVal(ch);if(v)return atHead?1:String(v).length+1;
+  const c=ch.codePointAt(0);
+  if(c>=0x3300&&c<=0x33FF){const n=[...ch.normalize('NFKC')].length;return Math.max(1,n)}
+  return 1;
+}
+function lineWidth(chars){let w=0;chars.forEach((ch,i)=>w+=weight(ch,i===0));return w}
+function layout(text,per,opt){
+  const paras=text.replace(/\r\n?/g,'\n').split('\n');const lines=[];
+  for(let p of paras){
+    if(opt.indent&&p.length&&!/^[\s　]/.test(p))p='　'+p;
+    const chars=[...p];if(!chars.length){lines.push('');continue}
+    let cur=[],w=0;
+    for(let i=0;i<chars.length;i++){
+      const ch=chars[i];const wt=weight(ch,cur.length===0);
+      if(w+wt>per&&cur.length){
+        let carry=[];
+        if(opt.kinsoku&&NOHEAD.includes(ch)&&cur.length>1){carry=[cur.pop()]}
+        lines.push(cur.join(''));cur=carry;w=lineWidth(cur);
+        const wt2=weight(ch,cur.length===0);cur.push(ch);w+=wt2;
+      }else{cur.push(ch);w+=wt}
+    }
+    lines.push(cur.join(''));
+  }
+  while(lines.length&&lines[lines.length-1]==='')lines.pop();
+  return lines;
+}
+function checks(text){
+  const out=[];const a=[...text];
+  const en=text.match(/[A-Za-zＡ-Ｚａ-ｚ]+/g);if(en)out.push(['warn','英字があります（固有名詞だけ使えます）：'+[...new Set(en)].slice(0,10).join('、')]);
+  if(/[\uFF61-\uFF9F]/.test(text))out.push(['warn','半角カナがあります。全角に直すと安心です。']);
+  const emo=a.filter(ch=>{const c=ch.codePointAt(0);return c>=0x1F000||(c>=0x2600&&c<=0x27BF&&!circledVal(ch))});if(emo.length)out.push(['warn','絵文字や特殊な記号があります：'+[...new Set(emo)].join(' ')]);
+  let depth=0,bad=false;for(const ch of a){if(OPEN.includes(ch))depth++;else if(CLOSE.includes(ch)){depth--;if(depth<0)bad=true}}
+  if(depth!==0||bad)out.push(['warn','開き括弧と閉じ括弧の数が合いません。括弧は開きと閉じで1字として数えるので、対応を確認してください。']);
+  if(/[0-9０-９]{1,3}[,，][0-9０-９]{3}/.test(text))out.push(['ok','金額の「,」も1字として数えています。']);
+  if(!out.length&&text.trim())out.push(['ok','使える文字だけで書かれているようです。']);
+  return out;
+}
+function fees(pages,o){
+  if(!pages)return null;
+  const naiyo=480+290*(pages-1);const extra=Math.floor(naiyo/2);
+  const per=o.post+480+(o.haitatsu?350:0)+(o.sokutatsu?300:0);
+  const first=naiyo+per;const other=extra+per;
+  return {naiyo,extra,per,first,other,total:first+other*(o.dobun-1)};
+}
+function render(){
+  const f=FMT[document.querySelector('input[name=fmt]:checked').value];const [per,rows,tate]=f;
+  const text=$('#src').value;const opt={indent:$('#indent').checked,kinsoku:$('#kinsoku').checked};
+  const lines=layout(text,per,opt);const pages=Math.ceil(lines.length/rows);
+  window._lines=lines;window._rows=rows;
+  $('#chk').innerHTML=checks(text).map(([c,m])=>'<p class="'+c+'">'+(c=='warn'?'⚠ ':'✓ ')+m+'</p>').join('')+(lines.length?'<p>'+lines.length+' 行 ／ 謄本 <b>'+pages+' 枚</b>（1枚 '+rows+' 行）'+(pages>1?'　2枚以上なので契印が必要です。':'')+'</p>':'');
+  const o={post:+$('#post').value,haitatsu:$('#haitatsu').checked,sokutatsu:$('#sokutatsu').checked,dobun:Math.max(1,parseInt($('#dobun').value)||1)};
+  const fe=fees(pages,o);
+  $('#fee').innerHTML=fe?'<table><tr><th>内容証明の加算料金（'+pages+'枚）</th><td>'+fe.naiyo.toLocaleString()+' 円</td></tr><tr><th>郵便物＋一般書留'+(o.haitatsu?'＋配達証明':'')+(o.sokutatsu?'＋速達':'')+'</th><td>'+fe.per.toLocaleString()+' 円</td></tr><tr><th>1通目の合計</th><td><b>'+fe.first.toLocaleString()+' 円</b></td></tr>'+(o.dobun>1?'<tr><th>2通目以降（同文・内容証明料は半額 '+fe.extra.toLocaleString()+'円）</th><td>'+fe.other.toLocaleString()+' 円 × '+(o.dobun-1)+'</td></tr><tr><th>全部の合計（'+o.dobun+'通）</th><td><b>'+fe.total.toLocaleString()+' 円</b></td></tr>':'')+'</table><p><small>謄本は同じものを2通（差出人用・郵便局用）用意し、内容文書・封筒と一緒に窓口へ出します。</small></p>':'<p class="gry">本文を入れると計算します。</p>';
+  let h='';
+  for(let p=0;p<pages;p++){
+    const seg=lines.slice(p*rows,(p+1)*rows);
+    h+='<p class="noprint"><small>'+(p+1)+' 枚目</small></p><div class="page'+(tate?' tate':'')+'">'+seg.map((l,i)=>'<span class="ln">'+(tate?'':'<span class="no">'+(i+1)+'</span>')+esc(l)+'</span>').join('')+'</div>';
+  }
+  $('#pages').innerHTML=h;
+}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function plain(){const L=window._lines||[],R=window._rows||26;const out=[];for(let p=0;p*R<L.length;p++){out.push('――― '+(p+1)+'枚目 ―――');out.push(...L.slice(p*R,(p+1)*R))}return out.join('\r\n')}
+$('#sample').onclick=()=>{$('#src').value='通知書\n私は、貴社との間で令和7年4月1日に締結した業務委託契約（以下「本契約」といいます。）に基づき、令和8年8月分の翻訳業務を完了し、同年8月31日に成果物を納品しました。\n本契約第5条では、報酬は納品月の翌月末日までに支払うと定められていますが、本書面作成日現在、報酬金165,000円（消費税込）のお支払いを受けておりません。\nつきましては、本書面到達後14日以内に、上記金額を私の指定口座へお支払いくださるよう請求いたします。\n令和8年11月2日\n東京都千代田区○○1丁目2番3号\n○○○○\n東京都港区△△4丁目5番6号\n株式会社△△△△\n代表取締役　△△△△　殿';render()};
+$('#clr').onclick=()=>{$('#src').value='';render()};
+$('#copy').onclick=()=>{navigator.clipboard.writeText(plain());$('#copy').textContent='コピーしました'};
+$('#dl').onclick=()=>{const b=new Blob(['\ufeff'+plain()],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='naiyo-shomei.txt';a.click()};
+document.querySelectorAll('input,select,textarea').forEach(e=>e.addEventListener('input',render));
+render();
+if(typeof module!=='undefined')module.exports={weight,layout,fees,checks};
+</script>
+</body>
+</html>
