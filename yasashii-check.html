@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>やさしい日本語チェッカー（自治体・学校・病院のお知らせ／一文の長さ・敬語・ふりがな・日付と金額の抜け落ち点検／無料）</title>
+<meta name="description" content="外国人住民向けのお知らせを「在留支援のためのやさしい日本語ガイドライン」の考え方で点検します。一文の長さ、尊敬語・謙譲語、二重否定、あいまいな言い方、ふりがなが必要な漢字（学年別漢字配当表）、曜日のない日付に加え、元の文から日付・時刻・金額・電話番号が抜け落ちていないかを突き合わせます。ブラウザ内で処理し、文章は送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yasashii-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1050px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}textarea{width:100%;height:170px;font-size:14px;line-height:1.6}
+label{display:inline-block;margin:4px 14px 4px 0}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ok{color:#1b7f3a}.warn{color:#a15c00}.ng{color:#b00020}.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+mark{background:#ffe0e0}.k{background:#e8f0ff}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>やさしい日本語チェッカー（お知らせ文書の点検）</h1>
+<p>外国人住民・保護者・患者さん向けのお知らせを、やさしい日本語に書き換えたあとに機械で数えられるところだけ点検します。書き換え自体はしません。最後は必ず人が読み、できれば日本語教師や外国人の方に読んでもらってください（ガイドラインのステップ3）。</p>
+<div class="cols">
+<div>
+<h2>① 元の文（任意）</h2>
+<p>入れると、日付・時刻・金額・電話番号などが書き換えで抜けていないかを突き合わせます。</p>
+<textarea id="src" placeholder="本給付金の支給を希望される方は、申請書に必要事項をご記入のうえ、令和8年12月25日までに窓口へご提出ください。手数料は300円です。お問い合わせ：市民課 0123-45-6789"></textarea>
+</div>
+<div>
+<h2>② やさしい日本語の文</h2>
+<p>ふりがなは「漢字（かんじ）」「漢字(かんじ)」「&lt;ruby&gt;」の形なら読み取ります。</p>
+<textarea id="dst" placeholder="お金（かね）が ほしい 人（ひと）は、紙（かみ）に 名前（なまえ）などを 書（か）いて ください。12月（がつ）25日（にち）までに 市役所（しやくしょ）に 出（だ）して ください。"></textarea>
+</div>
+</div>
+<p>
+<label>一文の上限 <input id="maxLen" type="number" value="40" min="10" max="200" style="width:4em">字</label>
+<label>ふりがななしでよい漢字 <select id="grade"><option value="0">なし（すべての漢字にふりがな）</option><option value="1">小学1年まで</option><option value="2" selected>小学2年まで</option><option value="3">小学3年まで</option><option value="6">小学6年まで</option></select></label>
+<label><input type="checkbox" id="chkKata" checked> カタカナ語を一覧にする</label>
+</p>
+<button id="run">点検する</button> <button id="sample">例文を入れる</button> <button id="dl" disabled>結果をCSVで保存</button>
+<div id="out"></div>
+<div class="note" style="margin-top:18px">
+<p><b>点検していること</b></p>
+<ul>
+<li>一文の長さ（句点「。」「！」「？」、改行で区切って数えます。ふりがな部分は数えません）</li>
+<li>尊敬語・謙譲語（いただく、ご〜ください、おります、申し上げる、〜られる など）。ガイドラインでは丁寧語「です・ます」だけにします</li>
+<li>二重否定（〜ないわけではない、〜なくはない、〜なければならない は「〜してください」へ）</li>
+<li>あいまいな言い方（など、程度、適宜、なるべく、〜ごろ、〜頃、若干、速やかに）</li>
+<li>「〜ましょう」（勧誘とも読めるので「〜してください」に）、「である・だ」体の混在</li>
+<li>漢字が4字以上続く語（例：申請手続期間）、ふりがなが必要な漢字（学年別漢字配当表 2020年版を目安に判定）</li>
+<li>曜日のない日付、時刻のない「午前中」など</li>
+<li>元の文との突き合わせ：日付・時刻・金額・電話番号・数と単位が、書き換えた文にも残っているか</li>
+</ul>
+<p>参考：出入国在留管理庁・文化庁「在留支援のためのやさしい日本語ガイドライン」。このページはその考え方の一部を機械的に当てはめたもので、公式のツールではありません。</p>
+</div>
+<div class="note" style="margin-top:12px;background:#eef6ff">
+<p>お知らせの<b>やさしい日本語への書き換え・点検</b>や、<b>英語・中国語の訳文づくり</b>（日本語・英語・中国語）を個人で請け負っています。1枚もののお知らせから冊子まで、原文の文字数で事前にお見積りします。ご相談は <a href="mailto:shinji-work@mail.grokbot.com?subject=%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> まで。</p>
+</div>
+<p><a href="index.html">ほかの無料ツール一覧</a> ／ <a href="hyoki-yure.html">表記ゆれ・文体チェッカー</a> ／ <a href="honyakucho-check.html">翻訳調チェッカー</a></p>
+<script>
+const GR={"1": "一七三上下中九二五人休先入八六円出力十千口右名四土夕大天女子字学小山川左年手文日早月木本村林校森正気水火犬玉王生田男町白百目石空立竹糸耳花草虫見貝赤足車金雨青音", "2": "万丸交京今会体何作元兄光公内冬刀分切前北午半南原友古台合同回図国園地場声売夏外多夜太妹姉室家寺少岩工市帰広店弓引弟弱強当形後心思戸才教数新方明星春昼時晴曜書朝来東楽歌止歩母毎毛池汽活海点父牛理用画番直矢知社秋科答算米紙細組絵線羽考聞肉自船色茶行西親角言計記話語読谷買走近通週道遠里野長門間雪雲電頭顔風食首馬高魚鳥鳴麦黄黒", "3": "丁世両主乗予事仕他代住使係倍全具写列助勉動勝化区医去反取受号向君味命和品員商問坂央始委守安定実客宮宿寒対局屋岸島州帳平幸度庫庭式役待急息悪悲想意感所打投拾持指放整旅族昔昭暑暗曲有服期板柱根植業様横橋次歯死氷決油波注泳洋流消深温港湖湯漢炭物球由申界畑病発登皮皿相県真着短研礼神祭福秒究章童笛第筆等箱級終緑練羊美習者育苦荷落葉薬血表詩調談豆負起路身転軽農返追送速進遊運部都配酒重鉄銀開院陽階集面題飲館駅鼻", "4": "不争付令以仲伝位低例便信倉候借停健側働億兆児共兵典冷初別利刷副功加努労勇包卒協単博印参史司各告周唱喜器囲固型堂塩士変夫失好季孫完官害察巣差希席帯底府康建径徒得必念愛成戦折挙改救敗散料旗昨景最望未末札材束松果栄案梅械極標機欠歴残殺毒氏民求治法泣浅浴清満漁灯無然焼照熱牧特産的省祝票種積競笑管節粉紀約結給続置老胃脈腸臣航良芸芽英菜街衣要覚観訓試説課議象貨貯費賞軍輪辞辺連達選郡量録鏡関陸隊静順願類飛飯養験茨媛岡潟岐熊香佐埼崎滋鹿縄井沖栃奈梨阪阜", "5": "久仏仮件任似余価保修俵個備像再刊判制券則効務勢厚句可営因団圧在均基報境墓増夢妻婦容寄富導居属布師常幹序弁張往復徳志応快性恩情態慣承技招授採接提損支政故敵断旧易暴条枝査格桜検構武比永河液混減測準演潔災燃版犯状独率現留略益眼破確示祖禁移程税築精素経統絶綿総編績織罪群義耕職肥能興舌舎術衛製複規解設許証評講謝識護豊財貧責貸貿賀資賛質輸述迷退逆造過適酸鉱銅銭防限険際雑非預領額飼", "6": "並乱乳亡仁供俳値傷優党冊処刻割創劇勤危卵厳収后否吸呼善困垂城域奏奮姿存孝宅宇宗宙宝宣密寸専射将尊就尺届展層己巻幕干幼庁座延律従忘忠憲我批担拝拡捨探推揮操敬映晩暖暮朗机枚染株棒模権樹欲段沿泉洗派済源潮激灰熟片班異疑痛皇盛盟看砂磁私秘穀穴窓筋策簡糖系紅納純絹縦縮署翌聖肺背胸脳腹臓臨至若著蒸蔵蚕衆裁装裏補視覧討訪訳詞誌認誕誠誤論諸警貴賃遺郵郷針鋼閉閣降陛除障難革頂骨"};
+const KG={};for(const g in GR)for(const c of GR[g])KG[c]=+g;
+const $=id=>document.getElementById(id);
+const isK=c=>/[\u4E00-\u9FFF\u3400-\u4DBF々]/.test(c);
+function nfkc(s){return s.normalize('NFKC')}
+// strip ruby: returns {plain, rubied:Set of indices in plain}
+function stripRuby(t){
+  t=t.replace(/<rt>.*?<\/rt>/g,'\u0001').replace(/<\/?(ruby|rb|rp)[^>]*>/g,'').replace(/<[^>]+>/g,'');
+  let out='',rub=[];
+  const re=/([\u4E00-\u9FFF\u3400-\u4DBF々]+)(?:[（(]([\u3041-\u309F\u30A0-\u30FFー]+)[）)]|\u0001)|./gsu;
+  let m;
+  while((m=re.exec(t))){
+    if(m[1]&&(m[2]||m[0].endsWith('\u0001'))){for(const c of m[1]){out+=c;rub.push(true)}}
+    else{const s=m[0];for(const c of s){out+=c;rub.push(false)}}
+  }
+  return {plain:out,rub};
+}
+const RULES=[
+ ['敬語',/(いただ|頂き|頂く|頂け|ご(?:記入|提出|確認|連絡|利用|参加|来場|協力|注意|理解|了承|案内|相談|持参|用意|遠慮)|お(?:越し|問い合わせ|問合せ|申し込み|申込み|知らせください|待ち|願い|求め|持ち|手続き|使い)|おります|おりません|申し上げ|伺|致し|いたし|させていただ|くださいますよう|ございます|なさ[いれっる]|召し上が|参ります|拝見|存じ)/g,'丁寧語（です・ます）だけにします。例：お越しいただく必要はありません → 来なくてもいいです'],
+ ['二重否定',/(ないわけではな|なくはな|ないことはな|なくもな|ないとは限らな|なければなりません|なければならない|ないと(?:いけ|だめ))/g,'「〜してください」「〜しなければなりません」をはっきり書きます。二重否定はやめます'],
+ ['あいまい',/(など|等|程度|適宜|なるべく|できるだけ|可能な限り|ごろ|頃|前後|若干|速やかに|すみやかに|随時|しばらく|場合があります|ことがあります|おおむね|概ね)/g,'数字や日時をはっきり書きます。例：9時ごろ → 午前8時30分から午前9時30分まで'],
+ ['ましょう',/ましょう/g,'「〜ましょう」は誘いとも読めます。「〜してください」にします'],
+ ['である体',/(である[。、]|であった|だ。|だった。|ではない。)/g,'文末は「です」「ます」にそろえます'],
+ ['受け身・尊敬',/(られます|られる|られた|られません)/g,'尊敬の「られる」か受け身か分かりにくいことがあります。主語をはっきり書きます'],
+ ['時間があいまい',/(午前中|午後から|夕方|夜間|朝のうち|後日|近日|今月中|月末|年度内|期間中)/g,'時刻や日付で書きます'],
+ ['漢字が続く',/[\u4E00-\u9FFF々]{4,}/g,'4字以上の漢字の語は、分けるか言い換えます（例：申請手続期間 → 申請（しんせい）が できる 期間（きかん））'],
+];
+const DOW='(?:[（(](?:月|火|水|木|金|土|日)(?:曜日?)?[）)]|\\s*(?:月|火|水|木|金|土|日)曜日)';
+function splitSent(t){return t.split(/(?<=[。！？!?])|\n+/).map(s=>s.trim()).filter(s=>s)}
+function extract(t){
+  t=nfkc(t).replace(/<rt>.*?<\/rt>/g,'').replace(/<[^>]+>/g,'').replace(/[（(][\u3041-\u309F\u30A0-\u30FFー]+[）)]/g,'');
+  t=t.replace(/(\d)[\s　]+(?=[年月日時分円])/g,'$1').replace(/([年月日時分円])[\s　]+(?=\d)/g,'$1');
+  const items=[];
+  const add=(kind,v)=>items.push(kind+'：'+v);
+  let m;
+  const reDate=/(?:(令和|平成|R)\s*(\d+|元)\s*年\s*)?(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日/g;
+  while((m=reDate.exec(t)))add('日付',+m[4]+'月'+(+m[5])+'日');
+  const reSlash=/\b(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})\b/g;
+  while((m=reSlash.exec(t)))add('日付',+m[2]+'月'+(+m[3])+'日');
+  const reTime=/(午前|午後)?\s*(\d{1,2})\s*(?:時\s*(?:(\d{1,2})\s*分|半)?|:(\d{2}))/g;
+  while((m=reTime.exec(t))){let h=+m[2],mi=m[3]?+m[3]:(m[4]?+m[4]:(/半/.test(m[0])?30:0));if(m[1]==='午後'&&h<12)h+=12;if(m[1]==='午前'&&h===12)h=0;add('時刻',h+':'+String(mi).padStart(2,'0'))}
+  const reYen=/(\d[\d,]*)\s*(万)?\s*円/g;
+  while((m=reYen.exec(t))){let v=+m[1].replace(/,/g,'');if(m[2])v*=10000;add('金額',v+'円')}
+  const reTel=/0\d{1,4}[-‐ー−]\d{1,4}[-‐ー−]\d{3,4}|0\d{9,10}/g;
+  while((m=reTel.exec(t)))add('電話',m[0].replace(/[‐ー−]/g,'-').replace(/-/g,''));
+  const reNum=/(\d+)\s*(人|枚|個|回|歳|才|か月|ヶ月|カ月|週間|日間|年間|部|冊|袋|本|台|件|階|番)/g;
+  while((m=reNum.exec(t))){let u=m[2].replace(/[ヶカ]月/,'か月').replace('才','歳');add('数',m[1]+u)}
+  return items;
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+let lastRows=[];
+function run(){
+  const maxLen=+$('maxLen').value||40,grade=+$('grade').value;
+  const raw=$('dst').value;const src=$('src').value;
+  const rows=[];let html='';
+  const sents=splitSent(raw);
+  let nOver=0,nIssue=0;const needRuby=new Map();const kata=new Map();
+  let tb='<table><tr><th>#</th><th>文</th><th>字数</th><th>指摘</th></tr>';
+  sents.forEach((s,i)=>{
+    const {plain,rub}=stripRuby(s);
+    const len=[...plain.replace(/[\s　]/g,'')].length;
+    const iss=[];
+    if(len>maxLen){iss.push(['長い',len+'字（上限'+maxLen+'字）。2つ以上の文に分けます']);nOver++}
+    for(const [name,re,tip] of RULES){re.lastIndex=0;const hits=[...plain.matchAll(re)].map(x=>x[0]);if(hits.length)iss.push([name,'「'+[...new Set(hits)].join('」「')+'」 '+tip])}
+    // dates without weekday
+    const dre=new RegExp('(\\d{1,2}|[０-９]{1,2})\\s*月\\s*(\\d{1,2}|[０-９]{1,2})\\s*日(?!'+DOW+')','g');
+    const nd=nfkc(plain).replace(/[（(][\u3041-\u309F\u30A0-\u30FFー]+[）)]/g,'');
+    const dd=[...nd.matchAll(dre)].map(x=>x[0]);
+    if(dd.length)iss.push(['曜日なし','「'+dd.join('」「')+'」 日付には曜日も書きます。例：12月25日（金曜日）']);
+    // kanji needing ruby
+    const chars=[...plain];const bad=[];
+    chars.forEach((c,j)=>{if(isK(c)&&!rub[j]){const g=KG[c]||9;if(g>grade){bad.push(c);needRuby.set(c,(needRuby.get(c)||0)+1)}}});
+    if(bad.length)iss.push(['ふりがな','「'+[...new Set(bad)].join('')+'」にふりがなを付けるか、言い換えます']);
+    if($('chkKata').checked){for(const k of plain.match(/[\u30A1-\u30FA][\u30A1-\u30FAー]{2,}/g)||[])kata.set(k,(kata.get(k)||0)+1)}
+    if(iss.length)nIssue++;
+    let shown=esc(plain);
+    tb+='<tr><td>'+(i+1)+'</td><td>'+shown+'</td><td class="'+(len>maxLen?'ng':'ok')+'">'+len+'</td><td>'+(iss.length?iss.map(x=>'<b class="warn">'+x[0]+'</b>：'+esc(x[1])).join('<br>'):'<span class="ok">なし</span>')+'</td></tr>';
+    rows.push([i+1,plain,len,iss.map(x=>x[0]+':'+x[1]).join(' / ')]);
+  });
+  tb+='</table>';
+  html+='<h2>結果</h2><p>文の数 <b>'+sents.length+'</b> ／ 指摘のある文 <b class="'+(nIssue?'warn':'ok')+'">'+nIssue+'</b> ／ 長すぎる文 <b class="'+(nOver?'ng':'ok')+'">'+nOver+'</b></p>';
+  // comparison
+  if(src.trim()){
+    const a=extract(src),b=extract(raw);
+    const cnt=arr=>arr.reduce((m,x)=>(m.set(x,(m.get(x)||0)+1),m),new Map());
+    const ca=cnt(a),cb=cnt(b);
+    const dropped=[],added=[];
+    for(const [k,v] of ca){const w=cb.get(k)||0;if(w<v)dropped.push(k+(v-w>1?' ×'+(v-w):''))}
+    for(const [k,v] of cb){const w=ca.get(k)||0;if(w<v)added.push(k+(v-w>1?' ×'+(v-w):''))}
+    html+='<h2>元の文との突き合わせ</h2>';
+    html+='<p>元の文から見つけた項目 '+a.length+' 件、書き換えた文 '+b.length+' 件。</p>';
+    html+=dropped.length?'<p class="ng"><b>抜け落ちの疑い：</b>'+dropped.map(esc).join('、')+'</p>':'<p class="ok">元の文の日付・時刻・金額・電話番号・数は、すべて書き換えた文にも残っています。</p>';
+    if(added.length)html+='<p class="warn"><b>元の文にない項目：</b>'+added.map(esc).join('、')+'（書き足した情報なら、依頼元に確認してください）</p>';
+    for(const x of dropped)rows.push(['比較','抜け落ちの疑い',x,'']);
+    for(const x of added)rows.push(['比較','元の文にない',x,'']);
+  }
+  html+=tb;
+  if(needRuby.size){html+='<h2>ふりがなが必要な漢字（ふりがなのない箇所）</h2><p>'+[...needRuby].sort((a,b)=>b[1]-a[1]).map(([c,n])=>'<span class="k">'+c+'</span>（'+(KG[c]?'小'+KG[c]:'中学以上')+'・'+n+'回）').join(' ')+'</p>'}
+  if(kata.size){html+='<h2>カタカナ語</h2><p>外来語は意味が英語と違うことがあります。必要なら言い換えるか説明を添えます。</p><p>'+[...kata].map(([k,n])=>esc(k)+'（'+n+'）').join('、')+'</p>'}
+  $('out').innerHTML=html;lastRows=rows;$('dl').disabled=!rows.length;
+}
+$('run').onclick=run;
+$('sample').onclick=()=>{
+ $('src').value='本給付金の支給を希望される方は、申請書に必要事項をご記入のうえ、本人確認書類の写しを添付し、令和8年12月25日までに窓口へご提出いただくか、郵送にてご提出ください。受付時間は午前8時30分から午後5時15分です。手数料は300円です。お問い合わせ：市民課 0123-45-6789';
+ $('dst').value='お金（かね）が ほしい 人（ひと）は、申請書（しんせいしょ）を 書（か）いて ください。\n在留（ざいりゅう）カードなどの コピーも 入（い）れて ください。\n12月（がつ）25日（にち）までに 市役所（しやくしょ）の 窓口（まどぐち）に 出（だ）すか、郵便（ゆうびん）で 送（おく）って ください。\n受付時間（うけつけじかん）は 午前（ごぜん）8時（じ）30分（ぷん）から 午後（ごご）5時（じ）までです。\n分（わ）からないことは 市民課（しみんか）に 聞（き）いて いただきます。';
+ run();
+};
+$('dl').onclick=()=>{
+ const csv='\ufeff番号,文,字数,指摘\n'+lastRows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yasashii-check.csv';a.click();
+};
+</script>
+</body>
+</html>
