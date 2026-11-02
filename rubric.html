@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルーブリック作成＆採点集計（無料・A4印刷・CSV）</title>
+<meta name="description" content="観点と段階を入れるだけで、印刷できるルーブリック表を作れます。各マスの記述はその場で書き換え可能。採点CSVを貼れば、重みつき合計・100点換算・A/B/C評定まで計算します。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/rubric.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.6em}
+label{display:inline-block;margin:4px 14px 4px 0}textarea{width:100%;box-sizing:border-box;font-family:inherit}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;margin-top:8px}th,td{border:1px solid #888;padding:6px;vertical-align:top;font-size:.92em}
+th{background:#eef3f8}td[contenteditable]:focus{outline:2px solid #4a90d9;background:#f6fbff}
+.w{font-weight:normal;font-size:.85em;color:#555}.bad{color:#b00020}
+@media print{.noprint{display:none}body{padding:0;max-width:none}@page{size:A4 landscape;margin:10mm}th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>ルーブリック作成＆採点集計</h1>
+<p>評価の観点と段階を入れると、そのまま印刷できるルーブリック表ができます。表の各マスはクリックして書き換えられます。下の欄に採点を貼れば、重みつきの合計点と評定も出せます。処理はすべてブラウザの中で行われ、入力は端末に保存されます。</p>
+<label>課題名 <input id="title" value="レポート（夏休みの自由研究）" style="width:18em"></label>
+<label>段階の数 <select id="nlv"><option>3</option><option selected>4</option><option>5</option></select></label>
+<label>段階の名前（高い順・カンマ区切り） <input id="lvnames" value="4 よくできた,3 できた,2 もう少し,1 がんばろう" style="width:22em"></label>
+<p>観点（1行に1つ。「観点名|重み」で重みを指定。重みを省くと1）</p>
+<textarea id="crit" rows="5">問いの立て方|1
+調べ方・根拠|2
+まとめ方・構成|1
+表現（図表・文章）|1</textarea>
+<button id="make">表を作る</button><button onclick="window.print()">印刷する</button><button id="csv">表をCSVで保存</button>
+<p class="note">各マスには段階に合わせた書き出しが入ります。「〜できている」の中身は課題に合わせて書き換えてください。書き換えた内容は「表を作る」を押し直すまで残ります。</p>
+</div>
+<h2 id="h"></h2>
+<div id="out"></div>
+<div class="noprint">
+<h2>採点の集計</h2>
+<p>1行に1人、「名前,観点1の段階,観点2の段階,…」の順で貼ってください（Excelからコピーしたタブ区切りも可）。</p>
+<textarea id="scores" rows="6">山田,4,3,3,2
+佐藤,3,3,2,3
+鈴木,2,1,2,2</textarea>
+<label>A評定の下限（100点換算） <input id="ta" type="number" value="80" style="width:4em"></label>
+<label>B評定の下限 <input id="tb" type="number" value="50" style="width:4em"></label>
+<button id="calc">集計する</button><button id="outcsv">結果をCSVで保存</button>
+<div id="res"></div>
+<p class="note">100点換算は「(重みつき合計 − 最低点) ÷ (満点 − 最低点) × 100」です。全観点が最低段階なら0点、最高段階なら100点になります。評定の区切りは学校や課題に合わせて変えてください。</p>
+<p><a href="./">ほかの無料ツール一覧へ</a></p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const store=k=>{try{return localStorage.getItem('rubric-'+k)}catch(e){return null}};
+const save=(k,v)=>{try{localStorage.setItem('rubric-'+k,v)}catch(e){}};
+['title','nlv','lvnames','crit','scores','ta','tb'].forEach(k=>{const v=store(k);if(v!==null)$(k).value=v;$(k).addEventListener('change',()=>save(k,$(k).value))});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function parseCrit(){return $('crit').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(/[|｜]/);const w=parseFloat(p[1]);return{name:p[0].trim(),w:isFinite(w)&&w>0?w:1}})}
+function levels(){const n=+$('nlv').value;let names=$('lvnames').value.split(/[,、，]/).map(s=>s.trim()).filter(Boolean);
+ const out=[];for(let i=0;i<n;i++){const pt=n-i;out.push({pt,name:names[i]||String(pt)})}return out}
+const STEM={top:'十分に〜できている。さらに〜まで工夫している。',high:'〜できている。',mid:'一部〜できているが、〜が足りない。',low:'〜がまだできていない。'};
+function stem(i,n){if(i===0)return STEM.top;if(i===n-1)return STEM.low;return i===1?STEM.high:STEM.mid}
+let cellCache={};
+function make(){
+ // keep edits
+ document.querySelectorAll('#out td[data-k]').forEach(td=>cellCache[td.dataset.k]=td.innerText);
+ const C=parseCrit(),L=levels();$('h').textContent=$('title').value+' ルーブリック';
+ let h='<table><thead><tr><th style="width:18%">観点</th>'+L.map(l=>'<th>'+esc(l.name)+'</th>').join('')+'</tr></thead><tbody>';
+ C.forEach(c=>{h+='<tr><th>'+esc(c.name)+(c.w!==1?'<br><span class="w">重み ×'+c.w+'</span>':'')+'</th>';
+  L.forEach((l,i)=>{const k=c.name+'|'+l.pt;const t=cellCache[k]!==undefined?cellCache[k]:stem(i,L.length);h+='<td contenteditable data-k="'+esc(k)+'">'+esc(t)+'</td>'});h+='</tr>'});
+ h+='</tbody></table>';const max=C.reduce((s,c)=>s+c.w*L[0].pt,0),min=C.reduce((s,c)=>s+c.w,0);
+ h+='<p class="w">満点 '+max+' 点（最低 '+min+' 点）。各観点の点数 = 段階の数字 × 重み。</p>';$('out').innerHTML=h;
+ $('out').addEventListener('input',e=>{if(e.target.dataset.k){cellCache[e.target.dataset.k]=e.target.innerText;save('cells',JSON.stringify(cellCache))}});
+}
+try{cellCache=JSON.parse(store('cells')||'{}')}catch(e){cellCache={}}
+function dl(name,rows){const s='\ufeff'+rows.map(r=>r.map(v=>/[",\n]/.test(v=String(v))?'"'+v.replace(/"/g,'""')+'"':v).join(',')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'}));a.download=name;a.click()}
+$('csv').onclick=()=>{const C=parseCrit(),L=levels();const rows=[['観点','重み',...L.map(l=>l.name)]];
+ C.forEach(c=>rows.push([c.name,c.w,...L.map((l,i)=>{const k=c.name+'|'+l.pt;return cellCache[k]!==undefined?cellCache[k]:stem(i,L.length)})]));dl('rubric.csv',rows)};
+let lastRes=[];
+function calc(){const C=parseCrit(),L=levels(),top=L[0].pt,max=C.reduce((s,c)=>s+c.w*top,0),min=C.reduce((s,c)=>s+c.w,0);
+ const ta=+$('ta').value,tb=+$('tb').value;lastRes=[];let errs=[];
+ $('scores').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,li)=>{const p=l.split(/[,\t、，]/).map(s=>s.trim());const name=p[0];const v=p.slice(1,1+C.length).map(Number);
+  if(v.length<C.length||v.some(x=>!Number.isInteger(x)||x<1||x>top)){errs.push((li+1)+'行目（'+esc(name)+'）：段階は1〜'+top+'の整数で、観点の数（'+C.length+'）だけ必要です');return}
+  const tot=v.reduce((s,x,i)=>s+x*C[i].w,0);const p100=max===min?100:Math.round((tot-min)/(max-min)*1000)/10;
+  lastRes.push([name,...v,tot,p100,p100>=ta?'A':p100>=tb?'B':'C'])});
+ let h='';if(errs.length)h+='<p class="bad">'+errs.join('<br>')+'</p>';
+ if(lastRes.length){h+='<table><thead><tr><th>名前</th>'+C.map(c=>'<th>'+esc(c.name)+'</th>').join('')+'<th>合計（/'+max+'）</th><th>100点換算</th><th>評定</th></tr></thead><tbody>'+
+  lastRes.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  const avg=C.map((c,i)=>Math.round(lastRes.reduce((s,r)=>s+r[1+i],0)/lastRes.length*100)/100);
+  h+='<p>観点ごとの平均段階：'+C.map((c,i)=>esc(c.name)+' '+avg[i]).join(' ／ ')+'。いちばん低い観点は「'+esc(C[avg.indexOf(Math.min(...avg))].name)+'」です。</p>'}
+ $('res').innerHTML=h}
+$('make').onclick=make;$('calc').onclick=calc;
+$('outcsv').onclick=()=>{const C=parseCrit();if(!lastRes.length)calc();dl('rubric-scores.csv',[['名前',...C.map(c=>c.name),'合計','100点換算','評定'],...lastRes])};
+make();
+</script>
+</body>
+</html>
