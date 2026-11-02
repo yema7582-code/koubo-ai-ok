@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>薬機法・広告表現チェッカー（化粧品・医薬部外品・健康食品・雑貨）｜無料</title>
+<meta name="description" content="化粧品・医薬部外品・健康食品・美容雑貨の商品ページ、LP、SNS投稿の文章を貼り付けると、薬機法・医薬品等適正広告基準・景品表示法で問題になりやすい表現（治る、シミが消える、美白、痩せる、No.1、副作用なし など）を色分けし、言い換え例を表示します。ブラウザ内で処理し、文章は送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yakki-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:200px;font-size:1em;font-family:inherit;box-sizing:border-box}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+mark.h{background:#ffd0d0}mark.m{background:#ffe9b0}mark.l{background:#e3eefc}
+.h{color:#a40000}.m{color:#8a5a00}.l{color:#1d4f91}
+table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+#view{white-space:pre-wrap;background:#fafafa;border:1px solid #eee;padding:10px;border-radius:6px}
+button{font-size:.95em;padding:4px 12px}
+</style>
+</head>
+<body>
+<h1>薬機法・広告表現チェッカー</h1>
+<p>商品ページ、LP、SNS投稿、チラシの文章を貼り付けると、薬機法（医薬品医療機器等法）の広告規制や「医薬品等適正広告基準」、景品表示法で指摘されやすい表現を探して色分けし、言い換えの例を出します。文章はブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<label>商品の分類：<select id="cat">
+<option value="cosme">化粧品（一般的なスキンケア・メイク・シャンプー）</option>
+<option value="quasi">医薬部外品（薬用化粧品・薬用歯みがき・育毛剤など）</option>
+<option value="food">健康食品・サプリメント（機能性表示食品・トクホ以外）</option>
+<option value="fnfc">機能性表示食品</option>
+<option value="goods">美容雑貨・美容機器（医療機器ではないもの）</option>
+</select></label>
+<textarea id="t" placeholder="例：たった1週間でシミが消える！ 医師も推薦する美白クリーム。肌の奥まで浸透して、副作用なしで安心です。"></textarea>
+<button id="go">チェックする</button> <button id="csv" disabled>結果をCSVで保存</button>
+</div>
+<div id="out"></div>
+<h2>色の意味</h2>
+<ul>
+<li class="h">赤：その分類の商品では、ほぼ表現できない（医薬品的な効能効果、病気の治療・予防、身体の構造機能の変化、安全性の保証など）。</li>
+<li class="m">黄：根拠や条件、書き方しだいで問題になる（最上級表現、効果の保証、即効性、医師・専門家の推薦、ビフォーアフターなど）。</li>
+<li class="l">青：書けるが注意が必要（「浸透」は角質層まで、「エイジングケア」は年齢に応じたお手入れの意味で、など）。</li>
+</ul>
+<p class="note">このツールは、よく指摘される言い回しを機械的に探す目安です。法的な判断や行政の見解ではありません。化粧品の効能は「化粧品の効能の範囲」（56項目）が基本で、医薬部外品は承認された効能効果の範囲内、健康食品は効能効果を書けないのが原則です。公開前には、都道府県の薬務課の相談窓口や専門家に確認してください。文章の言い換えや多言語（英語・中国語）表記の確認のご相談は shinji-work@mail.grokbot.com まで。</p>
+<p><a href="index.html">他の無料ツール一覧</a> ／ <a href="stema-check.html">ステマ規制 PR表記チェッカー</a> ／ <a href="nijuu-kakaku.html">セール「通常価格」表示チェッカー</a></p>
+<script>
+// [pattern, level(h/m/l) per category or all, reason, suggestion]
+// cats: cosme quasi food fnfc goods
+const ALL=['cosme','quasi','food','fnfc','goods'];
+const R=[
+ [/(治[るりす癒]|治療|完治|全快)/g,{all:'h'},'病気の治療をうたう表現。医薬品以外は書けません。','「すこやかに保つ」「整える」など、効能の範囲内の言い方に。'],
+ [/(予防|防止)(?!.*(乾燥|日やけ|日焼け|あせも|肌荒れ|フケ|かゆみ|口臭|虫歯|むし歯))/g,{cosme:'m',quasi:'l',food:'h',fnfc:'h',goods:'h'},'病気の予防をうたうと医薬品的になります（化粧品は「乾燥を防ぐ」「日やけによるシミ・ソバカスを防ぐ」など定められた範囲のみ）。','防ぐ対象を効能の範囲内（乾燥・肌荒れ・日やけ など）に限定する。'],
+ [/(改善|解消|回復|再生|修復|根本から|体質(が|を)?(変|改))/g,{all:'h'},'身体の状態や機能の変化をうたう表現。','「うるおいを与える」「ひきしめる」「すっきりした印象に」など。'],
+ [/(効く|効き目|効果[がを]?(実感|保証|抜群)|即効|すぐに効|特効)/g,{cosme:'m',quasi:'m',food:'h',fnfc:'m',goods:'h'},'効き目の強さ・速さや保証をうたう表現。','効果の保証や即効性は外し、「使用感」「毎日のお手入れに」などへ。'],
+ [/(シミ|しみ|シワ|しわ|たるみ|くすみ|クマ|ほうれい線|毛穴|ニキビ|にきび|吹き出物|ニキビ跡)[がをも]?(消え|消す|なくな|無くな|なくす|取れ|取る|薄く|撃退|改善|解消|ゼロ)/g,{all:'h'},'肌の悩みが消える・なくなるという表現は効能の範囲外です。','化粧品「乾燥による小ジワを目立たなくする（効能評価試験済みの場合）」「メイクで毛穴をカバー」、医薬部外品「メラニンの生成を抑え、しみ・そばかすを防ぐ」「にきびを防ぐ」など。'],
+ [/(美白|ホワイトニング|白くなる|色白にな|透明感(が|を)?(出|アップ))/g,{cosme:'h',quasi:'l',food:'h',fnfc:'h',goods:'h'},'美白は医薬部外品で「メラニンの生成を抑え、しみ・そばかすを防ぐ」意味でのみ使えます。化粧品・食品は不可。','化粧品なら「メイクアップ効果で明るい印象に」「うるおいで透明感のある肌へ（メイク効果・物理的効果である旨）」。'],
+ [/(若返|アンチエイジング|老化(を)?(防|止|ストップ)|エイジレス|年齢を巻き戻)/g,{cosme:'h',quasi:'h',food:'h',fnfc:'h',goods:'h'},'若返り・老化防止は身体機能の変化をうたう表現です。','「エイジングケア（年齢に応じたお手入れ）」と注記つきで使う。'],
+ [/(エイジングケア)/g,{all:'l'},'書けますが「※年齢に応じたお手入れ」の注記が必要とされます。','「エイジングケア※」「※年齢に応じたうるおいケア」。'],
+ [/(肌の奥|真皮|細胞(レベル|に届|を活性)|血行(を)?促進|新陳代謝(を)?(促|高)|ターンオーバー(を)?(促|正常|整))/g,{cosme:'h',quasi:'m',food:'h',fnfc:'h',goods:'h'},'作用部位が角質層を超える、または身体の機能に働きかける表現。','「角質層まで浸透※」「※角質層まで」と範囲を明記する。'],
+ [/(浸透)/g,{cosme:'l',quasi:'l',food:'h',goods:'m',fnfc:'h'},'化粧品で「浸透」を書くときは「角質層まで」と範囲を明記するのが原則。','「角質層まで浸透※」と注記をつける。'],
+ [/(育毛|発毛|増毛|抜け毛(を)?(防|予防|止)|薄毛(が|を)?(改善|解消)|髪が生え)/g,{cosme:'h',quasi:'l',food:'h',fnfc:'h',goods:'h'},'育毛・発毛・脱毛予防は医薬部外品（承認範囲）か医薬品のみ。','化粧品なら「髪にハリ・コシを与える」「頭皮をすこやかに保つ」。'],
+ [/(殺菌|除菌|抗菌|消毒|ウイルス(を)?(除去|不活化|撃退)|菌を(殺|除))/g,{cosme:'h',quasi:'m',food:'h',fnfc:'h',goods:'m'},'殺菌・抗菌・ウイルス除去は、化粧品・食品では書けず、雑貨でも根拠と対象（人体ではない）を明記する必要があります。','雑貨なら「布の表面の菌の増殖を抑える（試験機関・条件を記載）」。'],
+ [/(薬用)/g,{cosme:'h',quasi:'l',food:'h',fnfc:'h',goods:'h'},'「薬用」は医薬部外品だけが使える表示です。',''],
+ [/(痩せ|やせる|ヤセ|脂肪(を)?(燃焼|分解|落と|減ら)|代謝(が|を)?(上が|アップ|高め)|デトックス|毒素(を)?(排出|出す)|むくみ(が|を)?(取|解消|改善)|便秘(が|を)?(解消|改善)|快便)/g,{cosme:'h',quasi:'h',food:'h',fnfc:'m',goods:'h'},'痩身・代謝・排出など身体機能の変化をうたう表現。機能性表示食品でも届出した表示の範囲を超えると違反です。','健康食品は効能を書かず、成分や味、飲み方の説明に。機能性表示食品は届出表示をそのまま使う。'],
+ [/(免疫(力)?(を)?(高|アップ|強化|上げ)|血圧(が|を)?(下が|下げ|安定)|血糖値(が|を)?(下が|下げ)|コレステロール(が|を)?(下|減)|ガン|がん|癌|糖尿病|高血圧|花粉症|アトピー|認知症|うつ|不眠(が|を)?(解消|改善))/g,{all:'h'},'病名や疾病リスクの低減をうたう表現。トクホ・機能性表示食品の許可・届出表示以外は書けません。',''],
+ [/(副作用(が|は)?(なし|ない|ゼロ|の心配)|安全(性)?(が|は)?(保証|100|確認済|です|・安心)|絶対(に)?安心|肌に(やさしい|優しい)だけでなく(治|改善)|刺激ゼロ|誰にでも合う|全員に効|100[%％](安全|効果|効く|満足))/g,{all:'h'},'安全性や効果を保証する表現は、医薬品等適正広告基準で禁止されています。','「パッチテスト済み（すべての方に刺激が起こらないわけではありません）」など試験と限界を併記。'],
+ [/(No\.?\s?1|ナンバーワン|日本一|世界一|業界初|業界一|最高|最強|最上級|最大級|唯一|ここだけ|他社(より|製品より|を圧倒)|圧倒的)/gi,{all:'m'},'最上級・比較表現は、客観的な根拠（調査機関・期間・対象）を同じ場所に示さないと景品表示法の不当表示になりえます。化粧品・医薬部外品では「最高の効能」といった効能の最大級表現そのものが禁止です。','調査の出典・期間・対象を注記するか、具体的な事実（成分量・発売年など）に置き換える。'],
+ [/(医師|ドクター|皮膚科医|薬剤師|歯科医師|専門家|大学|病院)(が|も)?(推薦|推奨|おすすめ|オススメ|愛用|絶賛|認め|監修)/g,{all:'m'},'医薬関係者が推薦・指導しているかのような表現は、医薬品等適正広告基準で禁止されています（化粧品・健康食品も同様に扱われます）。「監修」も効能の裏付けのように見せると問題になります。','「開発に協力」など事実だけを、効能の保証に見えない形で書く。'],
+ [/(ビフォー|アフター|使用前|使用後|Before|After|〇日で|[0-9０-９]+(日|週間|ヶ月|か月|カ月)で(実感|変化|効果|-|マイナス|減))/gi,{all:'m'},'使用前後の比較や期間を区切った効果の表現は、効果の保証と受け取られやすく、化粧品等では原則として避けるべきとされます。','メイク効果・物理的効果に限る、個人の感想であっても効能の表現にならないよう注意。'],
+ [/(天然(成分|由来)?(だから|なので)(安心|安全)|無添加(だから|なので)(安心|安全)|ナチュラルだから)/g,{all:'m'},'「天然・無添加だから安全」は安全性の保証にあたります。何が無添加かも明記が必要です。','「〇〇（具体的な成分）不使用」と書き、安全とは言い切らない。'],
+ [/(永久|一生|ずっと(続|効)|リバウンド(しない|なし))/g,{all:'m'},'効果の持続を保証する表現。',''],
+ [/(医薬品(並|級|レベル)|処方|クスリ|お薬|治療薬|ステロイド)/g,{cosme:'h',quasi:'h',food:'h',fnfc:'h',goods:'h'},'医薬品と誤認させる表現。',''],
+ [/(マッサージ(効果)?で(脂肪|痩|むくみ|血行)|EMS(で|が)?(筋肉|腹筋|痩)|コリ(が|を)?(ほぐ|解消|改善)|肩こり|腰痛)/g,{cosme:'m',quasi:'m',food:'h',fnfc:'h',goods:'h'},'雑貨・美容機器が身体への作用（痩身・筋肉・こり）をうたうと、医療機器と誤認される表現になります。','「心地よい使用感」「リラックスタイムに」など使用感の表現に。'],
+ [/(個人の感想です|効果には個人差があります)/g,{all:'l'},'この注記をつけても、効能効果の表現そのものが許されるわけではありません。',''],
+];
+function lv(spec,cat){return spec.all||spec[cat]}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let rows=[];
+function run(){
+ const t=document.getElementById('t').value, cat=document.getElementById('cat').value;
+ const hits=[];
+ R.forEach(([re,spec,why,sug])=>{const l=lv(spec,cat);if(!l)return;re.lastIndex=0;let m;while((m=re.exec(t))){if(!m[0])break;hits.push({s:m.index,e:m.index+m[0].length,w:m[0],l,why,sug});}});
+ hits.sort((a,b)=>a.s-b.s||({h:0,m:1,l:2}[a.l]-{h:0,m:1,l:2}[b.l]));
+ // non-overlapping for highlighting
+ let html='',pos=0;const used=[];
+ for(const h of hits){if(h.s<pos)continue;html+=esc(t.slice(pos,h.s))+`<mark class="${h.l}" title="${esc(h.why)}">${esc(h.w)}</mark>`;pos=h.e;used.push(h);}
+ html+=esc(t.slice(pos));
+ const lineOf=i=>t.slice(0,i).split('\n').length;
+ rows=hits.map(h=>({line:lineOf(h.s),word:h.w,level:{h:'赤',m:'黄',l:'青'}[h.l],why:h.why,sug:h.sug}));
+ const c={h:0,m:0,l:0};hits.forEach(h=>c[h.l]++);
+ let out=`<h2>結果</h2><p><span class="h">赤 ${c.h}件</span> ／ <span class="m">黄 ${c.m}件</span> ／ <span class="l">青 ${c.l}件</span>（${t.length}文字）</p>`;
+ if(!hits.length)out+='<p>よく指摘される言い回しは見つかりませんでした。効能の範囲を超える内容が言い換えで書かれていないか、全体の印象でも確認してください。</p>';
+ out+=`<div id="view">${html}</div>`;
+ if(hits.length){out+='<table><tr><th>行</th><th>表現</th><th>目安</th><th>理由</th><th>言い換えの例</th></tr>'+rows.map(r=>`<tr><td>${r.line}</td><td>${esc(r.word)}</td><td class="${{赤:'h',黄:'m',青:'l'}[r.level]}">${r.level}</td><td>${esc(r.why)}</td><td>${esc(r.sug)}</td></tr>`).join('')+'</table>';}
+ if(cat==='food'&&!/(栄養機能食品|機能性表示食品|特定保健用食品|トクホ)/.test(t))out+='<p class="note">健康食品（いわゆるサプリ）は、効能効果を一切書けないのが原則です。「〇〇に」「〇〇が気になる方へ」も、身体の部位や悩みと結びつくと効能の暗示とみなされることがあります。</p>';
+ if(cat==='fnfc')out+='<p class="note">機能性表示食品は、消費者庁に届け出た「表示しようとする機能性」の文言の範囲でのみ表示できます。届出番号と、「疾病の診断、治療、予防を目的としたものではありません」等の必須表示も確認してください。</p>';
+ document.getElementById('out').innerHTML=out;document.getElementById('csv').disabled=!rows.length;
+}
+document.getElementById('go').onclick=run;
+document.getElementById('csv').onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const csv='\ufeff行,表現,目安,理由,言い換えの例\n'+rows.map(r=>[r.line,r.word,r.level,r.why,r.sug].map(q).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yakki-check.csv';a.click();};
+if(typeof module!=='undefined')module.exports={R,lv};
+</script>
+</body>
+</html>
