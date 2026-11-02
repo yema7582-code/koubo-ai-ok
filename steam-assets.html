@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam カプセル画像・スクリーンショット サイズチェッカー｜ストア・ライブラリ画像の不足と縮小表示を確認（無料）</title>
+<meta name="description" content="Steamのヘッダー・小・メイン・縦カプセル、ライブラリカプセル・ヒーロー・ロゴ、スクリーンショットをまとめて読み込み、必要なサイズ（920×430、462×174、1232×706、748×896、600×900、3840×1240など）と枚数を確認。小カプセルを120×45・184×69に縮小してロゴが読めるかも見られます。画像はブラウザ内だけで処理します。 / Free Steam capsule & screenshot size checker.">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/steam-assets.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top}th{background:#f3f3f3}
+.ng{color:#b00020}.warn{color:#a15c00}.ok{color:#1b7f3a}
+.pv{display:inline-block;margin:4px 8px 4px 0;text-align:center;font-size:11px;color:#555}.pv canvas{display:block;border:1px solid #999;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/12px 12px}
+#drop{border:2px dashed #999;border-radius:8px;padding:18px;text-align:center}
+</style>
+</head>
+<body>
+<h1>Steam カプセル画像・スクリーンショット サイズチェッカー</h1>
+<p>Steamのストアページとライブラリに必要な画像をまとめて選ぶと、サイズ違い・足りない画像・スクリーンショットの枚数と比率を一覧にします。小カプセルは実際に表示される 120×45 と 184×69 に縮小して、ロゴが読めるかを白黒でも確認できます。画像はアップロードされず、ブラウザの中だけで処理します。<br><small>Drop all your Steam store and library images to check required sizes, missing assets, screenshot count/ratio, logo transparency, and small-size legibility. Runs entirely in your browser.</small></p>
+<div id="drop">ここに画像をドラッグ＆ドロップ（PNG / JPG、複数可）<br><input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple></div>
+<p><label><input type="checkbox" id="gray"> 縮小プレビューを白黒でも表示する</label></p>
+<div id="sum"></div>
+<div id="out"></div>
+<h2>Steamの必要サイズ（Steamworks ドキュメントより）</h2>
+<table id="spec"></table>
+<p class="note">見ているもの：①画像の実寸がSteamworksの指定サイズと一致するか（ヘッダーとライブラリヘッダーは同じ920×430なので、2枚目はライブラリヘッダーとして扱います。種類はプルダウンで変更できます）。②スクリーンショットは5枚以上・16:9・1920×1080以上か。③ライブラリロゴは幅1280pxまたは高さ720pxで、透明背景のPNGか。④ファイル名の言語サフィックス（例：<code>foo_japanese.jpg</code>）で、ローカライズ版スクリーンショットを数えます。カプセルに「タイトル以外の文字（レビュー引用・受賞・セール文言など）を入れない」というルールは画像からは判定できないので、目で確認してください。ライブラリヒーローは中央の重要部分（セーフエリア）以外が切れることがあるので、顔やロゴを中央に寄せてください。</p>
+<p>Steamストアページの日本語・中国語（簡体/繁体）・英語への翻訳、カプセル画像のロゴ差し替え（日本語ロゴ版）の相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。関連ツール：<a href="steam-check.html">Steamストアページ 翻訳チェッカー</a> ／ <a href="font-check.html">ゲーム用フォント 文字欠けチェッカー</a> ／ <a href="logo-check.html">ロゴ 縮小・白黒チェッカー</a> ／ <a href="index.html">AI利用OKの公募まとめ</a></p>
+<script>
+const SPEC=[
+ {k:"header",n:"ヘッダーカプセル Header Capsule",w:920,h:430,req:1,pv:[[460,215],[231,87]]},
+ {k:"small",n:"小カプセル Small Capsule",w:462,h:174,req:1,pv:[[184,69],[120,45]]},
+ {k:"main",n:"メインカプセル Main Capsule",w:1232,h:706,req:1,pv:[[308,177]]},
+ {k:"vertical",n:"縦カプセル Vertical Capsule",w:748,h:896,req:1,pv:[[187,224]]},
+ {k:"shot",n:"スクリーンショット Screenshot",w:1920,h:1080,req:1,min:true},
+ {k:"bg",n:"ページ背景 Page Background（任意）",w:1438,h:810,req:0},
+ {k:"libcap",n:"ライブラリカプセル Library Capsule",w:600,h:900,req:1,pv:[[300,450],[100,150]]},
+ {k:"libheader",n:"ライブラリヘッダー Library Header",w:920,h:430,req:1,fallback:"header"},
+ {k:"hero",n:"ライブラリヒーロー Library Hero",w:3840,h:1240,req:1,pv:[[480,155]]},
+ {k:"logo",n:"ライブラリロゴ Library Logo（透明PNG）",w:1280,h:720,req:1,logo:true,pv:[[320,0]]},
+ {k:"bundle",n:"バンドルヘッダー Bundle Header（バンドルのみ）",w:707,h:232,req:0},
+ {k:"other",n:"（対象外・不明）",w:0,h:0,req:0}];
+const S=Object.fromEntries(SPEC.map(s=>[s.k,s]));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LANGS=["japanese","schinese","tchinese","koreana","english","french","german","spanish","latam","russian","brazilian","portuguese","italian","polish","turkish","thai","vietnamese","ukrainian","arabic","indonesian","czech","dutch","hungarian","romanian","swedish","danish","finnish","norwegian","greek","bulgarian"];
+$("spec").innerHTML="<tr><th>画像</th><th>サイズ</th><th>必須</th></tr>"+SPEC.filter(s=>s.k!=="other").map(s=>"<tr><td>"+s.n+"</td><td>"+(s.logo?"幅1280px または 高さ720px（比率は自由）":s.min?"1920×1080 以上・16:9、5枚以上":s.w+"×"+s.h)+"</td><td>"+(s.req?"必須":"任意")+(s.fallback?"（未設定ならヘッダーカプセルを使用）":"")+"</td></tr>").join("");
+let items=[];
+function guess(w,h,taken,isPng){
+ const exact=SPEC.filter(s=>s.w===w&&s.h===h&&!s.min&&!s.logo);
+ if(w===920&&h===430)return taken.header?"libheader":"header";
+ if(exact.length)return exact[0].k;
+ if(Math.abs(w/h-16/9)<0.01&&w>=1280)return "shot";
+ if(isPng&&(w===1280||h===720))return "logo";
+ return "other";
+}
+function hasAlpha(img){const c=document.createElement("canvas");const sc=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*sc));c.height=Math.max(1,Math.round(img.naturalHeight*sc));const x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);const d=x.getImageData(0,0,c.width,c.height).data;let t=0;for(let i=3;i<d.length;i+=4)if(d[i]<250)t++;return t/(d.length/4);}
+function check(it){
+ const s=S[it.type],w=it.w,h=it.h,r=[];let lv="ok";
+ const bad=m=>{r.push("<span class=ng>✕ "+m+"</span>");lv="ng"},warn=m=>{r.push("<span class=warn>△ "+m+"</span>");if(lv==="ok")lv="warn"},ok=m=>r.push("<span class=ok>○ "+m+"</span>");
+ if(it.type==="other"){warn("Steamの指定サイズのどれとも一致しません（"+w+"×"+h+"）。種類を選ぶとチェックします。");return [lv,r]}
+ if(s.min){const ar=w/h;if(Math.abs(ar-16/9)>0.01)bad("16:9 ではありません（"+ar.toFixed(3)+"）");else ok("16:9");if(w<1920||h<1080)bad("1920×1080 未満です");else ok("1920×1080 以上");}
+ else if(s.logo){if(w!==1280&&h!==720)bad("幅1280px または 高さ720px のどちらかに合わせてください（今は"+w+"×"+h+"）");else ok("サイズOK");
+  if(!it.png)bad("PNGではありません（透明背景のPNGが必要）");else if(it.alpha<0.02)bad("透明部分がほとんどありません（背景を透明にしてください）");else ok("透明背景あり（約"+Math.round(it.alpha*100)+"%）");}
+ else{if(w===s.w&&h===s.h)ok("サイズOK（"+w+"×"+h+"）");else if(Math.abs(w/h-s.w/s.h)<0.005)warn("比率は同じですがサイズが違います（"+w+"×"+h+" → "+s.w+"×"+s.h+"に書き出し直してください）");else bad("サイズが違います（"+w+"×"+h+"、必要なのは "+s.w+"×"+s.h+"）");}
+ if(!/^image\/(png|jpeg)$/.test(it.mime))warn("PNGかJPGで書き出すのが無難です（今は"+it.mime+"）");
+ if(it.size>5*1024*1024&&it.type!=="hero")warn("ファイルが大きめです（"+(it.size/1048576).toFixed(1)+"MB）");
+ return [lv,r];
+}
+function preview(it){
+ const s=S[it.type];if(!s||!s.pv)return "";
+ return s.pv.map(([pw,ph])=>{if(!ph)ph=Math.round(pw*it.h/it.w);return "<span class=pv data-w="+pw+" data-h="+ph+"><canvas width="+pw+" height="+ph+"></canvas>"+pw+"×"+ph+"</span>"+($("gray").checked?"<span class=pv data-w="+pw+" data-h="+ph+" data-g=1><canvas width="+pw+" height="+ph+"></canvas>白黒</span>":"")}).join("");
+}
+function render(){
+ const cnt={};items.forEach(i=>cnt[i.type]=(cnt[i.type]||0)+1);
+ let h="<table><tr><th>ファイル</th><th>種類</th><th>結果</th><th>縮小プレビュー（実際の表示サイズ）</th></tr>";
+ items.forEach((it,ix)=>{const [lv,r]=check(it);it.lv=lv;
+  h+="<tr><td>"+esc(it.name)+"<br><small>"+it.w+"×"+it.h+"</small>"+(it.lang?"<br><small>言語："+it.lang+"</small>":"")+"</td><td><select data-i="+ix+">"+SPEC.map(s=>"<option value="+s.k+(s.k===it.type?" selected":"")+">"+esc(s.n)+"</option>").join("")+"</select></td><td>"+r.join("<br>")+"</td><td data-p="+ix+">"+preview(it)+"</td></tr>";});
+ h+="</table>";$("out").innerHTML=items.length?h:"";
+ document.querySelectorAll("select[data-i]").forEach(el=>el.onchange=()=>{items[+el.dataset.i].type=el.value;render();});
+ document.querySelectorAll("td[data-p]").forEach(td=>{const it=items[+td.dataset.p];td.querySelectorAll(".pv").forEach(p=>{const c=p.querySelector("canvas"),x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(it.img,0,0,c.width,c.height);if(p.dataset.g){const d=x.getImageData(0,0,c.width,c.height);for(let i=0;i<d.data.length;i+=4){const y=0.299*d.data[i]+0.587*d.data[i+1]+0.114*d.data[i+2];d.data[i]=d.data[i+1]=d.data[i+2]=y}x.putImageData(d,0,0);}});});
+ // summary
+ const sm=[];SPEC.filter(s=>s.req).forEach(s=>{const n=cnt[s.k]||0;
+  if(s.k==="shot"){const base=items.filter(i=>i.type==="shot"&&!i.lang).length,good=items.filter(i=>i.type==="shot"&&!i.lang&&i.lv!=="ng").length;
+   if(base<5)sm.push("<span class=ng>✕ スクリーンショットが "+base+" 枚です（5枚以上必要。言語サフィックス付きはローカライズ版として別に数えます）</span>");else sm.push((good<5?"<span class=warn>△ ":"<span class=ok>○ ")+"スクリーンショット "+base+" 枚（基準を満たすもの "+good+" 枚）</span>");
+   const lc={};items.filter(i=>i.type==="shot"&&i.lang).forEach(i=>lc[i.lang]=(lc[i.lang]||0)+1);Object.entries(lc).forEach(([l,c])=>sm.push("<span class=ok>○ ローカライズ版スクリーンショット "+l+"："+c+" 枚</span>"));return;}
+  if(!n){if(s.fallback&&cnt[s.fallback])sm.push("<span class=warn>△ "+s.n+" がありません（ヘッダーカプセルで代用されます）</span>");else sm.push("<span class=ng>✕ "+s.n+" がありません</span>");}
+  else{const bad=items.filter(i=>i.type===s.k&&i.lv==="ng").length;sm.push((bad?"<span class=ng>✕ ":"<span class=ok>○ ")+s.n+(bad?"：サイズ等に問題あり":"：OK")+"</span>");}
+  if(n>1&&s.k!=="shot")sm.push("<span class=warn>△ "+s.n+" が "+n+" 枚あります（言語別のアートワークでなければ1枚です）</span>");});
+ $("sum").innerHTML=items.length?"<h2>まとめ</h2><p>"+sm.join("<br>")+"</p>":"";
+}
+async function load(files){
+ for(const f of files){if(!/^image\//.test(f.type))continue;
+  const url=URL.createObjectURL(f);const img=new Image();img.src=url;await img.decode().catch(()=>{});if(!img.naturalWidth)continue;
+  const png=f.type==="image/png";const m=f.name.toLowerCase().match(/_([a-z]+)\.[a-z0-9]+$/);const lang=m&&LANGS.includes(m[1])?m[1]:"";
+  const taken={};items.forEach(i=>taken[i.type]=1);
+  items.push({name:f.name,w:img.naturalWidth,h:img.naturalHeight,img,png,mime:f.type,size:f.size,lang,alpha:png?hasAlpha(img):0,type:guess(img.naturalWidth,img.naturalHeight,taken,png)});}
+ render();
+}
+$("files").onchange=e=>load([...e.target.files]);
+$("gray").onchange=render;
+const dz=$("drop");dz.ondragover=e=>{e.preventDefault()};dz.ondrop=e=>{e.preventDefault();load([...e.dataTransfer.files])};
+</script>
+</body>
+</html>
