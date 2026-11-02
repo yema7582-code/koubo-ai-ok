@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>令和8年分 年末調整 扶養控除・配偶者（特別）控除・特定親族特別控除 判定（新しい136万円・197万円の壁）｜無料</title>
+<meta name="description" content="令和8年分（2026年分）の年末調整向けに、家族ごとの扶養控除・配偶者控除・配偶者特別控除・特定親族特別控除の対象かどうかと控除額を判定する無料ツール。令和8年12月施行の改正（扶養親族の所得要件62万円・給与だけなら136万円、特定親族は197万円、配偶者特別控除は207万円まで、給与所得控除の最低保障額74万円）に対応。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/fuyou-hantei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+input[type=number]{width:8.5em;font-size:1em;text-align:right}input[type=text]{width:7em}
+select,input{font-size:1em}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+td.n{text-align:right;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.tot{font-weight:bold;background:#eef6ee}.warn{color:#b00020}.ok{color:#1b5e20}
+small{color:#555}button{font-size:1em;padding:4px 10px}
+</style>
+</head>
+<body>
+<h1>令和8年分 扶養控除・配偶者控除・特定親族特別控除 判定</h1>
+<p>家族ひとりずつ、<b>生年月日と今年（令和8年1月〜12月）の収入見込み</b>を入れると、年末調整でどの控除の対象になるか、控除額はいくらかを判定します。<b>令和8年12月1日施行の改正</b>に対応しています。扶養親族の所得要件は62万円以下（給与だけなら<b>年収136万円以下</b>）、19歳以上23歳未満の特定親族は<b>197万円以下</b>まで、配偶者特別控除は<b>207万円以下</b>まで広がりました。入力はこのブラウザの中だけで計算し、どこにも送信しません。</p>
+
+<div class="box">
+<h2>あなた（年末調整を受ける人）</h2>
+<p>給与の収入見込み <input type="number" id="mySal" min="0" step="1" value="5000000"> 円　給与以外の所得 <input type="number" id="myOth" min="0" step="1" value="0"> 円 <small>（配偶者控除の段階を決めるために使います）</small></p>
+<h2>家族</h2>
+<table id="fam"><thead><tr><th>続柄</th><th>生年月日</th><th>給与収入（円）</th><th>公的年金等の収入（円）</th><th>その他の所得（円）</th><th>同居の親など</th><th></th></tr></thead><tbody></tbody></table>
+<p><button id="add">家族を追加</button></p>
+</div>
+
+<div class="box" id="out"></div>
+
+<div class="note">
+<b>判定のしかた（国税庁「年末調整のしかた 令和8年版」、「源泉所得税の改正のあらまし」、タックスアンサーNo.1177による）</b><br>
+・年齢は令和8年12月31日の現況です。16歳以上＝平成23年1月1日以前生まれ、特定扶養・特定親族（19歳以上23歳未満）＝平成16年1月2日〜平成20年1月1日生まれ、老人扶養（70歳以上）＝昭和32年1月1日以前生まれ。<br>
+・給与所得控除は令和8・9年分の最低保障額74万円（年収220万円までは74万円）で計算し、220万円以上660万円未満は「給与所得控除後の給与等の金額の表」と同じく4千円単位で計算しています。<br>
+・公的年金等控除は、年金以外の合計所得が1,000万円以下の場合の額（65歳以上は最低110万円、65歳未満は最低60万円）です。<br>
+・扶養親族・同一生計配偶者：合計所得62万円以下。一般38万円、特定扶養63万円、老人扶養48万円（同居老親等58万円）。16歳未満は所得税の控除はありませんが、扶養控除等申告書の「住民税に関する事項」欄に書きます。<br>
+・特定親族特別控除：19歳以上23歳未満で合計所得62万円超123万円以下。控除額は63万円から3万円まで9段階。特定親族は扶養控除の対象ではありません。<br>
+・配偶者控除：あなたの合計所得900万円以下で38万円（70歳以上48万円）、950万円以下26万円（32万円）、1,000万円以下13万円（16万円）。配偶者特別控除：配偶者の合計所得62万円超133万円以下で、あなたの所得と配偶者の所得に応じて38万円〜1万円。<br>
+・障害者控除、ひとり親・寡婦控除、勤労学生控除（合計所得89万円以下、給与だけなら163万円以下）、青色・白色事業専従者、非居住者の親族の要件は判定していません。<br>
+・社会保険の扶養（年収130万円、19歳以上23歳未満は150万円）や住民税の基準は別の制度です。<br>
+最終的な判断は勤務先・税務署の案内に従ってください。このツールは税務相談ではありません。<a href="hoken-kojo.html">生命保険料控除・地震保険料控除 計算</a>、<a href="gensen-calc.html">フリーランス源泉徴収税額計算</a>もあります。従業員の申告書のまとめての確認などのご相談は shinji-work@mail.grokbot.com まで。
+</div>
+
+<script>
+const Y=2026;
+function ageEnd(bd){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(bd||'');if(!m)return null;const by=+m[1],mo=+m[2],d=+m[3];return (Y+1)-by-((mo===1&&d===1)?0:1)}
+function salInc(x){x=Math.max(0,Math.floor(x||0));let r;
+  if(x<2200000)r=x-740000;
+  else if(x<3600000){const a=Math.floor(x/4000)*4000;r=a*0.7-80000}
+  else if(x<6600000){const a=Math.floor(x/4000)*4000;r=a*0.8-440000}
+  else if(x<8500000)r=x*0.9-1100000;
+  else r=x-1950000;
+  return Math.max(0,Math.floor(r+1e-6))}
+function penInc(x,over65){x=Math.max(0,Math.floor(x||0));let r;
+  if(over65&&x<=3300000)r=x-1100000;
+  else if(!over65&&x<=1300000)r=x-600000;
+  else if(x<=4100000)r=x*0.75-275000;
+  else if(x<=7700000)r=x*0.85-685000;
+  else if(x<=10000000)r=x*0.95-1455000;
+  else r=x-1955000;
+  return Math.max(0,Math.floor(r+1e-6))}
+function tokuteiShinzoku(t){const b=[[850000,630000],[900000,610000],[950000,510000],[1000000,410000],[1050000,310000],[1100000,210000],[1150000,110000],[1200000,60000],[1230000,30000]];for(const [u,v] of b)if(t<=u)return v;return 0}
+function spouseSpecial(t,tier){const b=[[950000,[380000,260000,130000]],[1000000,[360000,240000,120000]],[1050000,[310000,210000,110000]],[1100000,[260000,180000,90000]],[1150000,[210000,140000,70000]],[1200000,[160000,110000,60000]],[1250000,[110000,80000,40000]],[1300000,[60000,40000,20000]],[1330000,[30000,20000,10000]]];for(const [u,v] of b)if(t<=u)return v[tier];return 0}
+function judge(me,p){
+  const age=ageEnd(p.bd);
+  if(age===null)return {age:null,total:null,kind:'生年月日を入れてください',amt:0,warn:true};
+  const total=salInc(p.sal)+penInc(p.pen,age>=65)+Math.max(0,Math.floor(p.oth||0));
+  const myTotal=salInc(me.sal)+Math.max(0,Math.floor(me.oth||0));
+  const tier=myTotal<=9000000?0:myTotal<=9500000?1:myTotal<=10000000?2:3;
+  if(p.rel==='spouse'){
+    if(tier===3)return {age,total,kind:total<=620000?'同一生計配偶者（あなたの所得が1,000万円超のため配偶者控除なし）':'対象外（あなたの合計所得が1,000万円超）',amt:0};
+    if(total<=620000){const a=age>=70?[480000,320000,160000][tier]:[380000,260000,130000][tier];return {age,total,kind:age>=70?'配偶者控除（老人控除対象配偶者）':'配偶者控除',amt:a}}
+    if(total<=1330000)return {age,total,kind:'配偶者特別控除',amt:spouseSpecial(total,tier)};
+    return {age,total,kind:'対象外（配偶者の合計所得が133万円超）',amt:0};
+  }
+  if(age<16)return {age,total,kind:total<=620000?'年少扶養親族（16歳未満：所得税の控除なし、住民税欄に記入）':'対象外（合計所得62万円超）',amt:0};
+  if(total<=620000){
+    if(age>=19&&age<=22)return {age,total,kind:'特定扶養親族',amt:630000};
+    if(age>=70)return p.dokyo?{age,total,kind:'老人扶養親族（同居老親等）',amt:580000}:{age,total,kind:'老人扶養親族',amt:480000};
+    return {age,total,kind:'一般の控除対象扶養親族',amt:380000};
+  }
+  if(age>=19&&age<=22&&total<=1230000)return {age,total,kind:'特定親族特別控除（扶養控除の対象ではありません）',amt:tokuteiShinzoku(total)};
+  return {age,total,kind:'対象外（合計所得62万円超'+(age>=19&&age<=22?'・123万円超':'')+'）',amt:0};
+}
+if(typeof module!=='undefined')module.exports={judge,salInc,penInc,ageEnd,tokuteiShinzoku,spouseSpecial};
+if(typeof document!=='undefined'){
+const tb=document.querySelector('#fam tbody');
+const yen=x=>x===null?'-':x.toLocaleString('ja-JP')+' 円';
+function row(v){v=v||{};const tr=document.createElement('tr');
+  tr.innerHTML=`<td><select class="rel"><option value="child">子・その他の親族</option><option value="parent">親・祖父母</option><option value="spouse">配偶者</option></select></td><td><input type="date" class="bd" value="${v.bd||''}"></td><td><input type="number" class="sal" min="0" value="${v.sal||0}"></td><td><input type="number" class="pen" min="0" value="${v.pen||0}"></td><td><input type="number" class="oth" min="0" value="${v.oth||0}"></td><td><label><input type="checkbox" class="dokyo"> 同居</label></td><td><button class="del">削除</button></td>`;
+  if(v.rel)tr.querySelector('.rel').value=v.rel;
+  tr.querySelector('.del').onclick=()=>{tr.remove();run()};
+  tr.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',run));
+  tb.appendChild(tr)}
+function run(){
+  const me={sal:+document.getElementById('mySal').value||0,oth:+document.getElementById('myOth').value||0};
+  let sum=0,h='<h2>判定結果（令和8年分 所得税・年末調整）</h2><p>あなたの合計所得金額（見込み）：'+yen(salInc(me.sal)+Math.max(0,Math.floor(me.oth)))+'</p><table><tr><th>#</th><th>年齢（12/31）</th><th>合計所得金額</th><th>判定</th><th>控除額</th><th>出す申告書</th></tr>';
+  [...tb.rows].forEach((tr,i)=>{const p={rel:tr.querySelector('.rel').value,bd:tr.querySelector('.bd').value,sal:+tr.querySelector('.sal').value||0,pen:+tr.querySelector('.pen').value||0,oth:+tr.querySelector('.oth').value||0,dokyo:tr.querySelector('.dokyo').checked};
+    const r=judge(me,p);sum+=r.amt;
+    const form=r.amt===0&&!/年少/.test(r.kind)?'-':/配偶者/.test(r.kind)?'配偶者控除等申告書':/特定親族/.test(r.kind)?'特定親族特別控除申告書':'扶養控除等（異動）申告書';
+    h+=`<tr><td>${i+1}</td><td class="n">${r.age===null?'-':r.age+' 歳'}</td><td class="n">${yen(r.total)}</td><td class="${r.amt>0?'ok':(r.warn?'warn':'')}">${r.kind}</td><td class="n">${yen(r.amt)}</td><td>${form}</td></tr>`});
+  h+=`<tr class="tot"><td colspan="4">控除額の合計</td><td class="n">${yen(sum)}</td><td></td></tr></table><p><small>改正で新しく対象になった家族がいる場合は、異動を書いた扶養控除等申告書などを12月の年末調整までに勤務先に出す必要があります。</small></p>`;
+  document.getElementById('out').innerHTML=h}
+document.getElementById('add').onclick=()=>{row();run()};
+['mySal','myOth'].forEach(i=>document.getElementById(i).addEventListener('input',run));
+row({rel:'spouse',bd:'1985-05-10',sal:1500000});row({rel:'child',bd:'2006-08-20',sal:1600000});row({rel:'child',bd:'2014-03-03'});
+run()}
+</script>
+</body>
+</html>
