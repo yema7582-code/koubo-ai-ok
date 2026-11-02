@@ -2,4 +2,5 @@
 > 生成AIの利用が認められている（または要項で禁止されていない）、参加無料・日本在住の個人が応募できる賞金付き公募を締切順にまとめた日本語の一覧です。各項目は公式要項へのリンク付きで、更新日はページ内に記載しています。
 
 - [一覧ページ](https://yema7582-code.github.io/koubo-ai-ok/): 締切、賞金、AI利用条件、応募方法の表
+- [ステマ規制 PR表記チェッカー](https://yema7582-code.github.io/koubo-ai-ok/stema-check.html)
 - [内容証明 字数・行数チェック＆謄本レイアウト・料金計算](https://yema7582-code.github.io/koubo-ai-ok/naiyo-shomei.html)
