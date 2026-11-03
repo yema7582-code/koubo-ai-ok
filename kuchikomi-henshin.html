@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google口コミ返信 下書きチェッカー（低評価・医療・外国語対応）｜無料</title>
+<meta name="description" content="Googleマップ（ビジネスプロフィール）の口コミへの返信文の下書きを、公開前に点検する無料ツール。個人情報の書き込み、医療機関の効果保証表現、口コミの見返り（割引・特典）や高評価だけのお願い、低評価への反論口調、定型文の使い回し、口コミ内容への言及の有無、外国語口コミへの言語の合わせ方を確認し、星の数に合わせた返信の骨組みも作ります。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kuchikomi-henshin.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:110px;font-size:1em;font-family:inherit;box-sizing:border-box}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+li{margin:4px 0}button{font-size:.95em;padding:4px 12px}
+pre{white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>Google口コミ返信 下書きチェッカー</h1>
+<p>Googleマップの口コミと、お店が書いた返信の下書きを貼り付けると、公開前に気をつけたい点を一覧にします。返信は「企業からの返信」として誰でも読める形で残り、口コミを書いた方にも通知が届きます。特に星1〜3の口コミへの返信は、事実を確かめてから出すのが基本です。</p>
+<div class="box">
+<label>業種：<select id="ind"><option value="general">一般（小売・サービス）</option><option value="food">飲食店</option><option value="beauty">美容院・サロン</option><option value="medical">医療機関・歯科・整骨院</option><option value="hotel">宿泊施設</option></select></label>
+<label style="margin-left:1em">星の数：<select id="star"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+<label style="margin-left:1em">お店の名前（任意）：<input id="shop" size="14" placeholder="例：〇〇食堂"></label>
+<p>口コミの本文（星だけの場合は空欄）</p>
+<textarea id="rev" placeholder="ここに口コミを貼り付け"></textarea>
+<p>返信の下書き</p>
+<textarea id="rep" placeholder="ここに返信の下書きを貼り付け（空欄なら骨組みだけ作ります）"></textarea>
+<details><summary>これまでの返信（任意・使い回しの確認用、1件ずつ空行で区切る）</summary><textarea id="past" placeholder="過去の返信を空行で区切って貼り付け"></textarea></details>
+<button id="go">チェックする</button>
+</div>
+<div id="out"></div>
+<h2>返信の基本（星の数ごと）</h2>
+<ul>
+<li class="ok">星4〜5：お礼、口コミに書かれた具体的な点への一言、また来てほしいという言葉。2〜4文で十分です。</li>
+<li class="ok">星だけ（本文なし）：短いお礼で構いません。定型文でも問題になりにくい区分です。</li>
+<li class="mid">星1〜3：まず事実を店長・院長が確認します。不快にさせたことへのおわび、確認した事実と改善したこと、個別の連絡先の案内を書きます。反論や相手の落ち度の指摘は、読む人全員に見られます。</li>
+<li class="ng">してはいけないこと：割引や特典と引き換えに口コミや高評価を頼む、良い口コミだけを選んで頼む、スタッフや取引先に口コミを書いてもらう（Googleのポリシーで禁止）。</li>
+<li class="ng">医療機関：返信で受診の事実や病名・治療内容に触れると、患者の個人情報を明かすことになります。「必ず治る」「痛みゼロ」のような効果の保証は医療広告ガイドラインで問題になります。</li>
+</ul>
+<p class="note">このツールは文面の目安を示すだけで、法的な判断ではありません。返信の可否は事実確認をしたうえでお店が決めてください。口コミ返信の下書き作成や、英語・中国語の口コミへの返信（日本語訳つき）のご相談は shinji-work@mail.grokbot.com まで。</p>
+<p><a href="index.html">他の無料ツール一覧</a> ／ <a href="stema-check.html">ステマ規制 PR表記チェッカー</a> ／ <a href="nap-check.html">店舗情報（NAP）表記ゆれチェッカー</a> ／ <a href="tenpo-jsonld.html">店舗情報 構造化データ（JSON-LD）作成</a> ／ <a href="yakki-check.html">薬機法・広告表現チェッカー</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function lang(s){
+  const t=s.replace(/\s/g,'');if(!t)return 'none';
+  const kana=(t.match(/[\u3040-\u30ff]/g)||[]).length, han=(t.match(/[\u4e00-\u9fff]/g)||[]).length, lat=(t.match(/[A-Za-z]/g)||[]).length, hang=(t.match(/[\uac00-\ud7af]/g)||[]).length;
+  if(hang>t.length*0.3)return 'ko';
+  if(kana>=3)return 'ja';
+  if(han>t.length*0.3)return 'zh';
+  if(lat>t.length*0.5)return 'en';
+  return 'ja';
+}
+function grams(s){s=s.replace(/[\s、。，．！？!?,.「」『』（）()\-ー〜~]/g,'');const g=new Set();for(let i=0;i<s.length-1;i++)g.add(s.slice(i,i+2));return g;}
+function jac(a,b){if(!a.size||!b.size)return 0;let n=0;for(const x of a)if(b.has(x))n++;return n/(a.size+b.size-n);}
+function keyTerms(s){
+  const out=new Set();
+  (s.match(/[\u30a1-\u30ffー]{2,}|[\u4e00-\u9fff]{2,}|[A-Za-z]{4,}/g)||[]).forEach(w=>{if(!/^(ありがとう|お店|お客様|今回|利用|店舗|スタッフ|本当|また|ぜひ)$/.test(w))out.add(w.toLowerCase())});
+  return out;
+}
+const RULES=[
+ {re:/(割引|クーポン|値引|プレゼント|特典|サービスします|無料に|ポイント).{0,25}(口コミ|レビュー|星|評価|投稿)|(口コミ|レビュー|星|評価|投稿).{0,25}(割引|クーポン|値引|プレゼント|特典|無料|ポイント)/,lv:'ng',msg:'口コミや評価と引き換えに特典を示しているように読めます。投稿の見返りはGoogleのポリシーで禁止です。'},
+ {re:/(星5|★5|☆5|五つ星|高評価|良い口コミ|いい口コミ).{0,15}(お願い|ください|して|書いて)/,lv:'ng',msg:'高評価や良い口コミだけを頼む書き方です。肯定的な口コミだけを募ることは禁止されています。'},
+ {re:/(勘違い|誤解|事実(では|と)(ありません|異なり)|そのような事実はございません|そのような事実はありません|言いがかり|営業妨害|迷惑|ルールを守らない|マナー違反|非常識)/,lv:'mid',msg:'反論・相手の落ち度を指摘する言葉があります。正しい内容でも、読む人には言い争いに見えます。事実だけを短く書き、詳しい話は個別の連絡に回すのが無難です。'},
+ {re:/(削除|通報|法的措置|弁護士|訴え)/,lv:'mid',msg:'削除・通報・法的措置に触れています。ポリシー違反の口コミは返信ではなくGoogleへの報告で対応し、返信では触れない方が安全です。'},
+ {re:/(090|080|070)[-\s]?\d{4}[-\s]?\d{4}|LINE\s?ID|@[A-Za-z0-9_]{3,}/,lv:'mid',msg:'個人の電話番号やSNSのIDのように見える文字列があります。案内するのはお店の代表番号や問い合わせ窓口にしてください。'},
+ {re:/(様|さん)(の|が).{0,10}(ご来店|ご予約|ご利用|施術|治療|診察|お会計)|\d{1,2}月\d{1,2}日.{0,10}(ご来店|ご予約|ご利用|ご来院|施術|治療|診察)|(ご予約|ご来店|ご来院)(いただいた|の際の).{0,6}(\d{1,2}時|日)/,lv:'mid',msg:'来店日時やお名前、利用内容を特定するような書き方です。口コミに書かれていない個人の情報は返信に書かないでください。'},
+ {re:/(テンプレ|定型文)/,lv:'mid',msg:'「定型文」などの言葉が入っています。下書きのメモが残っていないか確認してください。'},
+ {re:/[\[［【]\s*(店名|お名前|名前|日付|〇〇|○○|XX|xx)\s*[\]］】]|〇〇|○○/,lv:'ng',msg:'「〇〇」や［店名］のような差し込み箇所が残っています。'}
+];
+const MED=[
+ {re:/(必ず|絶対|確実に|100％|100%|完全に)(治|良く|改善|効|痛くな)/,msg:'効果を保証する表現です（医療広告ガイドラインで問題になりやすい）。'},
+ {re:/痛み(ゼロ|なし|が全くない|は一切)|無痛/,msg:'「痛みゼロ」「無痛」は誇大になりやすい表現です。'},
+ {re:/(地域|県内|日本|業界)(一|No\.?1|ナンバーワン)|最高の(治療|技術)|名医/,msg:'比較優良・最上級の表現です。'},
+ {re:/(病名|症状|診断|治療|処方|薬|手術|抜歯|インプラント|矯正|施術|検査|カルテ)/,msg:'治療内容・症状に触れています。返信が受診の事実を認めることになり、患者の個人情報にあたるおそれがあります。口コミ本人が書いていても、返信では一般的な言い方にとどめてください。'}
+];
+function skeleton(ind,star,rl,shop,revEmpty){
+  const s=shop||(ind==='medical'?'当院':'当店');
+  if(rl==='en'){
+    if(star>=4)return `Thank you so much for visiting ${shop||'us'} and for your kind review. We're glad you enjoyed [the specific point from the review]. We hope to see you again soon.`;
+    return `Thank you for taking the time to share your experience, and we're sorry that your visit fell short. We have looked into [what happened] and [what we changed]. We'd appreciate the chance to hear more; please contact us at [shop phone / email].`;
+  }
+  if(rl==='zh'){
+    if(star>=4)return `感谢您光临${shop||'本店'}并留下好评。很高兴您喜欢[评价中提到的具体内容]。期待您再次光临。`;
+    return `感谢您抽空留下评价，给您带来不愉快的体验，我们深表歉意。我们已确认了[具体情况]，并已[改进措施]。如方便，请通过[店铺电话/邮箱]与我们联系，我们希望进一步了解情况。`;
+  }
+  if(revEmpty&&star>=4)return `評価をいただきありがとうございます。またのお越しをスタッフ一同お待ちしております。`;
+  if(star>=4)return `${s}をご利用いただき、ありがとうございます。［口コミに書かれた具体的な点］を喜んでいただけて、スタッフ一同うれしく思っています。${star===4?'［気になった点があれば一言］もこれからの参考にさせていただきます。':''}またのお越しをお待ちしております。`;
+  const contact=ind==='medical'?'お手数ですが、受付（［代表電話］）までご連絡いただけますと幸いです。':'よろしければ、［代表電話・問い合わせ窓口］までご連絡いただけますと幸いです。';
+  return `貴重なご意見をいただき、ありがとうございます。ご期待に沿えず、ご不快な思いをおかけしたことをおわび申し上げます。［確認した事実を1文で］。［改善したこと・これからすることを1文で］。${contact}`;
+}
+$('go').onclick=()=>{
+  const ind=$('ind').value, star=+$('star').value, shop=$('shop').value.trim();
+  const rev=$('rev').value.trim(), rep=$('rep').value.trim();
+  const rl=lang(rev), pl=lang(rep);
+  const items=[];
+  const add=(lv,msg)=>items.push({lv,msg});
+  const cat=!rev&&star>=4?'星だけ（本文なし）':star>=4?'高評価（星4〜5）':'低評価（星1〜3）';
+  if(rep){
+    const len=[...rep].length;
+    if(len>4096)add('ng',`返信が${len}文字です。Googleの返信は4,096文字までです。`);
+    else if(len>400)add('mid',`返信が${len}文字と長めです。スマートフォンでは途中で折りたたまれます。要点を先に書いてください。`);
+    if(len<25&&star<=3)add('mid','低評価への返信としては短すぎます。おわび、確認した事実、連絡先の案内を入れてください。');
+    RULES.forEach(r=>{if(r.re.test(rep))add(r.lv,r.msg)});
+    if(ind==='medical')MED.forEach(r=>{if(r.re.test(rep))add('ng',r.msg)});
+    if(!/(ありがとう|感謝|thank|谢谢|感谢|감사)/i.test(rep))add('mid','お礼の言葉がありません。星の数にかかわらず、最初にお礼を書くのが基本です。');
+    if(star<=3){
+      if(!/(申し訳|おわび|お詫び|すみません|sorry|apolog|抱歉|歉意|죄송)/i.test(rep))add('mid','おわびの言葉がありません（事実と違う場合でも「ご不快な思いをおかけしたこと」へのおわびは書けます）。');
+      if(!/(連絡|お問い合わせ|問合せ|窓口|電話|メール|contact|联系|연락)/i.test(rep))add('mid','個別の連絡先の案内がありません。詳しいやり取りは返信欄の外で行うのが安全です。');
+      if(!/(改善|見直し|徹底|共有|指導|確認いたしました|確認しました|対策|改め|changed|improv|改进)/i.test(rep))add('mid','確認したことや改善したことが書かれていません。読む人は「指摘をどう受け止めたか」を見ています。');
+      add('mid','公開前に、口コミの内容が事実かどうかを店長・院長が確認し、返信文の承認を取ってください。');
+    }
+    if(rev){
+      const kr=keyTerms(rev), kp=keyTerms(rep); let hit=[];
+      kr.forEach(w=>{if(kp.has(w)||rep.toLowerCase().includes(w))hit.push(w)});
+      if(!hit.length&&star>=4)add('mid','口コミに書かれた具体的な言葉（料理名・スタッフへの言及など）に触れていません。定型文に見えやすくなります。');
+      else if(hit.length)add('ok',`口コミの内容に触れています（${hit.slice(0,5).map(esc).join('、')}）。`);
+    }
+    if(rl!=='none'&&rl!=='ja'&&pl==='ja')add('mid',`口コミは${{en:'英語',zh:'中国語',ko:'韓国語'}[rl]}で書かれています。同じ言語で返信するか、日本語の返信に短い訳を添えると相手に伝わります。`);
+    const past=$('past').value.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+    if(past.length){const g=grams(rep);let mx=0,mi=-1;past.forEach((p,i)=>{const j=jac(g,grams(p));if(j>mx){mx=j;mi=i}});
+      if(mx>=0.6)add(star<=3?'ng':'mid',`過去の返信${mi+1}件目とほぼ同じ文面です（一致度${Math.round(mx*100)}%）。同じ文の繰り返しは機械的な対応に見えます。`);
+      else add('ok',`過去の返信との一致度は最大${Math.round(mx*100)}%で、使い回しには見えません。`);}
+  }
+  if(ind==='medical'&&rev&&MED[3].re.test(rev))add('mid','口コミに治療内容や症状が書かれています。返信でその内容を繰り返したり、受診の事実を認めたりしないでください。');
+  let h=`<div class="box"><b>区分：</b>${cat}${rl!=='none'?`／口コミの言語：${{ja:'日本語',en:'英語',zh:'中国語',ko:'韓国語'}[rl]}`:''}`;
+  if(rep){const ng=items.filter(i=>i.lv==='ng').length, md=items.filter(i=>i.lv==='mid').length;
+    h+=`<p>${ng?`<span class="ng">要修正 ${ng}件</span>`:'<span class="ok">要修正なし</span>'}／確認 ${md}件</p><ul>`+items.map(i=>`<li class="${i.lv}">${esc(i.msg)}</li>`).join('')+'</ul>';}
+  const sk=skeleton(ind,star,rl==='none'?'ja':rl,shop,!rev);
+  h+=`<p><b>返信の骨組み</b>（［ ］の部分を事実に合わせて書き換えてください）</p><pre id="sk">${esc(sk)}</pre><button id="cp">骨組みをコピー</button></div>`;
+  $('out').innerHTML=h;
+  $('cp').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(sk);
+};
+</script>
+</body>
+</html>
