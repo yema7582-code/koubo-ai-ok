@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>時計の読み方プリント作成｜何時何分・針をかく・○分後の時刻（小1〜小3）・答えつき・無料</title>
+<meta name="description" content="アナログ時計の読み方プリントを答えつきで作れます。ちょうど・半／5分ごと／1分ごと、「何時何分？」「針をかこう」「○分後・○分前は何時何分？」の3種類。小1「とけい」、小2「時こくと時間」、小3「時こくと時間のもとめ方」の練習に。A4で印刷・PDF保存。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/tokei-yomi.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}.ctl label{display:inline-block;margin:4px 14px 4px 0}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.ttl{display:flex;justify-content:space-between;font-size:14px;margin:14px 0 10px;border-bottom:1px solid #999}
+.wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;justify-items:center}
+.q{text-align:center;font-size:15px;width:100%}.q svg{width:150px;height:150px}
+.ans{color:#c00;font-weight:bold}.blank{display:inline-block;min-width:2.2em;border-bottom:1px solid #333}
+.br{break-before:page;page-break-before:always}
+@media print{.noprint{display:none}body{padding:0;max-width:none}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>時計の読み方プリント作成（答えつき）</h1>
+<p>問題の種類と細かさを選んで「作る」を押すと、問題ページと答えのページができます。A4でそのまま印刷するか、印刷画面でPDFに保存してください。</p>
+<div class="ctl">
+<label>問題の種類 <select id="typ"><option value="read" selected>時計を読む（何時何分？）</option><option value="draw">針をかく（長い針・短い針）</option><option value="calc">○分後・○分前の時刻</option><option value="mix">まぜる</option></select></label>
+<label>細かさ <select id="lv"><option value="0">ちょうど・半（小1）</option><option value="1" selected>5分ごと（小1〜小2）</option><option value="2">1分ごと（小2）</option></select></label>
+<label>○分後・前の幅 <select id="span"><option value="0">60分まで・ちょうどの時をまたがない</option><option value="1" selected>60分まで・またぐ</option><option value="2">2時間まで（○時間○分）</option></select></label>
+<label>午前・午後をつける <input id="ampm" type="checkbox"></label>
+<label>問題数 <input id="n" type="number" value="12" min="3" max="24" step="3" style="width:4em"></label>
+<label>問題番号（同じ番号なら同じ問題） <input id="seed" type="number" value="1" style="width:6em"></label>
+<label>見出し <input id="title" type="text" value="とけいのよみかた" style="width:11em"></label>
+</div>
+<button id="make">作る</button><button id="next">別の問題にする</button><button onclick="window.print()">印刷する</button>
+<p class="note">短い針は1時間で次の数字まで動くので、「4時50分」の短い針は4と5のあいだの5に近い位置にかきます。ここで作る時計は分に合わせて短い針の位置も正しく計算しています（ざっくりした時計の絵にありがちな「短い針がちょうど数字の上にある」ずれはありません）。答えはプログラムで計算したものです。処理はすべてこのページの中で行い、何も送信しません。</p>
+<p id="msg"></p>
+</div>
+<div id="out"></div>
+<p class="noprint" style="font-size:13px;margin-top:24px">学年別・単元別のプリント一式や、塾・学童・放課後デイ向けのオリジナル教材づくりのご相談：shinji-work@mail.grokbot.com ／ <a href="index.html">ほかの無料ツール</a></p>
+<script>
+function rng(s){let a=(s>>>0)||1;return()=>{a^=a<<13;a>>>=0;a^=a>>>17;a^=a<<5;a>>>=0;return a/4294967296}}
+function pick(r,n){return Math.floor(r()*n)}
+function clock(h,m,hands){const cx=75,cy=75,R=68;let s=`<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${R}" fill="#fff" stroke="#000" stroke-width="2.5"/>`;
+for(let i=0;i<60;i++){const a=i*Math.PI/30,big=i%5==0,r1=big?R-8:R-4;s+=`<line x1="${(cx+Math.sin(a)*r1).toFixed(1)}" y1="${(cy-Math.cos(a)*r1).toFixed(1)}" x2="${(cx+Math.sin(a)*R).toFixed(1)}" y2="${(cy-Math.cos(a)*R).toFixed(1)}" stroke="#000" stroke-width="${big?2:0.8}"/>`}
+for(let i=1;i<=12;i++){const a=i*Math.PI/6;s+=`<text x="${(cx+Math.sin(a)*(R-19)).toFixed(1)}" y="${(cy-Math.cos(a)*(R-19)+5).toFixed(1)}" font-size="14" text-anchor="middle" font-family="sans-serif">${i}</text>`}
+if(hands){const ma=m*Math.PI/30,ha=((h%12)+m/60)*Math.PI/6;
+s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.sin(ha)*R*0.5).toFixed(1)}" y2="${(cy-Math.cos(ha)*R*0.5).toFixed(1)}" stroke="${hands}" stroke-width="5" stroke-linecap="round"/>`;
+s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.sin(ma)*R*0.8).toFixed(1)}" y2="${(cy-Math.cos(ma)*R*0.8).toFixed(1)}" stroke="${hands}" stroke-width="2.5" stroke-linecap="round"/>`}
+return s+`<circle cx="${cx}" cy="${cy}" r="3.5"/></svg>`}
+function fmt(h,m,ap){let p='';if(ap!==null){p=ap?'午後':'午前'}return `${p}${h}時${m?m+'分':(ap===null&&false?'':'')}`.replace(/時$/,'時')}
+function lab(h,m,ap){return fmt(h,m,ap)}
+function randTime(r,lv){const h=pick(r,12)+1;let m;if(lv==0)m=pick(r,2)*30;else if(lv==1)m=pick(r,12)*5;else m=pick(r,60);return[h,m]}
+function durTxt(d){const H=Math.floor(d/60),M=d%60;return (H?H+'時間':'')+(M?M+'分':'')}
+function make(){const typ=g('typ'),lv=+g('lv'),span=+g('span'),ampm=document.getElementById('ampm').checked,n=Math.max(3,Math.min(24,+g('n')||12)),seed=+g('seed')||1,title=g('title');
+const r=rng(seed*7919+lv*131+span*17+(ampm?3:0)+typ.length*1009);const qs=[];
+for(let i=0;i<n;i++){let t=typ=='mix'?['read','draw','calc'][i%3]:typ;let[h,m]=randTime(r,lv);let ap=ampm?pick(r,2):null;
+if(ampm&&h==12){ /* 12時は午前0時/正午の誤解を避ける */ h=11}
+if(t!='calc'){qs.push({t,h,m,ap});continue}
+let step=lv==0?30:(lv==1?5:1),d,after=pick(r,2)==0,h2,m2,ap2,tries=0;
+while(true){tries++;if(span==2){d=(pick(r,Math.floor(120/step))+1)*step}else{d=(pick(r,Math.floor(60/step))+1)*step;if(d==60&&step<60)d-=step}
+let tot=(ap?12*60:0)+(h%12)*60+m+(after?d:-d);
+if(span==0){const base=(h%12)*60+m;const hourStart=base-m;if(after?(m+d)>=60:(m-d)<0){if(tries<200)continue;}}
+if(ampm&&(tot<0||tot>=1440)){if(tries<200)continue}
+tot=((tot%1440)+1440)%1440;let H=Math.floor(tot/60);m2=tot%60;ap2=ampm?(H>=12?1:0):null;h2=H%12;if(h2==0)h2=12;
+if(ampm&&h2==12){if(tries<200)continue}
+if(d>0)break}
+qs.push({t,h,m,ap,d,after,h2,m2,ap2})}
+const cols=3;let page=(ans)=>{let s=`<div class="ttl"><b>${esc(title)}${ans?'（こたえ）':''}</b><span>　月　日　なまえ＿＿＿＿＿＿＿＿</span></div><div class="wrap">`;
+qs.forEach((q,i)=>{const no=`(${i+1}) `;
+if(q.t=='read'){s+=`<div class="q">${clock(q.h,q.m,'#000')}<br>${no}${ans?`<span class="ans">${lab(q.h,q.m,q.ap)}</span>`:(q.ap!==null?'<span class="blank"></span>':'')+'<span class="blank"></span>時<span class="blank"></span>分'}</div>`}
+else if(q.t=='draw'){s+=`<div class="q">${clock(q.h,q.m,ans?'#c00':null)}<br>${no}${lab(q.h,q.m,q.ap)}</div>`}
+else{s+=`<div class="q">${clock(q.h,q.m,'#000')}<br>${no}この時こくの<b>${durTxt(q.d)}${q.after?'後':'前'}</b>は？<br>${ans?`<span class="ans">${lab(q.h2,q.m2,q.ap2)}</span>`:(q.ap!==null?'<span class="blank"></span>':'')+'<span class="blank"></span>時<span class="blank"></span>分'}</div>`}});
+return s+'</div>'};
+document.getElementById('out').innerHTML=page(false)+'<div class="br"></div>'+page(true);
+document.getElementById('msg').textContent=`${n}問を作りました（問題番号 ${seed}）。`;
+if(ampm&&qs.some(q=>q.t!='calc'&&q.ap!==null)){} }
+function g(id){return document.getElementById(id).value}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+document.getElementById('make').onclick=make;
+document.getElementById('next').onclick=()=>{const e=document.getElementById('seed');e.value=(+e.value||0)+1;make()};
+make();
+</script>
+</body>
+</html>
