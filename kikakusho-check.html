@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小説コンテスト 企画書・あらすじチェッカー｜タイトル・キャッチコピー・あらすじを応募前に無料確認</title>
+<meta name="description" content="小説・漫画原作・ゲームシナリオの公募に出す企画書（タイトル、キャッチコピー、あらすじ、世界観、登場人物）を応募前にチェックする無料ツール。文字数、結末を伏せたあらすじ、固有名詞の多さ、長すぎる一文、主人公の登場位置、キャッチコピーとタイトルの重複を確認し、提出用のテキストに整えます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kikakusho-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea,input[type=text],input[type=number]{width:100%;font-size:1em;box-sizing:border-box}
+textarea{min-height:6em}input[type=number]{width:7em}
+label{display:block;margin:10px 0 2px;font-weight:600}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:10em}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+.ok{background:#eef6ee}.ng{background:#fdecea}.mid{background:#fff8e1}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+small{color:#555}pre{white-space:pre-wrap;background:#f6f6f6;padding:10px;border-radius:8px}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 0 0}
+</style>
+</head>
+<body>
+<h1>小説コンテスト 企画書・あらすじチェッカー</h1>
+<p>小説・漫画原作・ゲームシナリオの公募では、本文より先に<b>タイトル・キャッチコピー・あらすじ</b>で読まれるかどうかが決まります。下書きを貼ると、文字数と「選考でよく指摘される書き方」を自動で確認し、提出用のテキストに整えます。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<div class="row">
+<div><label for="title">タイトル</label><input type="text" id="title" placeholder="例：誤訳ひとつで国が滅ぶ ～異世界の通訳官は、今日も言葉を選んでいる～"></div>
+<div style="flex:0 0 8em"><label for="titleMax">上限（字）</label><input type="number" id="titleMax" value="0" min="0"><small>0＝指定なし</small></div>
+</div>
+<div class="row">
+<div><label for="catch">キャッチコピー</label><input type="text" id="catch" placeholder="例：その一言を、どう訳す？"></div>
+<div style="flex:0 0 8em"><label for="catchMax">上限（字）</label><input type="number" id="catchMax" value="35" min="0"></div>
+</div>
+<div class="row">
+<div><label for="hero">主人公の名前（あれば）</label><input type="text" id="hero" placeholder="例：リオ"></div>
+<div style="flex:0 0 8em"><label for="synMax">あらすじ上限</label><input type="number" id="synMax" value="800" min="0"></div>
+</div>
+<label for="syn">あらすじ</label><textarea id="syn" style="min-height:10em" placeholder="結末まで書くのが基本です（要項で「結末まで」と指定されることが多い）。"></textarea>
+<label for="world">世界観・設定（任意）</label><textarea id="world"></textarea>
+<label for="chara">登場人物（任意・1行に1人「名前：説明」）</label><textarea id="chara"></textarea>
+<button id="go">チェックする</button>
+</div>
+
+<div id="out"></div>
+<h2>提出用テキスト</h2>
+<p><small>見出しつきで1つのテキストにまとめます。フォームの欄ごとに貼るときは、見出しを消して使ってください。</small></p>
+<pre id="fmt"></pre>
+<button id="copy">コピー</button>
+
+<div class="note" style="margin-top:1.5em">
+<b>判定の考え方（目安です）</b><br>
+・あらすじは「読者向けの宣伝文」ではなく「選考する人向けの要約」です。最後が「果たして〜のか？」「続きは本編で」のように結末を伏せていると、多くの公募で減点や対象外の理由になります。<br>
+・カタカナの固有名詞や「」で囲んだ造語が多すぎると、短い文字数では読み手が追えなくなります。あらすじでは主要人物3〜4人程度に絞るのが一般的です。<br>
+・主人公はあらすじの冒頭（目安として最初の120字以内）に出すと、誰の話かがすぐ伝わります。<br>
+・一文が80字を超えると読みにくくなりやすいです。<br>
+・文字数の上限、AI利用の可否と申告方法は公募ごとに違います。必ず要項を確認してください。たとえばカクヨムコンテスト12【短編】は本文400字以上1万字以内、長編のカクヨムコンテスト12は本文10万字以上で、生成AIを使った作品は所定のタグ付けが必要です。<br>
+関連：<a href="moji-count.html">公募用 文字数・原稿用紙換算チェッカー</a> ／ <a href="ai-disclosure.html">生成AI利用の申告文メーカー</a> ／ <a href="hyoki-yure.html">表記ゆれ・文体混在チェッカー</a>
+</div>
+
+<p style="margin-top:2em"><small>翻訳・校正・応募書類づくりのご相談：shinji-work@mail.grokbot.com ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+function len(s){return [...s.replace(/\r?\n/g,"")].length;}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+const TEASER=/(果たして|はたして|どうなる|待ち受ける|運命や如何に|物語が今|幕を開ける|始まる[。！!]?$|続きは本編|のか[？?]|だろうか[？?。]?$|[？?]$)/;
+const ENDING=/(最後|最終的|結末|ラスト|ついに|やがて|ようやく|こうして|その結果|エピローグ|終わり|迎える|果てに|決着)/;
+const VAGUE=/(色々|いろいろ|様々な事件|さまざまな事件|とある|なんやかんや|波乱万丈|予想外の展開|衝撃の)/g;
+function check(){
+  const title=$("title").value.trim(),cat=$("catch").value.trim(),syn=$("syn").value.trim(),world=$("world").value.trim(),chara=$("chara").value.trim(),hero=$("hero").value.trim();
+  const tMax=+$("titleMax").value||0,cMax=+$("catchMax").value||0,sMax=+$("synMax").value||0;
+  const rows=[];const add=(lv,item,msg)=>rows.push([lv,item,msg]);
+  // title
+  if(!title)add("ng","タイトル","空欄です。");
+  else{
+    const n=len(title);
+    if(tMax&&n>tMax)add("ng","タイトル",`${n}字で上限${tMax}字を超えています。`);
+    else add(n>60?"mid":"ok","タイトル",`${n}字。`+(n>60?"長めです。フォームで切れないか確認してください。":""));
+    if(/[～〜\-－―]/.test(title)&&n>25)add("ok","タイトル","サブタイトルつきの形です。前半だけでも内容が伝わるか確認すると安心です。");
+  }
+  // catch
+  if(!cat)add("mid","キャッチコピー","空欄です。必須の公募が多いので用意しておくと安心です。");
+  else{
+    const n=len(cat);
+    add(cMax&&n>cMax?"ng":"ok","キャッチコピー",`${n}字`+(cMax?`（目安${cMax}字以内）`:"")+"。");
+    if(title&&(title.includes(cat)||cat.includes(title.split(/[～〜]/)[0].trim())))add("mid","キャッチコピー","タイトルとほぼ同じ言葉です。タイトルにない魅力（感情・問い・意外性）を足すと効果的です。");
+  }
+  // synopsis
+  if(!syn)add("ng","あらすじ","空欄です。");
+  else{
+    const n=len(syn);
+    if(sMax&&n>sMax)add("ng","あらすじ",`${n}字で上限${sMax}字を${n-sMax}字超えています。`);
+    else if(sMax&&n<sMax*0.5)add("mid","あらすじ",`${n}字（上限${sMax}字の半分未満）。展開と結末を書き足せる余裕があります。`);
+    else add("ok","あらすじ",`${n}字`+(sMax?`／上限${sMax}字`:"")+"。");
+    const sents=syn.split(/(?<=[。！？!?])\s*|\n+/).map(s=>s.trim()).filter(Boolean);
+    const last=sents[sents.length-1]||"";
+    if(TEASER.test(last))add("ng","あらすじ（結末）",`最後の文「${esc(last.slice(0,40))}」が結末を伏せた宣伝文の形です。選考用のあらすじでは結末まで書くのが基本です。`);
+    else if(!ENDING.test(syn.slice(-Math.max(120,Math.floor(n/3)))))add("mid","あらすじ（結末）","後半に結末を示す言葉（最後に／ついに／こうして など）が見当たりません。物語がどう終わるか書けているか確認してください。");
+    else add("ok","あらすじ（結末）","結末まで書かれているようです。");
+    const long=sents.filter(s=>len(s)>80);
+    if(long.length)add("mid","一文の長さ",`80字を超える文が${long.length}つあります：「${esc(long[0].slice(0,30))}…」`);
+    const kata=[...new Set((syn.match(/[ァ-ヴー]{3,}/g)||[]).filter(w=>!/^ー/.test(w)))];
+    const kagi=[...new Set(syn.match(/「[^」]{1,12}」/g)||[])];
+    const names=kata.length+kagi.length;
+    if(names>8)add("mid","固有名詞・造語",`カタカナ語・「」の造語が${names}種類あります（${esc(kata.slice(0,6).join("、"))}…）。主要なものに絞ると読みやすくなります。`);
+    else add("ok","固有名詞・造語",`カタカナ語・「」の造語は${names}種類。`);
+    if(hero){const p=syn.indexOf(hero);
+      if(p<0)add("ng","主人公",`あらすじに「${esc(hero)}」が出てきません。`);
+      else if([...syn.slice(0,p)].length>120)add("mid","主人公",`「${esc(hero)}」の初登場が${[...syn.slice(0,p)].length}字目です。冒頭近くに出すと誰の話か伝わりやすくなります。`);
+      else add("ok","主人公",`「${esc(hero)}」は${[...syn.slice(0,p)].length+1}字目に登場。`);}
+    const v=syn.match(VAGUE);if(v)add("mid","ぼかし表現",`「${[...new Set(v)].join("」「")}」は具体的な出来事に置き換えると説得力が増します。`);
+    const q=(syn.match(/[？?]/g)||[]).length;if(q>=3)add("mid","問いかけ",`「？」が${q}回あります。あらすじは問いかけより出来事で書くのが基本です。`);
+    if(/(です|ます)[。]/.test(syn)&&/(だ|である|た)[。]/.test(syn))add("mid","文体","です・ます調とだ・である調が混ざっているようです。");
+  }
+  if(world){add("ok","世界観",`${len(world)}字。`);}
+  if(chara){const lines=chara.split(/\n/).filter(l=>l.trim());add(lines.length>6?"mid":"ok","登場人物",`${lines.length}人。`+(lines.length>6?"企画書では主要人物に絞るのが一般的です。":""));
+    if(syn)lines.forEach(l=>{const nm=l.split(/[:：]/)[0].trim();if(nm&&!syn.includes(nm))add("mid","登場人物",`「${esc(nm)}」はあらすじに出てきません。役割が伝わるか確認してください。`);});}
+  const lab={ok:"OK",mid:"確認",ng:"要修正"};
+  $("out").innerHTML="<table><tr><th>判定</th><th>項目</th><th>内容</th></tr>"+rows.map(r=>`<tr class="${r[0]}"><td>${lab[r[0]]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")+"</table>";
+  let f="";
+  if(title)f+=`【タイトル】\n${title}\n\n`;if(cat)f+=`【キャッチコピー】\n${cat}\n\n`;if(syn)f+=`【あらすじ】\n${syn}\n\n`;if(world)f+=`【世界観・設定】\n${world}\n\n`;if(chara)f+=`【登場人物】\n${chara}\n`;
+  $("fmt").textContent=f.trim();
+}
+$("go").onclick=check;
+$("copy").onclick=()=>navigator.clipboard&&navigator.clipboard.writeText($("fmt").textContent);
+</script>
+</body>
+</html>
