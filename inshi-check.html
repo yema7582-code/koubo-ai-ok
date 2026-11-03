@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>印紙税額チェッカー（契約書・請負・領収書）｜令和9年3月までの軽減税率・税抜判定・電子契約は不要</title>
+<meta name="description" content="契約書・注文請書・領収書に貼る収入印紙はいくら？ 第1号（不動産売買・金銭消費貸借・運送）、第2号（請負・建設工事）、第7号（継続的取引の基本契約）、第17号（領収書）の印紙税額を、記載金額・消費税の区分記載・作成日（令和9年3月31日までの軽減措置）から判定。PDFやメール・電子契約は課税対象外の注意つき。無料・登録不要・入力はブラウザ内だけで処理。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/inshi-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:780px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input,select{font-size:1em;padding:3px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border-bottom:1px solid #eee;padding:4px 6px;text-align:left}td.n{text-align:right}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}.big{font-size:1.4em;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>印紙税額チェッカー（契約書・請負・領収書）</h1>
+<p>紙で作る契約書や領収書に貼る収入印紙の金額を、文書の種類と記載金額から判定します。国税庁の印紙税額一覧（令和8年4月1日現在法令等）をもとにしています。<strong>不動産の譲渡契約書と建設工事の請負契約書は、令和9年（2027年）3月31日までに作成するものが軽減税率</strong>です。</p>
+
+<div class="box">
+<label>文書の種類
+<select id="kind">
+<option value="1f">第1号：不動産・特許権・営業などの譲渡（売買契約書・売渡証書）</option>
+<option value="1o">第1号：土地の賃貸借・金銭消費貸借（借用書）・運送の契約書</option>
+<option value="2k">第2号：請負（建設工事：建物建築・リフォーム・電気工事など）</option>
+<option value="2" selected>第2号：請負（建設工事以外：制作・開発・保守・広告・翻訳の注文請書など）</option>
+<option value="7">第7号：継続的取引の基本となる契約書（取引基本契約・業務委託基本契約）</option>
+<option value="17">第17号：売上代金の受取書（領収書・レシート）</option>
+<option value="17o">第17号：売上代金以外の受取書（保証金・貸付金の返済の受取など）</option>
+</select></label>
+<label>記載された契約金額・受取金額（円、空欄＝金額の記載なし） <input id="amt" type="number" min="0" step="1" style="width:14em"></label>
+<label><input type="checkbox" id="taxsep"> 消費税額（または税込・税抜の両方）がはっきり区分して書いてある <input id="tax" type="number" min="0" placeholder="消費税額" style="width:9em"></label>
+<label>作成日（相手に交付する日／署名押印の日） <input id="date" type="date"></label>
+<label><input type="checkbox" id="denshi"> PDF・メール・電子契約サービスだけでやり取りし、紙の原本を作らない</label>
+<label><input type="checkbox" id="eigyou"> 受取書の発行者が営業者でない（個人が私的に売った・医師／弁護士などの業務・公益法人の非収益事業など）</label>
+<label><input type="checkbox" id="kihon"> 営業者どうしの継続取引で、目的物・単価・支払方法などの基本条件を決める契約（第2号で金額の記載がないとき第7号になるか判定）</label>
+</div>
+
+<div class="box" id="out"></div>
+
+<div class="note">
+<strong>よくある間違い</strong>
+<ul>
+<li>印紙税は<strong>紙の文書</strong>にかかります。PDFをメール送付・電子契約で締結したものは課税文書の作成にあたらず、印紙は不要です。ただし後で紙に印刷して署名押印し、交付すればその紙が課税文書になります。</li>
+<li>消費税額が区分して書いてあれば、<strong>税抜金額で判定</strong>します（第1号・第2号・第17号）。「税込110万円」だけだと110万円で判定です。</li>
+<li>契約書を2通作って双方が持つなら、<strong>2通とも</strong>印紙が必要です（コピーは原則不要）。</li>
+<li>印紙を貼らなかったときの過怠税は、原則として本来の税額とその2倍（合計3倍）、自主的に申し出れば1.1倍です。消印（割印）を忘れたときも、消していない印紙の額が過怠税になります。</li>
+<li>このツールは目安です。文書の内容によって号が変わることがあります（例：金額のある請負の基本契約は第2号、金額のないものは第7号）。最終判断は税務署や税理士にご確認ください。</li>
+</ul>
+</div>
+<p>多言語の契約書・請求書のチェックや翻訳のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ（日・英・中）。 <a href="index.html">他の無料ツール</a> ／ <a href="keiyaku-check.html">業務委託契約書 確認ポイント抽出</a> ／ <a href="shiharai-kijitsu.html">支払期日60日ルール チェッカー</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const M=10000, OKU=1e8;
+// [上限（以下）, 税額]
+const T1=[[10*M,200],[50*M,400],[100*M,1000],[500*M,2000],[1000*M,10000],[5000*M,20000],[OKU,60000],[5*OKU,100000],[10*OKU,200000],[50*OKU,400000],[Infinity,600000]];
+const T2=[[100*M,200],[200*M,400],[300*M,1000],[500*M,2000],[1000*M,10000],[5000*M,20000],[OKU,60000],[5*OKU,100000],[10*OKU,200000],[50*OKU,400000],[Infinity,600000]];
+const T1F=[[10*M,200],[50*M,200],[100*M,500],[500*M,1000],[1000*M,5000],[5000*M,10000],[OKU,30000],[5*OKU,60000],[10*OKU,160000],[50*OKU,320000],[Infinity,480000]];
+const T2K=[[100*M,200],[200*M,200],[300*M,500],[500*M,1000],[1000*M,5000],[5000*M,10000],[OKU,30000],[5*OKU,60000],[10*OKU,160000],[50*OKU,320000],[Infinity,480000]];
+const T17=[[100*M,200],[200*M,400],[300*M,600],[500*M,1000],[1000*M,2000],[2000*M,4000],[3000*M,6000],[5000*M,10000],[OKU,20000],[2*OKU,40000],[3*OKU,60000],[5*OKU,100000],[10*OKU,150000],[Infinity,200000]];
+const look=(t,a)=>t.find(r=>a<=r[0])[1];
+const yen=n=>n.toLocaleString()+'円';
+function calc(){
+  const k=$('kind').value, raw=$('amt').value.trim(), dateS=$('date').value;
+  const has=raw!=='', amt=has?Math.floor(+raw):null;
+  const sep=$('taxsep').checked, tax=+$('tax').value||0;
+  const out=[], notes=[];
+  if($('denshi').checked){
+    $('out').innerHTML='<p class="ok big">印紙は不要です（不課税）</p><p>電子データ（PDF・メール・電子契約）で作成・交付した文書は、印紙税法上の「課税文書の作成」にあたりません。紙に印刷して署名押印し、相手に渡したときは、その紙について下の判定が必要になります。</p>';
+    return;
+  }
+  let base=amt;
+  if(has&&sep&&['1f','1o','2k','2','17'].includes(k)){
+    if(tax>0&&tax<amt){base=amt-tax;notes.push(`消費税額 ${yen(tax)} が区分記載されているので、税抜 ${yen(base)} で判定しました（入力金額は税込とみなしています）。`);}
+    else notes.push('消費税額を入れると税抜金額で判定します。入力金額がすでに税抜なら、チェックを外してそのまま入れてください。');
+  }
+  const d=dateS?new Date(dateS+'T00:00:00'):new Date();
+  const genzei=d<=new Date('2027-03-31T23:59:59');
+  let res=null, label='';
+  if(k==='7'){res=4000;label='第7号文書（継続的取引の基本となる契約書）';
+    if(has)notes.push('契約金額の記載がある基本契約は、内容が請負なら第2号、売買なら第7号（金額に関係なく4,000円）になるのが一般的です。請負の基本契約で金額を書いたなら「第2号」で判定し直してください。');
+    notes.push('契約期間が3か月以内で更新の定めがないものは第7号にあたりません（金額がなければ不課税になり得ます）。');
+  }else if(k==='17'||k==='17o'){
+    label='第17号文書（'+(k==='17'?'売上代金の受取書':'売上代金以外の受取書')+'）';
+    if($('eigyou').checked){res=0;notes.push('営業に関しない受取書は非課税です。');}
+    else if(!has)res=200;
+    else if(base<5*M)res=0;
+    else res=(k==='17')?look(T17,base):200;
+    if(has&&base<5*M)notes.push('受取金額5万円未満は非課税です（税抜で判定できる場合は税抜）。');
+    notes.push('クレジットカード払いで「カード利用」と明記した領収書は、金銭の受取ではないので非課税です。');
+  }else if(k==='1f'||k==='1o'){
+    label='第1号文書';
+    if(!has)res=200;
+    else if(base<1*M)res=0;
+    else if(k==='1f'&&genzei&&base>10*M){res=look(T1F,base);notes.push('令和9年3月31日までに作成する不動産譲渡契約書なので、軽減後の税額です（本則 '+yen(look(T1,base))+'）。');}
+    else res=look(T1,base);
+    if(k==='1f'&&!genzei&&has&&base>10*M)notes.push('作成日が令和9年4月1日以降なので、軽減措置（現行法では令和9年3月31日まで）を適用していません。延長の有無は最新の税制改正を確認してください。');
+    if(k==='1o')notes.push('土地の賃貸借では、返還される敷金・保証金や毎月の賃料は記載金額に含めません（権利金など返ってこないお金だけ）。建物の賃貸借契約書は不課税です。');
+  }else{
+    label='第2号文書（請負に関する契約書）';
+    if(!has){
+      if($('kihon').checked){res=4000;label='第7号文書（継続的取引の基本となる契約書）';notes.push('金額の記載がない請負の基本契約で、営業者間の継続取引の条件を決めるものは第7号（4,000円）になります。');}
+      else res=200;
+    }
+    else if(base<1*M)res=0;
+    else if(k==='2k'&&genzei&&base>100*M){res=look(T2K,base);notes.push('令和9年3月31日までに作成する建設工事の請負契約書なので、軽減後の税額です（本則 '+yen(look(T2,base))+'）。');}
+    else res=look(T2,base);
+    if(k==='2k'&&!genzei&&has&&base>100*M)notes.push('作成日が令和9年4月1日以降なので、軽減措置（現行法では令和9年3月31日まで）を適用していません。');
+    if(k==='2')notes.push('委任（コンサル・事務代行など、成果物の完成を約さないもの）の契約書は原則不課税です。成果物の完成を約すなら請負です。');
+  }
+  let html=`<p>${label}</p><p class="big ${res?'':'ok'}">${res?'収入印紙 '+yen(res):'非課税（印紙不要）'}</p>`;
+  if(has)html+=`<p>判定に使った金額：${yen(base)}</p>`;else html+='<p>金額の記載なしとして判定しました。</p>';
+  html+='<ul>'+notes.map(n=>'<li>'+n+'</li>').join('')+'</ul>';
+  $('out').innerHTML=html;
+}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>
