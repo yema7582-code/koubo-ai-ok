@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2割特例が終わったら？3割特例・簡易課税・本則課税の消費税比較（個人事業者・令和8〜10年分）</title>
+<meta name="description" content="インボイス登録した個人事業者向け。2割特例（令和8年分まで）、3割特例（令和9年・令和10年分）、簡易課税、本則課税で消費税の納付額がいくら違うかを一度に比べます。簡易課税制度選択届出書の提出期限の目安も表示。入力はブラウザ内だけで処理されます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/sanwari-tokurei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:780px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input[type=number]{font-size:1.05em;padding:4px;width:12em}select{font-size:1em;padding:3px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #eee;padding:6px;text-align:left}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:#e8f5e9;font-weight:bold}tr.na td{color:#999}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}
+</style>
+</head>
+<body>
+<h1>2割特例のあと、3割特例と簡易課税のどちらが得？ 消費税の納付額比較</h1>
+<p>インボイス登録をきっかけに課税事業者になった個人事業者は、<strong>令和8年分まで「2割特例」</strong>（納付額＝売上税額の2割）、<strong>令和9年分・令和10年分は「3割特例」</strong>（売上税額の3割）を使えます。業種によっては簡易課税のほうが安くなるので、年ごとに比べて選ぶのがポイントです。</p>
+
+<div class="box">
+<strong>1. 申告する年と条件</strong>
+<label>申告する年分 <select id="year"><option value="8">令和8年分（2026年1〜12月）</option><option value="9" selected>令和9年分（2027年）</option><option value="10">令和10年分（2028年）</option></select></label>
+<label>基準期間（2年前）の課税売上高 <input type="number" id="kijun" min="0" step="1" value="6000000"> 円</label>
+<label><input type="checkbox" id="reg" checked> インボイス発行事業者の登録をしている（登録がきっかけで課税事業者になった）</label>
+<label>主な事業区分（簡易課税のみなし仕入率）
+<select id="kubun">
+<option value="0.9">第1種 卸売業（90%）</option>
+<option value="0.8">第2種 小売業・農林漁業（飲食料品）（80%）</option>
+<option value="0.7">第3種 製造業・建設業など（70%）</option>
+<option value="0.6">第4種 飲食店業など（60%）</option>
+<option value="0.5" selected>第5種 サービス業（翻訳・デザイン・ライター・IT等）（50%）</option>
+<option value="0.4">第6種 不動産業（40%）</option>
+</select></label>
+</div>
+
+<div class="box">
+<strong>2. 1年間の金額（税込）</strong>
+<label>課税売上（10%） <input type="number" id="s10" min="0" step="1" value="5500000"> 円</label>
+<label>課税売上（8% 軽減税率） <input type="number" id="s8" min="0" step="1" value="0"> 円</label>
+<label>課税仕入・経費（10%・インボイスあり） <input type="number" id="p10" min="0" step="1" value="550000"> 円</label>
+<label>課税仕入・経費（8%・インボイスあり） <input type="number" id="p8" min="0" step="1" value="0"> 円</label>
+<p style="font-size:.9em">仕入・経費は本則課税の計算だけに使います（特例と簡易課税では使いません）。</p>
+</div>
+
+<div class="box">
+<strong>3. 結果（国税＋地方消費税の合計）</strong>
+<table id="out"></table>
+<div id="msg"></div>
+</div>
+
+<div class="note">
+<p><strong>計算方法</strong>（国税庁「令和8年度税制改正特集」・インボイスQ&A問114-2 に基づく簡易計算）：税込売上を税抜にして1,000円未満切り捨て（課税標準額）→ 国税 7.8%（軽減 6.24%）を計算 → 特例は売上税額の8割（2割特例）または7割（3割特例）、簡易課税はみなし仕入率、本則は仕入税額（割戻し計算）を控除 → 100円未満切り捨て → 地方消費税は国税の22/78（100円未満切り捨て）。</p>
+<p>・2割特例は令和8年9月30日を含む課税期間まで（個人なら令和8年分まで）。3割特例は個人事業者だけで、法人は使えません。<br>
+・特例は事前の届出不要で、申告書に適用する旨を書くだけです。年ごとに選べます。<br>
+・簡易課税は原則として適用したい年の前年12月31日までに「消費税簡易課税制度選択届出書」が必要ですが、2割特例・3割特例を使った翌年なら、その年の申告期限（翌年3月31日ごろ）までの提出でその年から使えます。<br>
+・令和10年4月1日以降は、3割特例の計算から特定少額資産の譲渡の対価が除かれます（この計算では考慮していません）。<br>
+・売上の返品・値引き、貸倒れ、複数業種の簡易課税、課税期間の短縮、高額特定資産の取得などは考慮していません。</p>
+<p>この計算は目安で、税務上の助言ではありません。実際の申告は国税庁の資料や税理士にご確認ください。</p>
+<p>請求書・帳簿の確認、日英中の取引書類の翻訳のご相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎 慎二）</p>
+</div>
+<p><a href="index.html">ほかの無料ツール一覧へ</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const yen=n=>n.toLocaleString('ja-JP')+' 円';
+function calc(){
+  const y=+$('year').value, kijun=+$('kijun').value||0, reg=$('reg').checked, mr=+$('kubun').value;
+  const s10=+$('s10').value||0, s8=+$('s8').value||0, p10=+$('p10').value||0, p8=+$('p8').value||0;
+  const b10=Math.floor(Math.floor(s10*100/110)/1000)*1000, b8=Math.floor(Math.floor(s8*100/108)/1000)*1000;
+  const tax=Math.floor(b10*0.078+b8*0.0624);
+  const fin=k=>{const kk=Math.max(0,Math.floor(k/100)*100);const ch=Math.floor(kk*22/78/100)*100;return {kk,ch,t:kk+ch};};
+  const rows=[];
+  const tokOK=reg&&kijun<=10000000;
+  if(y===8) rows.push({n:'2割特例（売上税額の2割）',ok:tokOK,r:fin(tax-Math.floor(tax*0.8))});
+  else rows.push({n:'3割特例（売上税額の3割）',ok:tokOK,r:fin(tax-Math.floor(tax*0.7))});
+  rows.push({n:'簡易課税（みなし仕入率 '+Math.round(mr*100)+'%）',ok:kijun<=50000000,r:fin(tax-Math.floor(tax*mr))});
+  const ptax=Math.floor(p10*7.8/110+p8*6.24/108);
+  rows.push({n:'本則課税（実際の仕入税額を控除）',ok:true,r:fin(tax-ptax)});
+  const okRows=rows.filter(r=>r.ok), best=Math.min(...okRows.map(r=>r.r.t));
+  let h='<tr><th>方法</th><th class="n">消費税（国）</th><th class="n">地方消費税</th><th class="n">納付額合計</th></tr>';
+  for(const r of rows){const cls=!r.ok?'na':(r.r.t===best?'best':'');
+    h+=`<tr class="${cls}"><td>${r.n}${r.ok?'':'（条件外）'}</td><td class="n">${yen(r.r.kk)}</td><td class="n">${yen(r.r.ch)}</td><td class="n">${yen(r.r.t)}</td></tr>`;}
+  $('out').innerHTML=h;
+  let m=`<p>課税標準額 ${yen(b10+b8)}、売上にかかる消費税額（国）${yen(tax)}。</p>`;
+  if(!tokOK) m+='<p class="warn">基準期間の課税売上高が1,000万円を超えているか、インボイス登録がないため、'+(y===8?'2割':'3割')+'特例は使えません。</p>';
+  if(kijun>50000000) m+='<p class="warn">基準期間の課税売上高が5,000万円を超えているため、簡易課税は使えません。</p>';
+  const w=okRows.find(r=>r.r.t===best);
+  m+=`<p>この条件でいちばん納付額が少ないのは「<strong>${w.n}</strong>」です。</p>`;
+  if(y>=9&&tokOK&&mr>0.7) m+='<p>この業種は簡易課税のほうが3割特例より有利です。前年に2割特例・3割特例を使っていれば、その年の申告期限までに簡易課税制度選択届出書を出せばその年から簡易課税にできます。</p>';
+  if(y>=9&&tokOK&&mr===0.7) m+='<p>第3種は簡易課税と3割特例がほぼ同じ額になります（端数処理で差が出ることがあります）。</p>';
+  if(y===8&&tokOK) m+='<p>令和9年分からは3割特例になり、納付額は2割特例の約1.5倍になります。年分を切り替えて比べてみてください。</p>';
+  $('msg').innerHTML=m;
+}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>
