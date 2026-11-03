@@ -4,6 +4,7 @@
 - [一覧ページ](https://yema7582-code.github.io/koubo-ai-ok/): 締切、賞金、AI利用条件、応募方法の表
 - [Steam カプセル画像・スクリーンショット サイズチェッカー](https://yema7582-code.github.io/koubo-ai-ok/steam-assets.html)
 - [薬機法・広告表現チェッカー](https://yema7582-code.github.io/koubo-ai-ok/yakki-check.html)
+- [特定商取引法に基づく表記 記載項目チェッカー](https://yema7582-code.github.io/koubo-ai-ok/tokusho-check.html)
 - [ステマ規制 PR表記チェッカー](https://yema7582-code.github.io/koubo-ai-ok/stema-check.html)
 - [字幕ファイル（SRT/VTT）チェッカー](https://yema7582-code.github.io/koubo-ai-ok/jimaku-check.html): YouTube・講座動画の字幕の読む速さ（文字/秒）、1行の文字数、行数、表示時間、重なり、番号崩れを確認し、タイミングの一括ずらしとSRT⇔VTT変換
 - [小説コンテスト 企画書・あらすじチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kikakusho-check.html): タイトル・キャッチコピー・あらすじの文字数、結末を伏せたあらすじ、固有名詞の多さ、主人公の登場位置を応募前に確認

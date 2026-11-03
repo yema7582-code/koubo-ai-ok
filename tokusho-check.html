@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>特定商取引法に基づく表記 記載項目チェッカー（ネットショップ・BASE・STORES・Shopify）｜無料</title>
+<meta name="description" content="ネットショップの「特定商取引法に基づく表記」ページの文章を貼り付けると、通信販売の広告で表示が求められる項目（事業者名・住所・電話番号・販売価格・送料・支払方法と時期・引渡時期・返品について など）が書かれているかを一覧で確認できる無料ツール。項目があるかどうかを見るだけで、内容の適否は判断しません。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/tokusho-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:220px;font-size:1em;font-family:inherit}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:4px 8px;vertical-align:top;font-size:.93em}
+button{font-size:.95em;padding:4px 12px}
+</style>
+</head>
+<body>
+<h1>特定商取引法に基づく表記 記載項目チェッカー</h1>
+<p>ネットショップ（BASE・STORES・Shopify・自社サイトなど）の「特定商取引法に基づく表記」ページの文章を貼り付けると、通信販売の広告で一般に表示が求められる項目が<strong>書かれているかどうか</strong>を一覧にします。項目の一覧は消費者庁の<a href="https://www.no-trouble.caa.go.jp/what/mailorder/" rel="noopener">特定商取引法ガイド（通信販売）</a>をもとにしています。</p>
+<div class="box">
+<label><input type="checkbox" id="corp"> 法人として販売している</label>
+<label style="margin-left:1em"><input type="checkbox" id="digital"> ソフトウェア・デジタルコンテンツを販売している</label>
+<label style="margin-left:1em"><input type="checkbox" id="sub"> 定期購入・サブスクがある</label>
+<textarea id="t" placeholder="ここに「特定商取引法に基づく表記」ページの文章を貼り付け"></textarea>
+<button id="go">チェックする</button>
+</div>
+<div id="out"></div>
+<h2>使い方のヒント</h2>
+<ul>
+<li>見出し（「販売業者」「所在地」など）ごとコピーして貼り付けると、見つけやすくなります。</li>
+<li>「見つからない」と出た項目は、別の言い方で書いてあるだけの場合もあります。ページを目で確認してください。</li>
+<li>個人の方が住所・電話番号を載せない場合は、「請求があれば遅滞なく開示します」のように書く方法が案内されています。このツールはその一文があるかも確認します。</li>
+<li>2022年6月からは、注文確定直前の最終確認画面にも分量・価格・支払・引渡し・申込み期間・キャンセル条件の表示が必要です。下のチェックは表記ページ用なので、最終確認画面は別に確認してください。</li>
+</ul>
+<p class="note">このツールは「その項目らしい言葉があるか」を調べるだけで、記載内容が正しいか、法律に合っているかは判断しません（法的な助言ではありません）。迷う場合は消費者庁の資料や専門家に確認してください。ショップページの英語・中国語への翻訳のご相談は shinji-work@mail.grokbot.com まで。</p>
+<p><a href="index.html">他の無料ツール一覧</a> ／ <a href="nijuu-kakaku.html">セール「通常価格」表示チェッカー</a> ／ <a href="stema-check.html">ステマ規制 PR表記チェッカー</a> ／ <a href="catalog-check.html">商品データ AIショッピング対応チェッカー</a></p>
+<script>
+const ITEMS=[
+ {k:'事業者の氏名・名称',r:[/販売業者/,/事業者(名|の名称|の氏名)/,/(会社|店舗|屋号|ショップ)名/,/運営(会社|者)/,/氏名/]},
+ {k:'住所（所在地）',r:[/所在地/,/住所/,/〒\s*\d{3}-?\d{4}/]},
+ {k:'電話番号',r:[/電話/,/TEL/i,/0\d{1,4}-\d{1,4}-\d{3,4}/]},
+ {k:'代表者または責任者の氏名',r:[/代表者/,/(運営|販売|業務)?責任者/,/代表取締役/],corp:true},
+ {k:'販売価格',r:[/販売価格/,/商品代金/,/価格/,/料金/]},
+ {k:'送料',r:[/送料/,/配送料/,/配送費/]},
+ {k:'商品代金以外の必要料金（送料以外。なければ「なし」と書くと親切）',r:[/(代金|価格|商品代金)以外/,/手数料/,/通信費/,/振込手数料/],opt:true},
+ {k:'支払方法',r:[/支払(い)?方法/,/お支払/,/決済方法/,/クレジットカード/,/銀行振込/,/コンビニ/]},
+ {k:'支払時期',r:[/支払(い)?(時期|期限)/,/(前払|後払|注文時|購入時|即時)/,/決済(時|時点)/]},
+ {k:'商品の引渡時期（発送時期）',r:[/引(き)?渡(し)?(時期|し)/,/発送(時期|日|まで|目安)/,/お届け/,/配送(時期|日)/,/(営業日|日)以内に(発送|出荷)/,/ダウンロード/]},
+ {k:'返品・キャンセル（申込みの撤回・契約の解除）',r:[/返品/,/返金/,/キャンセル/,/交換/,/解約/]},
+ {k:'申込みの有効期限（ある場合）',r:[/有効期限/,/(申込|注文).{0,6}期限/,/期間限定/],opt:true},
+ {k:'販売数量の制限など特別な条件（ある場合）',r:[/(数量|個数).{0,4}(制限|限り|まで)/,/お一人様/,/販売条件/],opt:true},
+ {k:'契約不適合（不良品）の扱い（定めがある場合）',r:[/不良品/,/契約不適合/,/初期不良/,/破損/,/誤配/],opt:true},
+ {k:'動作環境（ソフトウェア・デジタルコンテンツ）',r:[/動作環境/,/推奨環境/,/対応(OS|端末|ブラウザ)/,/(Windows|macOS|iOS|Android)/],dig:true},
+ {k:'定期購入の条件（回数・総額・解約方法など）',r:[/定期/,/継続/,/サブスク/,/自動更新/,/回数/,/解約/],sub:true},
+ {k:'メールアドレス',r:[/[\w.+-]+@[\w-]+\.[\w.]+/,/メール/,/E-?mail/i],opt:true},
+];
+const DISCLOSE=/(請求|ご請求|お問い合わせ|求め).{0,20}(遅滞なく|速やかに|すみやかに)?.{0,10}(開示|提供|お知らせ|通知)/;
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function snip(t,re){const m=t.match(re);if(!m)return'';const i=Math.max(0,m.index-12);return t.slice(i,m.index+m[0].length+20).replace(/\s+/g,' ')}
+document.getElementById('go').onclick=()=>{
+ const t=document.getElementById('t').value;const corp=document.getElementById('corp').checked,dig=document.getElementById('digital').checked,sub=document.getElementById('sub').checked;
+ if(!t.trim()){document.getElementById('out').innerHTML='<p class="ng">文章を貼り付けてください。</p>';return}
+ const disc=DISCLOSE.test(t);let rows='',miss=0;
+ for(const it of ITEMS){
+  if(it.corp&&!corp)continue;if(it.dig&&!dig)continue;if(it.sub&&!sub)continue;
+  const hit=it.r.find(re=>re.test(t));let st,cls;
+  const line=hit?(t.split(/\n/).find(l=>hit.test(l))||''):'';
+  if(hit&&(it.k.startsWith('住所')||it.k.startsWith('電話'))&&DISCLOSE.test(line)){st='省略（開示請求の案内あり）';cls='mid'}
+  else if(hit){st='あり';cls='ok'}
+  else if((it.k.startsWith('住所')||it.k.startsWith('電話'))&&disc){st='省略（開示請求の案内あり）';cls='mid'}
+  else if(it.opt){st='見つからない（該当がなければ不要）';cls='mid'}
+  else{st='見つからない';cls='ng';miss++}
+  rows+=`<tr><td>${it.k}</td><td class="${cls}">${st}</td><td>${hit?esc(snip(t,hit)):''}</td></tr>`;
+ }
+ let head=miss?`<p class="ng">必須と思われる項目のうち ${miss} 件が見つかりませんでした。</p>`:'<p class="ok">主な項目はすべて見つかりました（内容の正しさは別途ご確認ください）。</p>';
+ if(disc)head+='<p class="mid">「請求があれば開示する」旨の文が見つかりました。省略している項目は、請求があったときに遅滞なく伝えられるよう準備しておいてください。</p>';
+ document.getElementById('out').innerHTML=head+`<table><tr><th>項目</th><th>結果</th><th>見つかった箇所</th></tr>${rows}</table>`;
+};
+</script>
+</body>
+</html>
