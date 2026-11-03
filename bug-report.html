@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ゲーム不具合報告書（バグレポート）チェッカー＆日英整形｜無料</title>
+<meta name="description" content="ゲームテスト・デバッグの不具合報告（バグレポート）を提出前に点検する無料ツール。再現手順の番号づけ、期待結果と実際の結果、再現率（7/10など）、ビルド番号・機種・OS、重要度の目安、「たまに」「なんか」「おかしい」などのあいまい語、1件に複数の不具合が混ざっていないかを確認し、日本語と英語の報告書テンプレートとCSV（Jira・Redmine・スプレッドシート取り込み用）を出力します。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/bug-report.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin-top:8px;font-weight:600}
+input[type=text],select{width:100%;font-size:1em;padding:4px;box-sizing:border-box}
+textarea{width:100%;min-height:90px;font-size:1em;font-family:inherit;box-sizing:border-box}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:160px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+li{margin:4px 0}button{font-size:.95em;padding:4px 12px;margin:4px 4px 0 0}
+pre{white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>ゲーム不具合報告書（バグレポート）チェッカー＆日英整形</h1>
+<p>ゲームのテストプレイやデバッグで見つけた不具合を、開発者が<strong>一度読めば再現できる報告書</strong>になっているか点検します。足りない項目やあいまいな言い回しを指摘し、日本語・英語の報告書とCSVを作ります。入力内容は送信されず、このページの中だけで処理します。</p>
+
+<div class="box">
+<label for="title">件名（タイトル）</label>
+<input type="text" id="title" placeholder="例：[セーブ] 雨天時にオートセーブするとセーブデータが消える">
+<div class="row">
+<div><label for="build">ビルド番号・バージョン</label><input type="text" id="build" placeholder="例：0.9.3 (build 1182)"></div>
+<div><label for="env">機種・OS・環境</label><input type="text" id="env" placeholder="例：Windows 11 / RTX 3060 / Steam版"></div>
+</div>
+<div class="row">
+<div><label for="area">場所・機能</label><input type="text" id="area" placeholder="例：2章 農場マップ／セーブ機能"></div>
+<div><label for="rate">再現率</label><input type="text" id="rate" placeholder="例：7/10、毎回、1回のみ"></div>
+<div><label for="sev">重要度（自分の見立て）</label>
+<select id="sev"><option value="">自動で目安を出す</option><option>致命的 (Blocker)</option><option>重大 (Critical)</option><option>中 (Major)</option><option>軽微 (Minor)</option><option>改善提案 (Trivial)</option></select></div>
+</div>
+<label for="pre">前提条件（任意）</label>
+<textarea id="pre" style="min-height:50px" placeholder="例：新規データで2章まで進めた状態、設定の天候演出ON"></textarea>
+<label for="steps">再現手順（1行に1手順）</label>
+<textarea id="steps" placeholder="1. 2章の農場マップに入る&#10;2. 天候が雨になるまで待つ&#10;3. 家に入ってオートセーブを発生させる&#10;4. タイトルに戻ってロードする"></textarea>
+<div class="row">
+<div><label for="exp">期待結果</label><textarea id="exp" style="min-height:60px" placeholder="例：直前のセーブデータからロードできる"></textarea></div>
+<div><label for="act">実際の結果</label><textarea id="act" style="min-height:60px" placeholder="例：セーブスロットが「データなし」になる"></textarea></div>
+</div>
+<label for="att">添付（スクリーンショット・動画・ログのファイル名やURL、任意）</label>
+<input type="text" id="att" placeholder="例：save_lost.mp4, output_log.txt">
+<label for="memo">補足（任意）</label>
+<textarea id="memo" style="min-height:50px" placeholder="例：晴れの日は発生しない。雨の演出をOFFにすると発生しない"></textarea>
+<button id="run">点検する</button><button id="sample">例を入れる</button><button id="clear">消す</button>
+</div>
+
+<div id="out"></div>
+
+<h2>報告書を書くときのコツ</h2>
+<ul>
+<li>件名は「[場所] 何をすると、何が起きる」の形にすると、一覧で見ても内容がわかります。</li>
+<li>再現手順は、ゲームを初めて触る人でも同じ操作ができるように、1手順1行で番号をつけます。</li>
+<li>「期待結果」と「実際の結果」を分けて書くと、仕様なのか不具合なのかの判断が早くなります。</li>
+<li>再現率は「7/10」のように、試した回数と発生した回数で書きます。1回しか起きていなくても、その旨を書けば立派な報告です。</li>
+<li>1件の報告には1つの不具合だけを書きます。別の不具合は別の報告にします。</li>
+</ul>
+<p class="note">重要度の目安は文中の言葉から機械的に推定したものです。最終的な判断は、テストの依頼元のルール（重要度の定義表）に合わせてください。</p>
+<p><a href="index.html">ほかの無料ツール一覧へ</a> ／ 関連：<a href="steam-check.html">Steamストアページ 翻訳チェッカー</a> ／ <a href="font-check.html">ゲーム用フォント 文字欠けチェッカー</a> ／ <a href="i18n-check.html">翻訳ファイル（JSON/PO）チェッカー</a></p>
+<p style="font-size:.9em">日本語・英語・中国語のゲーム翻訳チェック、テストプレイの報告書作成のご相談：shinji-work@mail.grokbot.com</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const F=['title','build','env','area','rate','sev','pre','steps','exp','act','att','memo'];
+const VAGUE=[['たまに','何回中何回か（例：3/10）'],['時々','何回中何回か'],['ときどき','何回中何回か'],['なんか','具体的な現象'],['なぜか','具体的な現象'],['おかしい','どう見えるか・どうなるか'],['変になる','どう見えるか'],['変な','どう見えるか'],['バグる','起きた現象そのもの'],['動かない','どの操作に何が反応しないか'],['うまくいかない','何が起きて、何を期待したか'],['いろいろ','一つずつ別の報告に'],['など','全部書き出すか、別報告に'],['適当に','実際に行った操作'],['しばらく','秒数や回数'],['すぐ','秒数'],['sometimes','x/y attempts'],['randomly','x/y attempts'],['weird','what exactly happens'],['broken','what exactly happens'],["doesn't work",'which input fails and what happens'],['does not work','which input fails and what happens'],['glitch','what exactly happens'],['etc','list them or split the report']];
+const SEV=[['致命的 (Blocker)',/(起動しない|起動できない|フリーズ|固まる|強制終了|クラッシュ|落ちる|進行不能|進めなくなる|セーブ.{0,6}(消え|壊れ|破損)|データ.{0,4}(消え|消失)|crash|freeze|soft.?lock|hard.?lock|progression|save.{0,10}(lost|corrupt|deleted))/i],['重大 (Critical)',/(課金|購入|決済|二重|実績.{0,4}解除されない|ロードできない|音が出ない|操作できない|purchase|payment|achievement|cannot load|no sound|input.{0,8}(lost|stuck))/i],['中 (Major)',/(当たり判定|すり抜け|表示されない|反映されない|計算.{0,4}(違|ずれ)|ずれる|翻訳.{0,4}(抜け|漏れ)|未翻訳|collision|clip|not displayed|untranslated|wrong value)/i],['軽微 (Minor)',/(誤字|脱字|文字.{0,4}(はみ出|切れ|重な)|はみ出|ちらつ|色.{0,4}違|typo|overlap|truncat|cut off|flicker)/i]];
+function v(id){return $(id).value.trim()}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function stepLines(s){return s.split(/\n/).map(x=>x.trim()).filter(Boolean)}
+function cleanStep(x){return x.replace(/^(\d+[\.\)．、:]|[・\-\*●]|[①-⑳])\s*/,'')}
+function guessSev(all){for(const [n,re] of SEV){if(re.test(all))return n}return '軽微 (Minor)'}
+function parseRate(r){if(!r)return null;let m=r.match(/(\d+)\s*[\/／]\s*(\d+)/);if(m)return {x:+m[1],y:+m[2]};if(/毎回|必ず|100%|always|every time/i.test(r))return {always:true};if(/1回のみ|一度だけ|once|1回だけ/i.test(r))return {x:1,y:1,once:true};m=r.match(/(\d+)\s*%/);if(m)return {pct:+m[1]};return {unknown:true}}
+function check(d){
+ const res=[];const add=(lv,t)=>res.push([lv,t]);
+ const steps=stepLines(d.steps);
+ if(!d.title)add('ng','件名がありません。「[場所] 何をすると、何が起きる」の形で書きましょう。');
+ else{ if(d.title.length<10)add('mid','件名が短すぎます（'+d.title.length+'文字）。現象と条件がわかるようにしましょう。');
+  if(d.title.length>80)add('mid','件名が長すぎます（'+d.title.length+'文字）。細かい条件は本文へ移しましょう。');
+  if(!/^[\[【［(（]/.test(d.title))add('mid','件名の先頭に [場所・機能] をつけると、一覧で探しやすくなります。');}
+ if(!d.build)add('ng','ビルド番号・バージョンがありません。どの版で起きたかが分からないと、修正済みかどうか判断できません。');
+ if(!d.env)add('ng','機種・OS・環境がありません。PC・スマホの機種、OS、ストア版かどうかを書きましょう。');
+ if(steps.length===0)add('ng','再現手順がありません。');
+ else{ if(steps.length<2)add('mid','再現手順が1行だけです。操作を1手順ずつ分けて書きましょう。');
+  if(steps.length>15)add('mid','再現手順が'+steps.length+'行あります。前提条件にまとめられる部分がないか見直しましょう。');
+  const numbered=steps.filter(x=>/^(\d+[\.\)．、:]|[①-⑳])/.test(x)).length;
+  if(numbered<steps.length)add('mid','番号のない手順があります。出力では自動で番号をつけます。');
+  const longS=steps.filter(x=>cleanStep(x).length>70);if(longS.length)add('mid','70文字を超える手順が'+longS.length+'行あります。1手順に複数の操作が入っていないか確認しましょう。');}
+ if(!d.exp)add('ng','期待結果がありません。本来どうなるべきかを書くと、仕様か不具合かの判断が早くなります。');
+ if(!d.act)add('ng','実際の結果がありません。');
+ if(d.exp&&d.act&&d.exp===d.act)add('ng','期待結果と実際の結果が同じ文になっています。');
+ const r=parseRate(d.rate);
+ if(!r)add('ng','再現率がありません。「7/10」のように、試した回数と発生した回数を書きましょう。');
+ else if(r.unknown)add('mid','再現率の書き方がわかりません。「3/10」「毎回」「1回のみ」などで書きましょう。');
+ else if(r.y!==undefined){if(r.x>r.y)add('ng','再現率の発生回数が試行回数より多くなっています（'+r.x+'/'+r.y+'）。');else if(r.y<3&&!r.once)add('mid','試行回数が'+r.y+'回です。可能なら5回以上試すと信頼度が上がります。');}
+ else if(r.once)add('mid','1回のみの発生です。発生直前の操作や時間帯、ログを補足に書いておきましょう。');
+ const all=[d.title,d.pre,d.steps,d.exp,d.act,d.memo].join('\n');
+ const found=[];for(const [w,h] of VAGUE){const re=new RegExp(w.replace(/[.*+?^${}()|[\]\\']/g,'\\$&'),'i');if(re.test(all))found.push('「'+w+'」→ '+h)}
+ if(found.length)add('mid','あいまいな言い回しがあります：'+found.join('、'));
+ if(/(また|あと|それと|ついでに|別件|他にも|ほかにも|additionally|also,|another bug)/i.test(d.act+'\n'+d.memo))add('mid','実際の結果・補足に別の不具合が混ざっているかもしれません（「また」「ほかにも」など）。1件1不具合に分けましょう。');
+ const sevAuto=guessSev(all);
+ if(!d.att){if(/^致命|^重大/.test(d.sev||sevAuto))add('mid','重要度が高そうなのに添付がありません。動画やログがあると修正が早まります。');else add('mid','スクリーンショットや動画があれば添付しましょう。');}
+ if(/(fuck|shit|クソ|ゴミ|ひどすぎ|最悪)/i.test(all))add('mid','感情的な表現があります。事実だけを書くと受け取ってもらいやすくなります。');
+ if(/(\d{3}-\d{4}-\d{4}|@[a-z0-9_.-]+\.[a-z]{2,}|パスワード|password)/i.test(all))add('ng','電話番号・メールアドレス・パスワードのような個人情報が含まれています。報告書からは外しましょう。');
+ if(res.filter(x=>x[0]==='ng').length===0)add('ok','必須項目はそろっています。');
+ return {res,steps:steps.map(cleanStep),sev:d.sev||sevAuto,sevAuto:!d.sev,r};
+}
+const SEVEN={'致命的 (Blocker)':'Blocker','重大 (Critical)':'Critical','中 (Major)':'Major','軽微 (Minor)':'Minor','改善提案 (Trivial)':'Trivial'};
+function rateEn(r,raw){if(!r||r.unknown)return raw||'(not given)';if(r.always)return 'Always (every attempt)';if(r.once)return 'Once (1 occurrence)';if(r.pct!==undefined)return r.pct+'%';return r.x+'/'+r.y+' attempts'}
+function report(d,c){
+ const ja=['件名：'+(d.title||'（未記入）'),'重要度：'+c.sev+(c.sevAuto?'（自動推定）':''),'ビルド：'+(d.build||'（未記入）'),'環境：'+(d.env||'（未記入）'),'場所・機能：'+(d.area||'—'),'再現率：'+(d.rate||'（未記入）'),'','■前提条件',d.pre||'なし','','■再現手順'].concat(c.steps.map((s,i)=>(i+1)+'. '+s)).concat(['','■期待結果',d.exp||'（未記入）','','■実際の結果',d.act||'（未記入）','','■添付',d.att||'なし','','■補足',d.memo||'なし']).join('\n');
+ const en=['Title: '+(d.title||'(missing)'),'Severity: '+SEVEN[c.sev]+(c.sevAuto?' (auto-estimated)':''),'Build: '+(d.build||'(missing)'),'Environment: '+(d.env||'(missing)'),'Area: '+(d.area||'-'),'Repro rate: '+rateEn(c.r,d.rate),'','Preconditions:',d.pre||'None','','Steps to reproduce:'].concat(c.steps.map((s,i)=>(i+1)+'. '+s)).concat(['','Expected result:',d.exp||'(missing)','','Actual result:',d.act||'(missing)','','Attachments:',d.att||'None','','Notes:',d.memo||'None','','(Field labels are in English; please translate the Japanese field contents before sending to an English-speaking team.)']).join('\n');
+ const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+ const csv=['Summary,Severity,Build,Environment,Area,Repro rate,Preconditions,Steps,Expected,Actual,Attachments,Notes',[d.title,SEVEN[c.sev],d.build,d.env,d.area,d.rate,d.pre,c.steps.map((s,i)=>(i+1)+'. '+s).join('\n'),d.exp,d.act,d.att,d.memo].map(q).join(',')].join('\r\n');
+ return {ja,en,csv};
+}
+function run(){
+ const d={};F.forEach(k=>d[k]=v(k));
+ const c=check(d);const r=report(d,c);
+ let h='<div class="box"><h2>点検結果</h2><ul>'+c.res.map(([l,t])=>'<li class="'+l+'">'+(l==='ng'?'要修正：':l==='mid'?'確認：':'OK：')+esc(t)+'</li>').join('')+'</ul><p>重要度の目安：<strong>'+esc(c.sev)+'</strong>'+(c.sevAuto?'（文中の言葉から推定）':'（選択した値）')+'</p></div>';
+ h+='<div class="box"><h2>日本語の報告書</h2><button data-c="ja">コピー</button><pre id="o_ja">'+esc(r.ja)+'</pre></div>';
+ h+='<div class="box"><h2>英語の報告書（項目名を英語化）</h2><button data-c="en">コピー</button><pre id="o_en">'+esc(r.en)+'</pre></div>';
+ h+='<div class="box"><h2>CSV（1行・Jira/Redmine/スプレッドシート取り込み用）</h2><button data-c="csv">コピー</button><button id="dl">CSVを保存</button><pre id="o_csv">'+esc(r.csv)+'</pre></div>';
+ $('out').innerHTML=h;
+ $('out').querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(r[b.dataset.c]));
+ $('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+r.csv],{type:'text/csv'}));a.download='bug-report.csv';a.click()};
+ window.__last={c,r};
+}
+$('run').onclick=run;
+$('clear').onclick=()=>{F.forEach(k=>$(k).value='');$('out').innerHTML=''};
+$('sample').onclick=()=>{const s={title:'[セーブ] 雨天時にオートセーブするとセーブデータが消える',build:'0.9.3 (build 1182)',env:'Windows 11 / RTX 3060 / Steam版',area:'2章 農場マップ／オートセーブ',rate:'7/10',sev:'',pre:'新規データで2章まで進めた状態。設定の天候演出はON',steps:'1. 2章の農場マップに入る\n2. 天候が雨になるまで待つ\n3. 家に入ってオートセーブを発生させる\n4. タイトルに戻ってロードする',exp:'直前のオートセーブからロードできる',act:'セーブスロットが「データなし」と表示され、ロードできない',att:'save_lost.mp4, output_log.txt',memo:'晴れの日は10回中0回。天候演出をOFFにすると発生しない'};F.forEach(k=>$(k).value=s[k]);run()};
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 - [Steam カプセル画像・スクリーンショット サイズチェッカー](https://yema7582-code.github.io/koubo-ai-ok/steam-assets.html)
 - [薬機法・広告表現チェッカー](https://yema7582-code.github.io/koubo-ai-ok/yakki-check.html)
 - [ステマ規制 PR表記チェッカー](https://yema7582-code.github.io/koubo-ai-ok/stema-check.html)
+- [ゲーム不具合報告書（バグレポート）チェッカー＆日英整形](https://yema7582-code.github.io/koubo-ai-ok/bug-report.html)
 - [Google口コミ返信 下書きチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kuchikomi-henshin.html)
 - [内容証明 字数・行数チェック＆謄本レイアウト・料金計算](https://yema7582-code.github.io/koubo-ai-ok/naiyo-shomei.html)
 - [翻訳調・AI翻訳っぽさチェッカー](https://yema7582-code.github.io/koubo-ai-ok/honyakucho-check.html): flags translationese patterns in Japanese machine/AI translation output with rewrite suggestions (client-side).
