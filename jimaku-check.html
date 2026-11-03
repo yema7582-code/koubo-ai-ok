@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>字幕ファイル（SRT/VTT）チェッカー｜1秒あたりの文字数・行の長さ・重なりを無料確認</title>
+<meta name="description" content="YouTube・講座動画・配信の字幕ファイル（SRT/WebVTT）を貼るだけで、1秒あたりの文字数（読む速さ）、1行の文字数、行数、表示時間の短すぎ・長すぎ、字幕の重なり、番号やタイムコードの崩れを確認する無料ツール。日本語・英語・中国語の目安に対応し、タイミングの一括ずらしとSRT⇔VTT変換もできます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/jimaku-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:12em;font-size:.95em;box-sizing:border-box;font-family:ui-monospace,monospace}
+input[type=number]{width:6em}select{font-size:1em}
+label{margin-right:14px}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.92em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+.ng{background:#fdecea}.mid{background:#fff8e1}.ok{background:#eef6ee}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 0 0}small{color:#555}
+</style>
+</head>
+<body>
+<h1>字幕ファイル（SRT/VTT）チェッカー</h1>
+<p>YouTube や講座動画の字幕ファイルを貼ると、<b>読む速さ（1秒あたりの文字数）</b>、1行の長さ、行数、表示時間、字幕どうしの重なり、番号やタイムコードの崩れを一覧で確認できます。自動字幕や機械翻訳の字幕を直すときの最終確認にどうぞ。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<p>
+<label>言語の目安 <select id="lang">
+<option value="ja">日本語（1秒4文字・1行16文字・2行まで）</option>
+<option value="en">英語（1秒17文字・1行42文字・2行まで）</option>
+<option value="zh">中国語（1秒9文字・1行16文字・2行まで）</option>
+<option value="custom">自分で決める</option>
+</select></label>
+</p>
+<p>
+<label>1秒あたり最大 <input type="number" id="cps" value="4" step="0.5"> 文字</label>
+<label>1行あたり最大 <input type="number" id="cpl" value="16"> 文字</label>
+<label>最大行数 <input type="number" id="maxl" value="2"></label><br>
+<label>最短表示 <input type="number" id="mind" value="0.83" step="0.01"> 秒</label>
+<label>最長表示 <input type="number" id="maxd" value="7" step="0.5"> 秒</label>
+<label>字幕の間の最小すき間 <input type="number" id="gap" value="0.08" step="0.01"> 秒</label>
+</p>
+<small>目安は配信サービスの字幕ガイドラインでよく使われる値です。納品先の指定があれば、そちらに合わせて書き換えてください。日本語・中国語は全角1文字＝1、半角英数は0.5として数えます。</small>
+<p><textarea id="src" placeholder="1
+00:00:01,000 --> 00:00:03,200
+こんにちは。今日は字幕の作り方を紹介します。
+
+2
+00:00:03,100 --> 00:00:04,000
+よろしくお願いします"></textarea></p>
+<button id="run">チェックする</button>
+<button id="sample">サンプルを入れる</button>
+</div>
+
+<div id="sum"></div>
+<div id="out"></div>
+
+<div class="box">
+<h2>タイミングの一括ずらし・形式変換</h2>
+<p><label>すべてを <input type="number" id="shift" value="0" step="0.1"> 秒ずらす（マイナスで早める）</label>
+<label>出力形式 <select id="fmt"><option value="srt">SRT</option><option value="vtt">WebVTT</option></select></label></p>
+<button id="conv">変換する</button> <button id="dl">ダウンロード</button>
+<p><textarea id="dst" readonly></textarea></p>
+</div>
+
+<div class="note">
+<b>よくある直し方</b><br>
+・読む速さが超えるとき：言い回しを短くする（「〜することができます」→「〜できます」）、または前後の字幕と時間を分け合う。<br>
+・1行が長いとき：意味の切れ目（助詞のあと・読点）で改行する。1行目と2行目の長さを近づけると読みやすくなります。<br>
+・重なっているとき：前の字幕の終わりを、次の字幕の始まりより少し前に。<br>
+・表示が長すぎるとき：話していない間まで出したままになっていないか確認。
+</div>
+
+<p><small>字幕の翻訳（日本語・英語・中国語）や、自動字幕・機械翻訳字幕の手直しのご相談：<a href="mailto:shinji-work@mail.grokbot.com?subject=%E5%AD%97%E5%B9%95%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+const P={ja:[4,16,2],en:[17,42,2],zh:[9,16,2]};
+const $=id=>document.getElementById(id);
+$('lang').onchange=()=>{const p=P[$('lang').value];if(p){$('cps').value=p[0];$('cpl').value=p[1];$('maxl').value=p[2];}};
+function w(s){let n=0;for(const c of s){const k=c.codePointAt(0);n+=(k<0x2E80||(k>=0xFF61&&k<=0xFF9F))?0.5:1;}return n;}
+function wEn(s){return [...s].length;}
+function tc(s){const m=s.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})[,.](\d{1,3})$/);if(!m)return null;return (+(m[1]||0))*3600+(+m[2])*60+(+m[3])+(+m[4].padEnd(3,'0'))/1000;}
+function fmt(t,sep){if(t<0)t=0;const ms=Math.round(t*1000);const h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60,x=ms%1000;const p=(v,n)=>String(v).padStart(n,'0');return p(h,2)+':'+p(m,2)+':'+p(s,2)+sep+p(x,3);}
+function strip(s){return s.replace(/<[^>]+>/g,'').replace(/\{\\[^}]*\}/g,'');}
+function parse(txt){
+  txt=txt.replace(/\r\n?/g,'\n').replace(/^\uFEFF/,'');
+  const issues=[];const cues=[];
+  const isVtt=/^WEBVTT/.test(txt);
+  const blocks=txt.split(/\n\s*\n/);
+  for(const b of blocks){
+    const lines=b.split('\n').filter((l,i,a)=>!(i===a.length-1&&l===''));
+    if(!lines.length||/^WEBVTT/.test(lines[0])||/^(NOTE|STYLE|REGION)\b/.test(lines[0]))continue;
+    let i=0,id=null;
+    if(!lines[0].includes('-->')){id=lines[0].trim();i=1;}
+    const tl=lines[i]||'';
+    const m=tl.match(/^\s*(\S+)\s*-->\s*(\S+)(.*)$/);
+    if(!m){issues.push({n:id||'?',msg:'タイムコードの行が見つかりません：「'+(tl||lines[0]).slice(0,40)+'」',lv:'ng'});continue;}
+    const s=tc(m[1]),e=tc(m[2]);
+    if(s===null||e===null){issues.push({n:id||'?',msg:'タイムコードの形が崩れています：'+tl.trim(),lv:'ng'});continue;}
+    if(!isVtt&&(/\./.test(m[1])||/\./.test(m[2])))issues.push({n:id||'?',msg:'SRTのミリ秒の区切りは「,」です（「.」はVTTの書き方）',lv:'mid'});
+    const text=lines.slice(i+1);
+    cues.push({id,s,e,text,raw:tl});
+  }
+  return {cues,issues,isVtt};
+}
+function check(){
+  const cps=+$('cps').value,cpl=+$('cpl').value,maxl=+$('maxl').value,mind=+$('mind').value,maxd=+$('maxd').value,gap=+$('gap').value;
+  const en=$('lang').value==='en';const W=en?wEn:w;
+  const {cues,issues,isVtt}=parse($('src').value);
+  const rows=[];let bad=0,warn=0;
+  cues.forEach((c,k)=>{
+    const msgs=[];const n=c.id||('#'+(k+1));
+    const d=c.e-c.s;
+    const plain=c.text.map(strip);
+    const chars=plain.reduce((a,l)=>a+W(l.replace(/^\s+|\s+$/g,'')),0);
+    if(!isVtt&&c.id!==null&&String(k+1)!==c.id)msgs.push(['mid','番号が連番になっていません（'+(k+1)+'のはず）']);
+    if(d<=0)msgs.push(['ng','終わりが始まりより前か同じです']);
+    else{
+      if(d<mind)msgs.push(['mid','表示が短すぎます（'+d.toFixed(2)+'秒）']);
+      if(d>maxd)msgs.push(['mid','表示が長すぎます（'+d.toFixed(2)+'秒）']);
+      const r=chars/d;if(r>cps)msgs.push([r>cps*1.25?'ng':'mid','読む速さ '+r.toFixed(1)+'文字/秒（上限'+cps+'）']);
+    }
+    if(!plain.join('').trim())msgs.push(['ng','字幕の文字がありません']);
+    if(plain.length>maxl)msgs.push(['ng',plain.length+'行あります（上限'+maxl+'行）']);
+    plain.forEach((l,j)=>{const x=W(l.trim());if(x>cpl)msgs.push(['mid',(j+1)+'行目が'+x+'文字（上限'+cpl+'）']);
+      if(/^\s|\s$/.test(l)&&l.trim())msgs.push(['mid',(j+1)+'行目の前後に空白があります']);
+      if(!en&&/[｡-ﾟ]/.test(l))msgs.push(['mid','半角カナがあります']);});
+    if(plain.length===2&&!en){const a=W(plain[0].trim()),b=W(plain[1].trim());if(a&&b&&Math.max(a,b)>2.5*Math.min(a,b))msgs.push(['mid','2行の長さの差が大きいです（'+a+'と'+b+'）']);}
+    const nx=cues[k+1];
+    if(nx){if(nx.s<c.e-0.0005)msgs.push(['ng','次の字幕と '+(c.e-nx.s).toFixed(3)+'秒重なっています']);
+      else if(nx.s-c.e<gap&&nx.s-c.e>0.0005)msgs.push(['mid','次の字幕とのすき間が '+(nx.s-c.e).toFixed(3)+'秒（'+gap+'秒未満）']);
+      if(nx.s<c.s)msgs.push(['ng','次の字幕の方が早く始まっています（順番の入れ替わり）']);}
+    if(msgs.length){const lv=msgs.some(m=>m[0]==='ng')?'ng':'mid';lv==='ng'?bad++:warn++;rows.push({n,t:fmt(c.s,',')+' → '+fmt(c.e,','),txt:plain.join(' / '),msgs,lv});}
+  });
+  issues.forEach(x=>{x.lv==='ng'?bad++:warn++;rows.unshift({n:x.n,t:'',txt:'',msgs:[[x.lv,x.msg]],lv:x.lv});});
+  const total=cues.length;const dur=total?cues[total-1].e:0;
+  $('sum').innerHTML='<div class="box '+(bad?'ng':warn?'mid':'ok')+'">字幕 '+total+'件（最後の字幕の終わり '+fmt(dur,',')+'）：要修正 '+bad+'件、注意 '+warn+'件'+(total&&!bad&&!warn?'。問題は見つかりませんでした。':'')+'</div>';
+  const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  $('out').innerHTML=rows.length?'<table><tr><th>番号</th><th>時間</th><th>字幕</th><th>指摘</th></tr>'+rows.map(r=>'<tr class="'+r.lv+'"><td>'+esc(String(r.n))+'</td><td>'+r.t+'</td><td>'+esc(r.txt)+'</td><td>'+r.msgs.map(m=>esc(m[1])).join('<br>')+'</td></tr>').join('')+'</table>':'';
+  return {total,bad,warn,rows};
+}
+function convert(){
+  const {cues}=parse($('src').value);const sh=+$('shift').value||0;const v=$('fmt').value==='vtt';
+  const out=cues.map((c,k)=>(v?'':(k+1)+'\n')+fmt(c.s+sh,v?'.':',')+' --> '+fmt(c.e+sh,v?'.':',')+'\n'+c.text.join('\n')).join('\n\n')+'\n';
+  $('dst').value=(v?'WEBVTT\n\n':'')+out;return $('dst').value;
+}
+$('run').onclick=check;$('conv').onclick=convert;
+$('dl').onclick=()=>{const t=$('dst').value||convert();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='subtitles.'+$('fmt').value;a.click();};
+$('sample').onclick=()=>{$('src').value='1\n00:00:01,000 --> 00:00:03,200\nこんにちは。今日は字幕の作り方を\n紹介します。\n\n2\n00:00:03,100 --> 00:00:03,600\nよろしくお願いします\n\n4\n00:00:04,000 --> 00:00:12,500\nまず最初に、動画編集ソフトを開いてタイムラインを確認することができます。\n\n5\n00:00:13.000 --> 00:00:15,000\nｶﾀｶﾅ も 確認\n';check();};
+</script>
+</body>
+</html>
