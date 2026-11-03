@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>少額減価償却資産 判定ツール（令和8年改正 30万円→40万円の境目・一括償却・300万円枠／個人事業主・無料）</title>
+<meta name="description" content="パソコンや机など、今年買った備品を一括で経費にできるか判定します。10万円未満・一括償却（10万〜20万円）・少額減価償却資産の特例（令和8年3月31日までの取得は30万円未満、4月1日以後は40万円未満）・通常の減価償却（定額法）を自動で振り分け、年300万円枠と家事按分も計算。入力はブラウザ内だけで処理されます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/shoukyaku-hantei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input[type=number]{font-size:1.05em;padding:4px;width:7em}select{font-size:1em;padding:3px}
+textarea{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:.95em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border-bottom:1px solid #eee;padding:5px;text-align:left;vertical-align:top}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.tag{display:inline-block;padding:0 6px;border-radius:4px;font-size:.85em;background:#e3f2fd}
+.tag.t1{background:#e8f5e9}.tag.t2{background:#fff3e0}.tag.t3{background:#f3e5f5}.tag.t4{background:#eceff1}
+button{font-size:1em;padding:6px 14px;margin:4px 4px 4px 0}
+</style>
+</head>
+<body>
+<h1>少額減価償却資産 判定ツール（令和8年 30万円→40万円の境目に対応）</h1>
+<p>令和8年度の税制改正で、青色申告の中小事業者が<strong>令和8年4月1日以後に取得</strong>した資産は、<strong>40万円未満</strong>なら使い始めた年に全額を経費にできるようになりました（3月31日までに取得した分は従来どおり30万円未満）。同じ年の中に二つの基準が混ざるので、今年買った備品をまとめて振り分けます。</p>
+
+<div class="box">
+<strong>1. 前提</strong>
+<label>申告する年分 <select id="year"><option value="2026" selected>令和8年分（2026年）</option><option value="2027">令和9年分（2027年）</option><option value="2028">令和10年分（2028年）</option></select></label>
+<label><input type="checkbox" id="aoiro" checked> 青色申告の承認を受けている（中小事業者・常時使用する従業員400人以下）</label>
+<label>使う業務の所得区分 <select id="shotoku"><option value="jigyo" selected>事業所得・不動産所得</option><option value="zatsu">雑所得（副業の業務など）</option></select></label>
+<label>経理方式 <select id="keiri"><option value="komi" selected>税込経理（免税事業者はこちら）</option><option value="nuki">税抜経理</option></select>　<small>下の金額はこの方式の金額で入力します。</small></label>
+<label>その年の業務期間（開業・廃業の年は月数） <input type="number" id="months" min="1" max="12" value="12"> か月</label>
+</div>
+
+<div class="box">
+<strong>2. 今年取得した資産（1行に1つ）</strong>
+<p style="margin:4px 0"><small>形式：<code>品名, 取得日, 使い始めた日, 取得価額（1台・1組の金額）, 事業で使う割合%, 耐用年数</code>　割合と耐用年数は省略可（100%・4年）。取得価額には送料・設置費など付随費用を含めます。</small></p>
+<textarea id="list" rows="8">ノートパソコン, 2026-03-20, 2026-04-02, 330000, 100, 4
+デスクトップPC, 2026-05-10, 2026-05-10, 385000, 80, 4
+モニター, 2026-06-01, 2026-06-01, 98000, 100, 5
+事務用いす, 2026-07-15, 2026-07-15, 150000, 100, 8
+カメラ, 2026-09-01, 2026-09-03, 420000, 100, 5</textarea>
+<button id="run">判定する</button> <button id="csv">結果をCSVで保存</button>
+<label><input type="checkbox" id="preferIkkatsu"> 10万〜20万円の資産は、特例より一括償却を優先する（償却資産税の対象外にしたい場合）</label>
+</div>
+
+<div id="out"></div>
+
+<div class="note">
+<strong>判定のルール（国税庁タックスアンサー No.2100・No.5408、財務省 令和8年度税制改正の大綱より）</strong>
+<ul>
+<li>金額は経理方式どおり（税込経理なら税込）で、<strong>家事按分の前</strong>の1台・1組・1そろいの金額で判定します。請求書を分けても別の資産にはなりません。</li>
+<li>10万円未満：使い始めた年に全額を経費（青色・白色を問いません）。</li>
+<li>10万円以上20万円未満：一括償却資産として3年間で3分の1ずつ（月数按分なし）、または特例・通常償却。</li>
+<li>少額減価償却資産の特例：青色申告の中小事業者で、事業所得・不動産所得・山林所得の業務に使う資産。取得日が令和8年3月31日までなら10万円以上30万円未満、令和8年4月1日〜令和11年3月31日なら10万円以上40万円未満（40万円ちょうどは対象外）。<strong>基準は取得日で決まり</strong>、使い始めた日ではありません。年合計300万円まで（業務期間が1年未満なら月数で按分）、資産単位で選ぶので枠の一部だけ使うことはできません。青色申告決算書の減価償却費の摘要欄に「措法28の2」と記載します。</li>
+<li>上記に当たらない資産は通常の減価償却（個人の原則である定額法、使い始めた月から12月までの月数で按分、1円未満切り上げで表示）。償却率は平成19年4月以後取得資産の定額法の償却率です。</li>
+<li>主要な業務としてではない貸付けに使う資産は、10万円未満・一括償却・特例のいずれも使えません（このツールは貸付け用を想定していません）。</li>
+<li>特例を使った資産は固定資産税（償却資産税）の申告対象になります。10万円未満・一括償却の資産は対象外です。</li>
+</ul>
+耐用年数の例：パソコン（サーバー用を除く）4年、軽自動車4年、普通自動車（新車）6年、事務机・いす 金属製15年／その他8年。ほかは国税庁「耐用年数表」で確認してください。<br>
+これは計算の目安で、税務上の助言ではありません。最終的な判断は税理士または税務署にご確認ください。
+</div>
+
+<p>帳簿・請求書の確認、日英中の取引書類の翻訳のご相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎 慎二）</p>
+<p><a href="index.html">ほかの無料ツール一覧へ</a> ／ <a href="sanwari-tokurei.html">3割特例・簡易課税の消費税比較</a> ／ <a href="keihi-check.html">経費・請求書CSV チェッカー</a></p>
+
+<script>
+const RATE={2:.5,3:.334,4:.25,5:.2,6:.167,7:.143,8:.125,9:.112,10:.1,11:.091,12:.084,13:.077,14:.072,15:.067,16:.063,17:.059,18:.056,19:.053,20:.05};
+function yen(n){return Math.round(n).toLocaleString('ja-JP')+'円'}
+function parseDate(s){const m=String(s||'').trim().replace(/[\/.]/g,'-').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(!m)return null;return {y:+m[1],m:+m[2],d:+m[3],s:m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0')}}
+function toNum(s){return Number(String(s||'').replace(/[,，円¥\s]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)))}
+function judge(opt,rows){
+  const cap=Math.floor(3000000*opt.months/12);let used=0;const res=[];
+  for(const r of rows){
+    const o={...r,warn:[]};
+    if(!r.acq||!r.use){o.kind='エラー';o.warn.push('日付の形式が読めません（例 2026-04-01）');res.push(o);continue}
+    if(r.use.y!==opt.year){o.warn.push('使い始めた日が申告する年分ではありません。経費にできるのは使い始めた年からです。')}
+    if(r.use.s<r.acq.s)o.warn.push('使い始めた日が取得日より前になっています。');
+    const P=r.price, acqS=r.acq.s;
+    const inPeriod=acqS>='2006-04-01'&&acqS<='2029-03-31';
+    const lim=acqS>='2026-04-01'?400000:300000;
+    const tokureiOK=opt.aoiro&&opt.shotoku==='jigyo'&&inPeriod&&P>=100000&&P<lim;
+    const usedYear=r.use.y===opt.year;
+    const mon=usedYear?(13-r.use.m):0;
+    let kind,full=0,alt='';
+    if(P<100000){kind='10万円未満（全額経費）';full=usedYear?P:0;o.cls='t1'}
+    else if(P<200000&&(opt.preferIkkatsu||!tokureiOK)){kind='一括償却資産（3年で1/3ずつ）';full=usedYear?Math.ceil(P/3):0;o.cls='t2';if(tokureiOK)alt='特例を使えば今年 '+yen(P*r.ratio/100)+'（ただし償却資産税の対象）'}
+    else if(tokureiOK&&used+P<=cap){kind='少額減価償却資産の特例（全額経費・措法28の2）';full=usedYear?P:0;if(usedYear)used+=P;o.cls='t3';o.warn.push('取得日 '+acqS+' のため基準は'+(lim/10000)+'万円未満です。');if(P<200000)alt='一括償却なら今年 '+yen(Math.ceil(P/3)*r.ratio/100)+'（償却資産税の対象外）'}
+    else{
+      const rate=RATE[r.life];if(!rate){o.warn.push('耐用年数は2〜20年で入力してください（それ以外は未対応）。')}
+      kind='通常の減価償却（定額法 '+r.life+'年・償却率'+(rate||'?')+'・'+mon+'か月）';o.cls='t4';
+      full=rate&&usedYear?Math.ceil(P*rate*mon/12):0;
+      if(tokureiOK&&used+P>cap)o.warn.push('特例の要件は満たしますが、年300万円枠（今年の上限 '+yen(cap)+'）を超えるため通常償却にしています。枠は資産単位で使うので一部だけは使えません。');
+      if(!tokureiOK&&P>=100000&&P<400000){
+        if(P>=300000&&acqS<'2026-04-01')o.warn.push('令和8年3月31日までの取得なので基準は30万円未満です。使い始めた日が4月以後でも40万円基準にはなりません。');
+        else if(!opt.aoiro)o.warn.push('白色申告のため特例は使えません。');
+        else if(opt.shotoku!=='jigyo')o.warn.push('雑所得の業務には特例が使えません。');
+      }
+      if(P>=400000&&P<440000&&opt.keiri==='komi')o.warn.push('税込経理のため40万円以上になっています。税抜経理なら税抜金額で判定します（経理方式は事業全体で統一）。');
+    }
+    o.kind=kind;o.year1=full;o.expense=Math.ceil(full*r.ratio/100);o.alt=alt;
+    if(r.ratio<100)o.warn.push('家事按分前の '+yen(P)+' で判定し、経費は事業割合 '+r.ratio+'% 分です。');
+    res.push(o);
+  }
+  return {res,cap,used};
+}
+function readRows(){
+  return document.getElementById('list').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')).map(l=>{
+    const f=l.split(/[,，\t]/).map(s=>s.trim());
+    return {name:f[0]||'',acq:parseDate(f[1]),use:parseDate(f[2]),price:toNum(f[3]),ratio:f[4]?toNum(f[4]):100,life:f[5]?toNum(f[5]):4};
+  });
+}
+function opts(){return {year:+document.getElementById('year').value,aoiro:document.getElementById('aoiro').checked,shotoku:document.getElementById('shotoku').value,keiri:document.getElementById('keiri').value,months:Math.min(12,Math.max(1,+document.getElementById('months').value||12)),preferIkkatsu:document.getElementById('preferIkkatsu').checked}}
+let last=null;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){
+  const o=opts();last=judge(o,readRows());
+  let tot=0,h='<div class="box"><strong>3. 結果（'+o.year+'年分）</strong><table><tr><th>品名</th><th class="n">取得価額</th><th>区分</th><th class="n">今年の償却額</th><th class="n">うち経費</th></tr>';
+  for(const r of last.res){tot+=r.expense||0;h+='<tr><td>'+esc(r.name)+'<br><small>取得 '+(r.acq?r.acq.s:'?')+' ／ 使用開始 '+(r.use?r.use.s:'?')+'</small></td><td class="n">'+yen(r.price||0)+'</td><td><span class="tag '+(r.cls||'')+'">'+esc(r.kind)+'</span>'+(r.alt?'<br><small>'+esc(r.alt)+'</small>':'')+(r.warn.length?'<br><small class="warn">'+r.warn.map(esc).join('<br>')+'</small>':'')+'</td><td class="n">'+yen(r.year1||0)+'</td><td class="n">'+yen(r.expense||0)+'</td></tr>'}
+  h+='<tr><th colspan="4">今年の必要経費の合計（目安）</th><th class="n">'+yen(tot)+'</th></tr></table>';
+  h+='<p><small>少額減価償却資産の特例：今年の使用額 '+yen(last.used)+' ／ 上限 '+yen(last.cap)+'</small></p></div>';
+  document.getElementById('out').innerHTML=h;
+}
+document.getElementById('run').onclick=render;
+document.getElementById('csv').onclick=()=>{if(!last)render();const rows=[['品名','取得日','使用開始日','取得価額','区分','今年の償却額','事業割合%','今年の経費','注意']];for(const r of last.res)rows.push([r.name,r.acq?r.acq.s:'',r.use?r.use.s:'',r.price,r.kind,r.year1||0,r.ratio,r.expense||0,r.warn.join(' / ')]);const csv='\ufeff'+rows.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='shoukyaku-hantei.csv';a.click()};
+render();
+</script>
+</body>
+</html>
