@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI検索の「おすすめ」に出ているか チェックシート作成（ChatGPT・Gemini・Perplexity・AIモード）｜店舗・地域ビジネス向け</title>
+<meta name="description" content="「〇〇駅 おすすめ 歯医者」のようにお客さんがAIに聞きそうな質問を、業種・地域・サービスから日本語・英語・中国語でまとめて作成。ChatGPT・Gemini・Perplexity・GoogleのAIモードで調べた結果（推薦されたか・何番目か・説明は正確か・引用元・代わりに推薦された競合）を記録するCSVを出力し、記入済みCSVを読み込むと推薦率と競合の推薦回数を集計します。無料・登録不要・ブラウザ内だけで処理。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-suisen-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}h2{font-size:1.1em;margin-top:1.6em}label{display:block;margin:8px 0 2px}
+input,select,textarea{font-size:1em;padding:3px;box-sizing:border-box}input[type=text],textarea{width:100%}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.9em}td,th{border-bottom:1px solid #eee;padding:4px 6px;text-align:left;vertical-align:top}td.n{text-align:right}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}.tag{font-size:.8em;background:#eef;padding:1px 6px;border-radius:6px;white-space:nowrap}
+.big{font-size:1.2em}.warn{color:#b00020}.ok{color:#1b5e20}button{font-size:1em;padding:4px 12px;margin:4px 4px 4px 0}
+</style>
+</head>
+<body>
+<h1>AI検索の「おすすめ」に出ているか チェックシート作成</h1>
+<p>お客さんが ChatGPT や Gemini、GoogleのAIモードに「近くでおすすめの〇〇は？」と聞いたとき、自分のお店が名前を挙げてもらえているかを確かめるためのシートを作ります。<strong>AIの答えは聞き方や場所で毎回変わる</strong>ので、1つの質問で一喜一憂せず、意図の違う質問をまとめて同じ条件で定期的に確認するのがコツです。</p>
+
+<div class="box">
+<label>業種（例：歯医者、美容室、ラーメン店、税理士事務所、整体院、ホテル）<input type="text" id="gyoshu" value="歯医者"></label>
+<label>英語・中国語での業種名（任意。空欄なら日本語のまま）<input type="text" id="gyoshuEn" placeholder="dentist / 牙科诊所" value="dentist / 牙科诊所"></label>
+<label>地域（市区町村・駅名・エリアをカンマ区切り。最初のものを主に使います）<input type="text" id="area" value="吉祥寺駅, 武蔵野市"></label>
+<label>店名・事務所名<input type="text" id="name" value="さくら歯科クリニック"></label>
+<label>主なサービス・メニュー（カンマ区切り、3〜6個がおすすめ）<input type="text" id="svc" value="インプラント, 小児歯科, ホワイトニング, 親知らずの抜歯"></label>
+<label>選ばれる理由・お客さんが気にすること（カンマ区切り。例：土日診療、駐車場、英語対応、子連れOK）<input type="text" id="need" value="土日診療, 痛くない治療, 英語対応"></label>
+<label>競合（近くの同業、最大5件、カンマ区切り）<input type="text" id="comp" value="みどり歯科, 吉祥寺デンタルオフィス, 井の頭歯科医院"></label>
+<label>言語 <label style="display:inline"><input type="checkbox" id="lJa" checked> 日本語</label> <label style="display:inline"><input type="checkbox" id="lEn" checked> 英語</label> <label style="display:inline"><input type="checkbox" id="lZh"> 中国語（簡体字）</label></label>
+<label>確認するAI <label style="display:inline"><input type="checkbox" class="eng" value="ChatGPT" checked> ChatGPT</label> <label style="display:inline"><input type="checkbox" class="eng" value="Gemini" checked> Gemini</label> <label style="display:inline"><input type="checkbox" class="eng" value="Perplexity"> Perplexity</label> <label style="display:inline"><input type="checkbox" class="eng" value="GoogleAIモード" checked> GoogleのAIモード／AIによる概要</label></label>
+<button id="gen">質問セットを作る</button>
+</div>
+
+<div id="out"></div>
+
+<h2>記入済みCSVを集計する</h2>
+<div class="box">
+<p>上で出力したCSVに、AIごとの結果（推薦された＝○／×、何番目か、説明は正確か＝○／△／×、引用元URL、代わりに推薦された店）を記入して読み込むと、推薦率をまとめます。</p>
+<input type="file" id="csvIn" accept=".csv,text/csv"> <span>または貼り付け：</span>
+<textarea id="csvText" rows="4" placeholder="CSVの中身を貼り付け"></textarea>
+<button id="agg">集計する</button>
+<div id="aggOut"></div>
+</div>
+
+<div class="note">
+<p><strong>確認するときの注意</strong></p>
+<ul>
+<li>ログアウトした状態（またはシークレットウィンドウ）で、毎回新しい会話で聞くと、過去の会話の影響を減らせます。場所を聞かれたら主な地域を答えてください。</li>
+<li>同じ質問でも答えは揺れます。月1回など間隔を決めて、同じセットで比べてください。1回出なかっただけで「載っていない」とは言えません。</li>
+<li>名前が出なかった質問では、<strong>代わりに推薦された店と、そのとき引用されたサイト</strong>（Googleビジネスプロフィール、口コミサイト、地域のまとめ記事など）を記録すると、どこを整えればよいかが見えてきます。</li>
+<li>AIが書いた自店の説明（営業時間・料金・対応言語など）が間違っていたら、公式サイトとGoogleビジネスプロフィールの情報をそろえるのが先です。店舗情報のゆれは<a href="nap-check.html">NAP表記ゆれチェッカー</a>、構造化データは<a href="tenpo-jsonld.html">店舗情報JSON-LD作成</a>で確認できます。</li>
+<li>llms.txt を置くだけでAIの推薦に出やすくなる、という根拠は今のところ確認されていません。「AIで必ず上位に出せる」とうたう業者にも注意してください。</li>
+</ul>
+<p>入力内容はこのブラウザの中だけで処理し、どこにも送信しません。日英中の質問づくりや月次の確認・レポート作成の代行は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> までご相談ください。</p>
+</div>
+<p><a href="./">← 無料ツール一覧へ</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const split=s=>s.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+function build(){
+  const g=$('gyoshu').value.trim()||'お店';
+  const gx=split($('gyoshuEn').value.replace(/\//g,','));
+  const gEn=gx.find(x=>/^[\x00-\x7F]+$/.test(x))||g, gZh=gx.find(x=>/[\u4e00-\u9fff]/.test(x)&&!/[\u3040-\u30ff]/.test(x))||g;
+  const areas=split($('area').value); const a=areas[0]||'この地域', a2=areas[1]||a;
+  const name=$('name').value.trim(); const svc=split($('svc').value).slice(0,6); const need=split($('need').value).slice(0,6);
+  const comp=split($('comp').value).slice(0,5);
+  const Q=[]; const add=(lang,intent,q)=>{ if(!Q.some(x=>x.q===q)) Q.push({lang,intent,q}); };
+  if($('lJa').checked){
+    add('ja','おすすめ（地域）',`${a}でおすすめの${g}を教えて`);
+    add('ja','おすすめ（地域）',`${a2}の${g}で評判がいいところはどこ？`);
+    add('ja','近く・今すぐ',`${a}の近くで今日行ける${g}はある？`);
+    svc.forEach(s=>add('ja','サービス別',`${a}で${s}が得意な${g}は？`));
+    need.forEach(n=>add('ja','条件・不安',`${a}で${n}の${g}を探しています。どこがいい？`));
+    if(svc[0]) add('ja','料金',`${a}で${svc[0]}の料金の目安と、おすすめの${g}を教えて`);
+    add('ja','選び方',`${g}の選び方のポイントと、${a}で条件に合うところを教えて`);
+    if(comp[0]) add('ja','比較',`${a}の${g}なら${comp[0]}と他にどこがおすすめ？`);
+    if(name){ add('ja','指名（説明の正確さ）',`${a}の「${name}」はどんな${g}？営業時間や特徴を教えて`);
+      if(comp[0]) add('ja','指名比較',`${name}と${comp[0]}、どちらがいい？`); }
+  }
+  if($('lEn').checked){
+    add('en','recommend',`What are the best ${gEn}s near ${a} in Japan?`);
+    add('en','foreign visitor',`I'm a tourist in ${a}. Can you recommend an English-speaking ${gEn} nearby?`);
+    svc.slice(0,2).forEach(s=>add('en','service',`Where can I get ${s} near ${a}? Recommend a good ${gEn}.`));
+    if(name) add('en','brand accuracy',`Tell me about ${name} in ${a}. What are its hours and what is it known for?`);
+  }
+  if($('lZh').checked){
+    add('zh','推荐',`${a}附近有哪些推荐的${gZh}？`);
+    add('zh','外国游客',`我在日本${a}旅游，附近有能用中文或英文沟通的${gZh}吗？`);
+    if(name) add('zh','品牌准确性',`介绍一下${a}的「${name}」，营业时间和特点是什么？`);
+  }
+  return {Q,name,comp};
+}
+let last=null;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function csvCell(s){s=String(s??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+const HEAD=['番号','言語','意図','質問','AI','確認日','推薦された(○/×)','何番目','説明は正確(○/△/×)','引用元URL','代わりに推薦された店','メモ'];
+$('gen').onclick=()=>{
+  const r=build(); const engs=[...document.querySelectorAll('.eng:checked')].map(e=>e.value); last={...r,engs};
+  if(!r.Q.length){$('out').innerHTML='<p class="warn">言語を1つ以上選んでください。</p>';return;}
+  let h=`<h2>質問セット（${r.Q.length}問 × AI ${engs.length}種 ＝ ${r.Q.length*engs.length}回の確認）</h2>`;
+  if(!r.name) h+='<p class="warn">店名が空欄です。指名で聞く質問（説明が正確かの確認）が作れません。</p>';
+  if(r.Q.length*engs.length>60) h+='<p>確認回数が多めです。最初は日本語の「おすすめ」「サービス別」とAI 2種だけでも十分です。</p>';
+  h+='<table><tr><th>#</th><th>意図</th><th>質問</th></tr>'+r.Q.map((x,i)=>`<tr><td>${i+1}</td><td><span class="tag">${x.lang}</span> ${esc(x.intent)}</td><td>${esc(x.q)}</td></tr>`).join('')+'</table>';
+  h+='<button id="dl">記録用CSVをダウンロード</button><button id="cp">質問だけコピー</button>';
+  $('out').innerHTML=h;
+  $('dl').onclick=()=>{
+    const rows=[HEAD]; let n=0; r.Q.forEach((x,i)=>engs.forEach(e=>rows.push([i+1,x.lang,x.intent,x.q,e,'','','','','','',''])));
+    const blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv'});
+    const u=URL.createObjectURL(blob); const l=document.createElement('a'); l.href=u; l.download='ai-suisen-check.csv'; l.click();
+  };
+  $('cp').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(r.Q.map(x=>x.q).join('\n'));
+};
+function parseCSV(t){t=t.replace(/^\ufeff/,'');const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c=='"')q=true; else if(c==','){row.push(f);f='';} else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);rows.push(row);row=[];f='';} else f+=c;}
+  if(f!==''||row.length){row.push(f);rows.push(row);} return rows.filter(r=>r.some(x=>x.trim()!==''));}
+const yes=s=>/^(○|〇|o|y|yes|1|はい|あり)$/i.test(String(s).trim()); const no=s=>/^(×|x|n|no|0|いいえ|なし)$/i.test(String(s).trim());
+function aggregate(text){
+  const rows=parseCSV(text); if(rows.length<2) return '<p class="warn">CSVが読めませんでした。</p>';
+  const H=rows[0].map(x=>x.trim()); const ix=k=>H.findIndex(h=>h.startsWith(k));
+  const iAI=ix('AI'),iR=ix('推薦'),iP=ix('何番目'),iAcc=ix('説明'),iSrc=ix('引用元'),iC=ix('代わり'),iInt=ix('意図'),iQ=ix('質問');
+  if(iAI<0||iR<0) return '<p class="warn">「AI」「推薦された」の列が見つかりません。このページで作ったCSVを使ってください。</p>';
+  const byE={},byI={},comps={},srcs={}; let done=0,hit=0,acc={ok:0,mid:0,ng:0},pos=[],miss=[];
+  rows.slice(1).forEach(r=>{const v=r[iR]||''; if(!yes(v)&&!no(v)) return; done++; const y=yes(v); if(y)hit++;
+    const e=r[iAI]||'?', it=iInt>=0?r[iInt]:'?'; (byE[e]=byE[e]||[0,0]); byE[e][1]++; if(y)byE[e][0]++; (byI[it]=byI[it]||[0,0]); byI[it][1]++; if(y)byI[it][0]++;
+    if(y&&iP>=0&&+r[iP]>0)pos.push(+r[iP]);
+    if(iAcc>=0){const a=(r[iAcc]||'').trim(); if(/○|〇/.test(a))acc.ok++; else if(/△/.test(a))acc.mid++; else if(/×|x/i.test(a))acc.ng++;}
+    if(iC>=0) split(r[iC]||'').forEach(c=>comps[c]=(comps[c]||0)+1);
+    if(iSrc>=0) (r[iSrc]||'').split(/[\s,，、]+/).filter(Boolean).forEach(u=>{let d=u;try{d=new URL(u).hostname.replace(/^www\./,'');}catch(_){} srcs[d]=(srcs[d]||0)+1;});
+    if(!y&&iQ>=0) miss.push(e+'：'+r[iQ]);
+  });
+  if(!done) return '<p class="warn">「推薦された」欄に ○ か × が入った行がありません。</p>';
+  const pct=(a,b)=>b?Math.round(a/b*100)+'%':'-';
+  const tbl=(o,t)=>'<table><tr><th>'+t+'</th><th class="n">推薦</th><th class="n">確認</th><th class="n">推薦率</th></tr>'+Object.entries(o).map(([k,[a,b]])=>`<tr><td>${esc(k)}</td><td class="n">${a}</td><td class="n">${b}</td><td class="n">${pct(a,b)}</td></tr>`).join('')+'</table>';
+  const top=(o,n)=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  let h=`<p class="big">全体の推薦率：<strong>${pct(hit,done)}</strong>（${hit}/${done}回）${pos.length?`／推薦されたときの平均順位 ${(pos.reduce((a,b)=>a+b,0)/pos.length).toFixed(1)}番目`:''}</p>`;
+  h+='<h3>AI別</h3>'+tbl(byE,'AI')+'<h3>質問の意図別</h3>'+tbl(byI,'意図');
+  const accN=acc.ok+acc.mid+acc.ng; if(accN) h+=`<p>自店の説明：正確 ${acc.ok}／一部違う ${acc.mid}／間違い ${acc.ng}${acc.ng+acc.mid?' <span class="warn">→ 間違いの内容（営業時間・料金・住所など）を公式サイトとGoogleビジネスプロフィールで統一してください。</span>':''}</p>`;
+  const tc=top(comps,8); if(tc.length) h+='<h3>代わりに推薦された店（回数）</h3><table>'+tc.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${v}</td></tr>`).join('')+'</table><p>上位の店がどのサイトで紹介されているか（口コミ数・まとめ記事・地域メディア）を見比べると、次に手を入れる場所の候補になります。</p>';
+  const ts=top(srcs,8); if(ts.length) h+='<h3>よく引用されたサイト</h3><table>'+ts.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${v}</td></tr>`).join('')+'</table>';
+  if(miss.length) h+=`<details><summary>推薦されなかった質問（${miss.length}）</summary><ul>`+miss.slice(0,40).map(m=>`<li>${esc(m)}</li>`).join('')+'</ul></details>';
+  return h;
+}
+$('agg').onclick=()=>{const f=$('csvIn').files[0]; if(f){const rd=new FileReader(); rd.onload=()=>{$('aggOut').innerHTML=aggregate(rd.result);}; rd.readAsText(f);} else $('aggOut').innerHTML=aggregate($('csvText').value);};
+</script>
+</body>
+</html>
