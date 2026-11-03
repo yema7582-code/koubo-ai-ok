@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ナンプレ（数独）プリント作成｜答えが1つに決まる問題だけ・4×4/6×6/9×9・答えつき・無料</title>
+<meta name="description" content="ナンプレ（数独）の印刷用プリントを答えつきで作れます。4×4・6×6・9×9、ヒント数でむずかしさを調整。すべての問題は答えがちょうど1つになることをプログラムで確かめてから出します。自習・朝学習・脳トレ用に。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nanpure.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}.ctl label{display:inline-block;margin:4px 14px 4px 0}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.ttl{display:flex;justify-content:space-between;font-size:14px;margin:14px 0 10px;border-bottom:1px solid #999}
+.wrap{display:grid;grid-template-columns:repeat(var(--c),1fr);gap:18px;justify-items:center}
+.pz{text-align:center;font-size:13px}
+table.g{border-collapse:collapse;border:2.5px solid #000;margin:4px auto}
+table.g td{width:var(--s);height:var(--s);border:1px solid #888;text-align:center;font-size:calc(var(--s)*.6);padding:0;font-variant-numeric:tabular-nums}
+table.g td.r{border-right:2.5px solid #000}table.g td.b{border-bottom:2.5px solid #000}
+table.g td.a{color:#c00}.br{break-before:page;page-break-before:always}
+@media print{.noprint{display:none}body{padding:0;max-width:none}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>ナンプレ（数独）プリント作成（答えつき）</h1>
+<p>大きさとむずかしさを選んで「作る」を押すと、問題ページと答えのページができます。A4でそのまま印刷するか、印刷画面でPDFに保存してください。</p>
+<div class="ctl">
+<label>大きさ <select id="sz"><option value="4">4×4（1〜4）</option><option value="6">6×6（1〜6）</option><option value="9" selected>9×9（1〜9）</option></select></label>
+<label>むずかしさ <select id="lv"><option value="0">やさしい（ヒント多め）</option><option value="1" selected>ふつう</option><option value="2">むずかしい（ヒント少なめ）</option></select></label>
+<label>問題数 <input id="n" type="number" value="4" min="1" max="12" style="width:4em"></label>
+<label>問題番号（同じ番号なら同じ問題） <input id="seed" type="number" value="1" style="width:6em"></label>
+<label>見出し <input id="title" type="text" value="ナンプレ" style="width:10em"></label>
+</div>
+<button id="make">作る</button><button id="next">別の問題にする</button><button onclick="window.print()">印刷する</button>
+<p class="note">ルール：たて・よこの各列と、太線で囲んだ各ブロックに、1から最大の数までが1つずつ入ります。ここで作る問題は、すべて「答えがちょうど1つ」であることを全探索で確かめてから表示します（AIで作った問題にありがちな「解けない」「答えが2つある」はありません）。むずかしさはヒントの数の目安です。処理はすべてこのページの中で行い、何も送信しません。</p>
+<p id="msg"></p>
+</div>
+<div id="out"></div>
+<p class="noprint" style="font-size:13px;margin-top:24px">学年別・単元別のプリント一式や、塾・学童向けのオリジナル教材づくりのご相談：shinji-work@mail.grokbot.com ／ <a href="index.html">ほかの無料ツール</a></p>
+<script>
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuf(a,r){for(var i=a.length-1;i>0;i--){var j=Math.floor(r()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function dims(n){return n==4?[2,2]:n==6?[2,3]:[3,3]} // [box rows, box cols]
+function ok(g,n,i,v){var br=dims(n)[0],bc=dims(n)[1],r=Math.floor(i/n),c=i%n;
+ for(var k=0;k<n;k++){if(g[r*n+k]==v||g[k*n+c]==v)return false}
+ var r0=r-r%br,c0=c-c%bc;for(var a=0;a<br;a++)for(var b=0;b<bc;b++)if(g[(r0+a)*n+c0+b]==v)return false;return true}
+function count(g,n,lim){ // number of solutions up to lim, MRV
+ var best=-1,bc=null;for(var i=0;i<n*n;i++)if(!g[i]){var c=[];for(var v=1;v<=n;v++)if(ok(g,n,i,v))c.push(v);if(!c.length)return 0;if(!bc||c.length<bc.length){best=i;bc=c;if(c.length==1)break}}
+ if(best<0)return 1;var t=0;for(var k=0;k<bc.length;k++){g[best]=bc[k];t+=count(g,n,lim-t);if(t>=lim)break}g[best]=0;return t}
+function fill(g,n,r){var i=g.indexOf(0);if(i<0)return true;var vs=shuf(Array.from({length:n},(_,k)=>k+1),r);
+ for(var k=0;k<n;k++)if(ok(g,n,i,vs[k])){g[i]=vs[k];if(fill(g,n,r))return true}g[i]=0;return false}
+function make(n,lv,r){var sol=new Array(n*n).fill(0);fill(sol,n,r);var p=sol.slice();
+ var target={4:[8,6,4],6:[20,16,13],9:[38,30,25]}[n][lv];var idx=shuf(Array.from({length:n*n},(_,k)=>k),r),given=n*n;
+ for(var k=0;k<idx.length&&given>target;k++){var i=idx[k],v=p[i];p[i]=0;if(count(p.slice(),n,2)!=1)p[i]=v;else given--}
+ return {p:p,s:sol,given:given}}
+function grid(n,cells,isAns,puz){var br=dims(n)[0],bc=dims(n)[1],h='<table class="g">';
+ for(var r=0;r<n;r++){h+='<tr>';for(var c=0;c<n;c++){var i=r*n+c,cl=[];if((c+1)%bc==0&&c<n-1)cl.push('r');if((r+1)%br==0&&r<n-1)cl.push('b');
+  var v=cells[i]||'';if(isAns&&!puz[i])cl.push('a');h+='<td class="'+cl.join(' ')+'">'+v+'</td>'}h+='</tr>'}return h+'</table>'}
+function run(){var n=+sz.value,lv=+document.getElementById('lv').value,cnt=Math.max(1,Math.min(12,+document.getElementById('n').value||4)),sd=+seed.value||1,tt=document.getElementById('title').value;
+ var r=rng(sd*1009+n*31+lv*7),list=[];for(var k=0;k<cnt;k++)list.push(make(n,lv,r));
+ for(var k=0;k<list.length;k++){if(count(list[k].p.slice(),n,2)!=1){msg.textContent='検証エラー：問題を作り直してください';return}}
+ var cols=n==9?2:n==6?2:3,s=n==9?(cnt>4?'7.5mm':'9mm'):n==6?'11mm':'13mm';
+ var head='<div class="ttl"><span>'+esc(tt)+'（'+n+'×'+n+'・'+['やさしい','ふつう','むずかしい'][lv]+'）　問題番号 '+sd+'</span><span>なまえ（　　　　　　　　）</span></div>';
+ var q='',a='';list.forEach(function(x,k){q+='<div class="pz">('+(k+1)+') ヒント'+x.given+'個'+grid(n,x.p,false)+'</div>';a+='<div class="pz">('+(k+1)+')'+grid(n,x.s,true,x.p)+'</div>'});
+ out.innerHTML=head+'<div class="wrap" style="--c:'+cols+';--s:'+s+'">'+q+'</div><div class="br"></div><div class="ttl"><span>こたえ　'+esc(tt)+'　問題番号 '+sd+'</span><span>赤字が答え</span></div><div class="wrap" style="--c:'+cols+';--s:'+s+'">'+a+'</div>';
+ msg.textContent=cnt+'問を作りました。すべて答えが1つだけになることを確認済みです。'}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var sz=document.getElementById('sz'),seed=document.getElementById('seed'),out=document.getElementById('out'),msg=document.getElementById('msg');
+document.getElementById('make').onclick=run;document.getElementById('next').onclick=function(){seed.value=(+seed.value||1)+1;run()};
+run();
+</script>
+</body>
+</html>

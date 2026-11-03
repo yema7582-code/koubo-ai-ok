@@ -9,3 +9,4 @@
 - [翻訳調・AI翻訳っぽさチェッカー](https://yema7582-code.github.io/koubo-ai-ok/honyakucho-check.html): flags translationese patterns in Japanese machine/AI translation output with rewrite suggestions (client-side).
 - [やさしい日本語チェッカー](https://yema7582-code.github.io/koubo-ai-ok/yasashii-check.html): 外国人住民向けお知らせのやさしい日本語を点検（一文の長さ、敬語、二重否定、あいまい表現、ふりがなが必要な漢字、曜日なしの日付、元の文との日付・時刻・金額・電話番号の突き合わせ）
 - [入金消込チェッカー](https://yema7582-code.github.io/koubo-ai-ok/nyukin-keshikomi.html): 銀行入金明細CSVと請求一覧を突き合わせ、一致・振込手数料差引・まとめ入金・一部入金・不明入金・未入金を判定（ブラウザ内処理）
+- [ナンプレ（数独）プリント作成](https://yema7582-code.github.io/koubo-ai-ok/nanpure.html): 4×4/6×6/9×9 sudoku worksheets with answer pages; every puzzle is verified to have exactly one solution.
