@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>支払期日60日ルール チェッカー（取適法・フリーランス法）｜締め支払サイト判定・遅延利息14.6%計算</title>
+<meta name="description" content="「月末締め翌々月末払い」は60日を超える？ 取適法（2026年1月施行・旧下請法）とフリーランス法の「受領日から起算して60日以内」に、自社の締め日・支払日のルールが収まるかを納品日ごとに判定。手形払いの禁止、「まで」「以内」表記、みなし支払期日、遅延利息（年14.6%）も計算します。無料・登録不要・入力はブラウザ内だけで処理。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/shiharai-kijitsu.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:780px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input,select{font-size:1em;padding:3px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border-bottom:1px solid #eee;padding:4px 6px;text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.ng td{background:#ffebee}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}
+</style>
+</head>
+<body>
+<h1>支払期日「60日ルール」チェッカー（取適法・フリーランス法）</h1>
+<p>2026年1月1日から下請法は<strong>取適法</strong>（中小受託取引適正化法）になり、<strong>手形払いが禁止</strong>されました。取適法もフリーランス法も、支払期日は<strong>検査をするかどうかに関係なく「給付を受領した日から起算して60日以内」</strong>で、できる限り短く、具体的な日付で決める必要があります。自社の「締め日・支払日」のルールで、いちばん遅くなる納品日でも60日に収まるかをここで確かめられます。</p>
+
+<div class="box">
+<strong>1. 締め・支払のルール</strong>
+<label>締め日 <select id="shime"><option value="31">月末締め</option><option value="25">25日締め</option><option value="20">20日締め</option><option value="15">15日締め</option><option value="10">10日締め</option><option value="0">締めなし（納品ごと）</option></select></label>
+<label>支払日 <select id="tsuki"><option value="1">翌月</option><option value="2">翌々月</option><option value="0">当月</option><option value="3">3か月後</option></select>
+<select id="hi"><option value="31">末日</option><option value="25">25日</option><option value="20">20日</option><option value="15">15日</option><option value="10">10日</option><option value="5">5日</option></select> 払い</label>
+<label>（締めなしの場合）納品日から <input type="number" id="days" value="30" min="0" style="width:5em"> 日後に支払</label>
+<label><input type="checkbox" id="kenshu"> 起算日を「検収完了日」にしている（検収まで <input type="number" id="kdays" value="10" min="0" style="width:4em"> 日）</label>
+<label>支払方法 <select id="hoho"><option value="furikomi">銀行振込（現金）</option><option value="tegata">約束手形</option><option value="densai">電子記録債権（でんさい）</option><option value="ikkatsu">一括決済方式（ファクタリング）</option></select></label>
+<label>確認する月 <input type="month" id="month"></label>
+<label>契約書・発注書の支払条項（任意・表記チェック用）<br><textarea id="joko" rows="3" style="width:100%" placeholder="例：代金は検収完了の翌月末日までに支払う。"></textarea></label>
+</div>
+
+<div class="box" id="out"></div>
+
+<div class="box">
+<strong>2. 遅れた場合の遅延利息（年14.6%）</strong>
+<label>受領日（納品日・役務の提供を受けた日） <input type="date" id="ju"></label>
+<label>実際の支払日 <input type="date" id="pay"></label>
+<label>未払いの金額 <input type="number" id="amt" value="300000" min="0" style="width:10em"> 円</label>
+<div id="out2"></div>
+</div>
+
+<div class="note">
+<p><strong>このツールの前提</strong>（公正取引委員会の取適法リーフレット・フリーランス法特設サイト、取適法第3条をもとにしています）</p>
+<ul>
+<li>「受領日から起算して60日」は受領日を1日目として数えます。60日目は受領日の59日後です。支払期日を決めていない場合は受領日が、60日を超えて決めた場合は60日目が支払期日とみなされます。</li>
+<li>毎月の締め日で支払う場合は、運用上「60日」を「2か月」と読み替えます（月末締め翌月末払いはOK、月末締め翌々月払いは60日超）。</li>
+<li>検収完了日を起算日にする運用は認められません。起算日は受領日です。</li>
+<li>取適法では手形払いが禁止され、電子記録債権・一括決済方式も支払期日までに満額の現金を得にくいものは使えません。</li>
+<li>「〇日まで」「〇日以内」という書き方は、具体的な支払期日を決めたことになりません（フリーランス法特設サイトの違反例）。</li>
+<li>金融機関の休業日で順延する場合、順延後も60日以内なら、事前に書面等で合意していれば問題になりません。60日を超える順延は2日以内で、事前の合意がある場合に限られます。</li>
+<li>遅延利息は、60日を経過した日から実際に支払う日までの日数に、年14.6%を日割りで掛けて計算しています（1円未満切り捨て）。</li>
+<li>取適法の対象かどうか（資本金・従業員数の基準、取引の類型）はこのツールでは判定しません。法律相談ではありません。迷ったら公正取引委員会の窓口か専門家に確認してください。</li>
+</ul>
+</div>
+<p>発注書・契約書の点検、日英中の取引書類の翻訳のご相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎 慎二）</p>
+<p><a href="index.html">ほかの無料ツール</a> ／ <a href="freelance-terms-check.html">フリーランス新法 取引条件チェックリスト</a> ／ <a href="keiyaku-check.html">業務委託契約書 確認ポイント抽出</a> ／ <a href="naiyo-shomei.html">内容証明 字数チェック</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const D=(y,m,d)=>new Date(Date.UTC(y,m,d));
+const add=(dt,n)=>new Date(dt.getTime()+n*864e5);
+const last=(y,m)=>new Date(Date.UTC(y,m+1,0)).getUTCDate();
+const fmt=dt=>dt.getUTCFullYear()+'/'+(dt.getUTCMonth()+1)+'/'+dt.getUTCDate()+'('+'日月火水木金土'[dt.getUTCDay()]+')';
+const diff=(a,b)=>Math.round((b-a)/864e5);
+function payDate(ju,s,t,h,days){
+  if(s===0) return add(ju,days);
+  let y=ju.getUTCFullYear(),m=ju.getUTCMonth(),d=ju.getUTCDate();
+  const sd=Math.min(s,last(y,m));
+  if(d>sd){m++;} // 次の締めに回る
+  const pm=m+t, py=y+Math.floor(pm/12), pmm=((pm%12)+12)%12;
+  return D(py,pmm,Math.min(h,last(py,pmm)));
+}
+function calc(){
+  const s=+$('shime').value,t=+$('tsuki').value,h=+$('hi').value,days=+$('days').value||0;
+  const ken=$('kenshu').checked,kd=+$('kdays').value||0,hoho=$('hoho').value;
+  let mon=false;const [yy,mm]=($('month').value||'2026-11').split('-').map(Number);
+  let rows='',worst=null,ng=0;
+  for(let d=1;d<=last(yy,mm-1);d++){
+    const ju=D(yy,mm-1,d), base=ken?add(ju,kd):ju, p=payDate(base,s,t,h,days);
+    const nth=diff(ju,p)+1, l60=add(ju,59), l2m=(()=>{let y=ju.getUTCFullYear(),m=ju.getUTCMonth()+2;const yy2=y+Math.floor(m/12),m2=m%12;return add(D(yy2,m2,Math.min(ju.getUTCDate(),last(yy2,m2))),-1)})(), lim=(s!==0&&l2m>l60)?l2m:l60, bad=p>lim;
+    if(bad)ng++; if(!worst||nth>worst.nth)worst={ju,p,nth,lim};
+    if(s!==0&&lim>l60&&p>l60)mon=true;rows+=`<tr${bad?' class="ng"':''}><td>${fmt(ju)}</td><td>${fmt(p)}</td><td class="n">${nth}日目</td><td>${fmt(lim)}</td><td>${bad?'<span class="warn">60日超</span>':'<span class="ok">OK</span>'}</td></tr>`;
+  }
+  let msg=[];
+  if(ng) msg.push(`<p class="warn"><strong>このルールでは、${ng}日分の納品日で支払が60日を超えます。</strong>いちばん遅いのは ${fmt(worst.ju)} 納品で、支払は ${fmt(worst.p)}（受領日から${worst.nth}日目）、期限は ${fmt(worst.lim)} です。</p>`);
+  else msg.push(`<p class="ok"><strong>どの納品日でも支払期限内に収まります。</strong>いちばん遅いのは ${fmt(worst.ju)} 納品の ${fmt(worst.p)}（${worst.nth}日目）です。支払日が休業日にあたる場合の順延ルールも確認してください。</p>`);
+  if(mon) msg.push('<p>月単位の締め（例：月末締め翌月末払い）は、公正取引委員会の運用で「60日」を「2か月」として扱うため、31日の月をまたいで61日目になっても違反になりません。表の期限はその扱いで出しています。</p>');
+  if(ken) msg.push('<p class="warn">起算日を検収完了日にしています。取適法・フリーランス法では起算日は受領日なので、上の表は受領日から数え直しています。条項の「検収完了後」を「受領後」に直す必要があります。</p>');
+  if(hoho==='tegata') msg.push('<p class="warn">約束手形での支払は、2026年1月1日以降の取適法対象の発注では禁止です（経過措置はありません）。振込など、支払期日までに満額を現金で受け取れる方法に切り替えてください。手形をやめる代わりに割引料を差し引くと「減額」になります。</p>');
+  if(hoho==='densai'||hoho==='ikkatsu') msg.push('<p class="warn">電子記録債権・一括決済方式は、支払期日までに手数料なしで満額の現金を得られない仕組みなら使えません。使う場合は、発注書（4条明示）に金融機関名や満期日などの事項も書く必要があります。</p>');
+  const j=$('joko').value;
+  if(j){
+    const f=[];
+    if(/まで|以内|迄/.test(j)) f.push('「まで」「以内」と書かれています。具体的な支払日（例：毎月末日締め、翌月末日支払）として決めたことにならないおそれがあります。');
+    if(/検収|検査完了|検品/.test(j)) f.push('検収・検査の完了を起算点にしているように読めます。起算点は受領日です。');
+    if(/手形/.test(j)) f.push('手形払いの記載があります。');
+    if(/請求書.*(受領|到着|届)/.test(j)) f.push('請求書の受領を条件にしているように読めます。請求書が届かなくても、決めた支払期日までに支払う必要があります。');
+    if(/割引|手数料.*(差し引|控除|負担)|振込手数料/.test(j)) f.push('割引料や手数料の差し引きが書かれています。受託側の負担にする合意がない差し引きは「減額」になるおそれがあります。');
+    if(/下請法|親事業者|下請事業者/.test(j)) f.push('旧下請法の用語が残っています（取適法では「委託事業者」「中小受託事業者」）。');
+    msg.push(f.length?'<p><strong>条項の表記チェック</strong></p><ul class="warn">'+f.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'<p class="ok">条項の表記で目立つ問題は見つかりませんでした。</p>');
+  }
+  $('out').innerHTML=msg.join('')+`<details><summary>納品日ごとの支払日一覧（${yy}年${mm}月）</summary><table><tr><th>受領日</th><th>支払日</th><th>受領日から</th><th>期限</th><th>判定</th></tr>${rows}</table></details>`;
+  calc2();
+}
+function calc2(){
+  const a=$('ju').value,b=$('pay').value,amt=+$('amt').value||0;
+  if(!a||!b){$('out2').innerHTML='<p>受領日と実際の支払日を入れると計算します。</p>';return;}
+  const ju=new Date(a+'T00:00:00Z'),p=new Date(b+'T00:00:00Z'),start=add(ju,60);
+  const n=diff(start,p)+1;
+  if(n<=0){$('out2').innerHTML=`<p class="ok">受領日から${diff(ju,p)+1}日目の支払で、60日以内です（期限 ${fmt(add(ju,59))}）。遅延利息はかかりません。ただし、契約で決めた支払期日より遅れていれば、それ自体が支払遅延です。</p>`;return;}
+  const r=Math.floor(amt*0.146*n/365);
+  $('out2').innerHTML=`<p class="warn">60日目（${fmt(add(ju,59))}）を${n}日過ぎています。遅延利息の目安は <strong>${r.toLocaleString()}円</strong>（${amt.toLocaleString()}円 × 14.6% × ${n}日 ÷ 365）です。</p><p>この計算は、受領日から60日を経過した日（${fmt(start)}）から支払日までを数えています。契約で決めた支払期日がもっと早い場合も、取適法の遅延利息は60日経過日から数えます。</p>`;
+}
+const now=new Date();$('month').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+document.querySelectorAll('input,select,textarea').forEach(e=>e.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>

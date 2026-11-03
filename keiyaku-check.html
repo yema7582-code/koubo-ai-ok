@@ -78,5 +78,6 @@ $('dl').onclick=()=>{const q=s=>'"'+String(s).replace(/<[^>]+>/g,'').replace(/"/
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='keiyaku-check.csv';a.click()};
 $('cp').onclick=()=>{const qs=[...new Set(RES.filter(r=>r.lv!=='ok'&&r.q).map(r=>r.head+'：'+r.q))];const t='契約書について、署名の前にいくつか確認させてください。\n\n'+qs.map((x,i)=>(i+1)+'. '+x).join('\n')+'\n\nお手数ですが、ご回答または修正案をいただけますと助かります。';navigator.clipboard.writeText(t).then(()=>alert('コピーしました'),()=>prompt('コピーしてください',t))};
 </script>
+<p><a href="shiharai-kijitsu.html">支払期日60日ルール チェッカー（取適法・フリーランス法）</a></p>
 </body>
 </html>
