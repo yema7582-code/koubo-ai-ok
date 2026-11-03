@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ペアワイズ（オールペア）テストケース作成ツール｜ゲーム・アプリの組み合わせテスト｜無料</title>
+<meta name="description" content="OS・端末・言語・入力方法・画質設定などの組み合わせテストを、すべての2因子の組み合わせを網羅する最小限のテストケース（ペアワイズ法／オールペア法）にまとめる無料ツール。禁止組み合わせの指定、網羅率の確認、CSV保存（Excel・スプレッドシート・Jira取り込み用）に対応。ブラウザ内で動作し、入力内容は送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/pairwise.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+label{display:block;margin-top:8px;font-weight:600}
+textarea{width:100%;min-height:130px;font-size:1em;font-family:ui-monospace,Menlo,Consolas,monospace;box-sizing:border-box}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+button{font-size:.95em;padding:4px 12px;margin:4px 4px 0 0}
+table{border-collapse:collapse;font-size:.9em;margin-top:6px}td,th{border:1px solid #bbb;padding:3px 7px;text-align:left}th{background:#f0f0f0}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>ペアワイズ（オールペア）テストケース作成ツール</h1>
+<p>ゲームやアプリの動作確認で「OS × 端末 × 言語 × 入力方法 × 画質」のような組み合わせを全部試すと、件数がすぐ数百件になります。不具合の多くは<strong>2つの条件の組み合わせ</strong>で起きるため、どの2条件の組み合わせも最低1回は出てくるように選べば、件数を大きく減らせます（ペアワイズ法、オールペア法）。このツールはその最小に近いテストケース表を作ります。処理はすべてブラウザ内で行い、入力内容はどこにも送信しません。</p>
+
+<div class="box">
+<label for="params">因子と水準（1行に1因子。「因子名: 値, 値, 値」）</label>
+<textarea id="params" placeholder="OS: Windows 11, macOS, iOS, Android
+言語: 日本語, 英語, 簡体字中国語
+入力: キーボード＋マウス, ゲームパッド, タッチ
+画質: 低, 中, 高"></textarea>
+<label for="cons">禁止する組み合わせ（任意。1行に1つ。「因子=値, 因子=値」）</label>
+<textarea id="cons" style="min-height:70px" placeholder="OS=iOS, 入力=キーボード＋マウス
+OS=Windows 11, 入力=タッチ"></textarea>
+<label><input type="checkbox" id="en"> 列見出しを英語にする（Test ID / Result / Notes）</label>
+<button id="run">テストケースを作る</button><button id="sample">例を入れる</button><button id="clear">消去</button>
+</div>
+<div id="out"></div>
+
+<h2>使い方のコツ</h2>
+<ul>
+<li>因子は「テスト結果を変えそうなもの」だけに絞ります。値が多い因子は、同じ挙動になるもの（例：Android 13 と 14）をまとめると件数が減ります。</li>
+<li>物理的にありえない組み合わせ（iOS でキーボード＋マウスなど）は「禁止する組み合わせ」に入れてください。その2条件が同じ行に入らなくなり、網羅の対象からも外れます。</li>
+<li>ペアワイズは3条件以上が重なって初めて起きる不具合までは保証しません。課金・セーブ・起動など重要な機能は、別に重点テストを足してください。</li>
+<li>CSV は Excel やスプレッドシートでそのまま開けるよう BOM 付きの UTF-8 で保存します。「結果」「備考」列にテスト結果を記入して使えます。</li>
+</ul>
+<p class="note">このツールは貪欲法（未網羅のペアを最も多く含む行を順に選ぶ方法）で表を作ります。数学的な最小件数とは限りませんが、全組み合わせに比べて大きく減ります。同じ入力なら毎回同じ表になります。</p>
+<p style="font-size:.9em">ゲームのテストプレイ・不具合報告書の作成、日本語・英語・中国語の翻訳チェックのご相談：shinji-work@mail.grokbot.com</p>
+<p style="font-size:.9em"><a href="index.html">ほかの無料ツール一覧</a> ／ <a href="bug-report.html">ゲーム不具合報告書チェッカー</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function parseParams(t){
+ const out=[],err=[];
+ t.split(/\r?\n/).forEach((line,i)=>{
+  line=line.trim();if(!line||line.startsWith('#'))return;
+  const m=line.match(/^([^:：]+)[:：](.*)$/);
+  if(!m){err.push((i+1)+'行目：「因子名: 値, 値」の形になっていません');return}
+  const name=m[1].trim();
+  const vals=[...new Set(m[2].split(/[,、，]/).map(s=>s.trim()).filter(Boolean))];
+  if(!vals.length){err.push((i+1)+'行目：値がありません');return}
+  if(out.some(p=>p.name===name)){err.push('因子名「'+name+'」が重複しています');return}
+  out.push({name,vals});
+ });
+ return {ps:out,err};
+}
+function parseCons(t,ps){
+ const out=[],err=[];
+ t.split(/\r?\n/).forEach((line,i)=>{
+  line=line.trim();if(!line||line.startsWith('#'))return;
+  const parts=line.split(/[,、，]/).map(s=>s.trim()).filter(Boolean);
+  const terms=[];
+  for(const p of parts){
+   const m=p.match(/^(.+?)[=＝](.+)$/);
+   if(!m){err.push('禁止 '+(i+1)+'行目：「因子=値」の形になっていません');return}
+   const pi=ps.findIndex(x=>x.name===m[1].trim());
+   if(pi<0){err.push('禁止 '+(i+1)+'行目：因子「'+m[1].trim()+'」がありません');return}
+   const vi=ps[pi].vals.indexOf(m[2].trim());
+   if(vi<0){err.push('禁止 '+(i+1)+'行目：「'+ps[pi].name+'」に値「'+m[2].trim()+'」がありません');return}
+   terms.push([pi,vi]);
+  }
+  if(terms.length<2){err.push('禁止 '+(i+1)+'行目：2つ以上の条件を書いてください');return}
+  out.push(terms);
+ });
+ return {cs:out,err};
+}
+function violates(row,cs){ // row: array, -1 = unset
+ return cs.some(c=>c.every(([p,v])=>row[p]===v));
+}
+function generate(ps,cs){
+ const n=ps.length,key=(a,x,b,y)=>a+':'+x+'|'+b+':'+y;
+ const need=new Set();let excluded=0;
+ for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)for(let x=0;x<ps[a].vals.length;x++)for(let y=0;y<ps[b].vals.length;y++){
+  const r=Array(n).fill(-1);r[a]=x;r[b]=y;
+  if(violates(r,cs))excluded++;else need.add(key(a,x,b,y));
+ }
+ const total=need.size,rows=[];let seed=12345;
+ const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+ const gain=r=>{let g=0;for(let a=0;a<n;a++)if(r[a]>=0)for(let b=a+1;b<n;b++)if(r[b]>=0&&need.has(key(a,r[a],b,r[b])))g++;return g};
+ let guard=0;
+ while(need.size&&guard++<5000){
+  let best=null,bg=-1;
+  const list=[...need];
+  for(let t=0;t<Math.min(80,list.length);t++){
+   const [s1,s2]=list[Math.floor(rnd()*list.length)].split('|');
+   const [a,x]=s1.split(':').map(Number),[b,y]=s2.split(':').map(Number);
+   const r=Array(n).fill(-1);r[a]=x;r[b]=y;
+   const order=[...Array(n).keys()].filter(i=>i!==a&&i!==b).sort(()=>rnd()-.5);
+   let ok=true;
+   for(const p of order){
+    let bv=-1,bs=-1;
+    for(let v=0;v<ps[p].vals.length;v++){r[p]=v;if(violates(r,cs))continue;const s=gain(r)+rnd()*0.01;if(s>bs){bs=s;bv=v}}
+    if(bv<0){ok=false;break}r[p]=bv;
+   }
+   if(!ok)continue;
+   const g=gain(r);if(g>bg){bg=g;best=r.slice()}
+  }
+  if(!best||bg<=0)break;
+  for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)need.delete(key(a,best[a],b,best[b]));
+  rows.push(best);
+ }
+ return {rows,total,left:need.size,leftList:[...need].map(k=>k.split('|').map(t=>{const [a,x]=t.split(':').map(Number);return ps[a].name+'='+ps[a].vals[x]}).join(' × ')),excluded,full:ps.reduce((m,p)=>m*p.vals.length,1)};
+}
+function run(){
+ const P=parseParams($('params').value);
+ const C=P.err.length?{cs:[],err:[]}:parseCons($('cons').value,P.ps);
+ const errs=P.err.concat(C.err);
+ if(!errs.length&&P.ps.length<2)errs.push('因子を2つ以上入れてください');
+ if(errs.length){$('out').innerHTML='<div class="box"><ul>'+errs.map(e=>'<li class="ng">'+esc(e)+'</li>').join('')+'</ul></div>';window.__last={errs};return}
+ const ps=P.ps,g=generate(ps,C.cs),en=$('en').checked;
+ const head=[en?'Test ID':'No.'].concat(ps.map(p=>p.name),[en?'Result':'結果',en?'Notes':'備考']);
+ const body=g.rows.map((r,i)=>['TC-'+String(i+1).padStart(3,'0')].concat(r.map((v,j)=>ps[j].vals[v]),['','']));
+ const q=s=>/[",\n]/.test(s)?'"'+String(s).replace(/"/g,'""')+'"':s;
+ const csv=[head].concat(body).map(r=>r.map(q).join(',')).join('\r\n');
+ const cov=g.total?((g.total-g.left)/g.total*100).toFixed(1):'100.0';
+ let h='<div class="box"><h2>結果</h2><ul>';
+ h+='<li>全組み合わせ：<strong>'+g.full.toLocaleString()+'</strong> 件 → ペアワイズ：<strong>'+g.rows.length+'</strong> 件（'+(g.full?Math.round((1-g.rows.length/g.full)*100):0)+'% 削減）</li>';
+ h+='<li class="'+(g.left?'mid':'ok')+'">2因子の組み合わせ網羅率：'+cov+'%（'+(g.total-g.left)+' / '+g.total+' ペア）</li>';
+ if(g.excluded)h+='<li class="mid">禁止指定により網羅対象から外したペア：'+g.excluded+'</li>';
+ if(g.left)h+='<li class="mid">禁止の指定の組み合わせにより、どの行にも入れられないペアが '+g.left+' 件あります（例：'+esc(g.leftList.slice(0,5).join('、'))+'）。本当にありえない組み合わせなら問題ありません。ありうる場合は禁止行を見直してください。</li>';
+ h+='</ul><button id="dl">CSVを保存</button><button id="cp">CSVをコピー</button><div class="scroll"><table><tr>'+head.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr>'+body.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</table></div></div>';
+ $('out').innerHTML=h;
+ $('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download='pairwise-testcases.csv';a.click()};
+ $('cp').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(csv);
+ window.__last={g,csv,ps};
+}
+$('run').onclick=run;
+$('clear').onclick=()=>{$('params').value='';$('cons').value='';$('out').innerHTML=''};
+$('sample').onclick=()=>{$('params').value='OS: Windows 11, macOS, iOS, Android\n言語: 日本語, 英語, 簡体字中国語\n入力: キーボード＋マウス, ゲームパッド, タッチ\n画質: 低, 中, 高\n回線: Wi-Fi, モバイル回線, オフライン\nセーブ: 新規データ, 引き継ぎデータ';$('cons').value='OS=iOS, 入力=キーボード＋マウス\nOS=Android, 入力=キーボード＋マウス\nOS=Windows 11, 入力=タッチ\nOS=macOS, 入力=タッチ\nOS=Windows 11, 回線=モバイル回線\nOS=macOS, 回線=モバイル回線';run()};
+</script>
+</body>
+</html>
