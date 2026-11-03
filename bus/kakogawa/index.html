@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>おおきな字のバス時刻表 かこがわ（かこバス・かこバスミニ 次のバス）</title>
+<meta name="description" content="加古川市のコミュニティバス「かこバス」「かこバスミニ」の次に来るバスを、大きな文字と読み上げで表示します。バス停を一度選んでブックマークすれば、次からは開くだけ。加古川市のオープンデータ（GTFS-JP）を使っています。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/bus/kakogawa/">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--fs:1;--bg:#fff;--fg:#111;--sub:#555;--card:#f4f4f4;--line:#ccc;--acc:#0050b3}
+body.dark{--bg:#000;--fg:#fff;--sub:#ddd;--card:#1b1b1b;--line:#555;--acc:#ffd600}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;margin:0 auto;max-width:720px;padding:14px;line-height:1.5;background:var(--bg);color:var(--fg);font-size:calc(18px*var(--fs))}
+h1{font-size:1.15em;margin:.2em 0 .4em}
+.stop{font-size:2.1em;font-weight:800;line-height:1.2;margin:.2em 0}
+.kana{color:var(--sub);font-size:.95em}
+.now{color:var(--sub);margin:.3em 0 .8em;font-size:1.05em}
+.bus{background:var(--card);border-radius:14px;padding:14px 16px;margin:12px 0;border:2px solid var(--line)}
+.bus.first{border-width:4px;border-color:var(--acc)}
+.t{font-size:3em;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+.left{font-size:1.5em;font-weight:700}
+.dest{font-size:1.45em;font-weight:700;margin-top:.15em}
+.route{display:inline-block;padding:2px 10px;border-radius:8px;font-size:.95em;margin-top:6px;font-weight:700}
+button,.btn{font-size:1em;padding:12px 16px;margin:6px 6px 0 0;border-radius:12px;border:2px solid var(--fg);background:var(--bg);color:var(--fg);cursor:pointer;min-height:52px}
+button.main{background:var(--acc);color:#fff;border-color:var(--acc)}
+body.dark button.main{color:#000}
+input{font-size:1.1em;padding:12px;width:100%;border-radius:12px;border:2px solid var(--fg);background:var(--bg);color:var(--fg)}
+ul.list{list-style:none;padding:0;margin:8px 0}
+ul.list li button{width:100%;text-align:left;margin:4px 0}
+.small{font-size:.8em;color:var(--sub)}
+.none{font-size:1.4em;font-weight:700;padding:16px 0}
+.bar{display:flex;flex-wrap:wrap;gap:0}
+.hide{display:none}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<h1>おおきな字のバス時刻表 かこがわ</h1>
+
+<section id="view" class="hide" aria-live="polite">
+  <div class="stop" id="stopName"></div>
+  <div class="kana" id="stopKana"></div>
+  <div class="now" id="now"></div>
+  <div id="buses"></div>
+  <div class="bar">
+    <button class="main" id="speak">🔊 よみあげる</button>
+    <button id="change">バス停をかえる</button>
+  </div>
+  <p class="small" id="bm">このページをブックマーク（お気に入り）やホーム画面に追加すると、次からはこのバス停がすぐ出ます。</p>
+</section>
+
+<section id="pick">
+  <p>バス停の名前を入れてください。ひらがなでも探せます。</p>
+  <input id="q" type="search" placeholder="例：かこがわえき、市民病院" autocomplete="off" aria-label="バス停の名前">
+  <div class="bar"><button id="near">📍 近くのバス停をさがす</button></div>
+  <ul class="list" id="results"></ul>
+</section>
+
+<div class="bar" style="margin-top:14px">
+  <button id="bigger">文字を大きく</button><button id="smaller">文字を小さく</button><button id="dark">白黒反転</button>
+</div>
+
+<p class="small" id="info"></p>
+<p class="small">時刻はダイヤ（時刻表）どおりの予定です。道路の混みぐあいで遅れることがあります。運休・ダイヤ改正の情報は<a id="cityLink" href="https://www.city.kakogawa.lg.jp/" rel="noopener">加古川市のページ</a>で確かめてください。<br>
+データ：加古川市「かこバス/かこバスミニ」GTFS-JP（<a href="https://creativecommons.org/licenses/by/2.1/jp/" rel="noopener">CC BY 2.1 JP</a>、<a href="https://gtfs-data.jp/" rel="noopener">GTFSデータリポジトリ</a>経由）を加工して作成。加古川市の公式サービスではありません。位置情報やバス停の選択はこの端末の中だけで使い、送信しません。<br>
+<a href="../../">ほかの無料ツール</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+let D=null, cur=null, timer=null;
+const pad=n=>String(n).padStart(2,'0');
+function jstNow(){const d=new Date(Date.now()+9*3600e3);return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),wd:(d.getUTCDay()+6)%7,min:d.getUTCHours()*60+d.getUTCMinutes(),h:d.getUTCHours(),mi:d.getUTCMinutes(),wdj:'日月火水木金土'[d.getUTCDay()]};}
+function ymd(t){return ''+t.y+pad(t.m)+pad(t.d);}
+function shift(t,days){const d=new Date(Date.UTC(t.y,t.m-1,t.d+days));return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),wd:(d.getUTCDay()+6)%7};}
+function active(t){const k=ymd(t),s=new Set();
+  D.svc.forEach(id=>{const c=D.cal[id];if(c&&c.d[t.wd]&&k>=c.s&&k<=c.e)s.add(id);});
+  const e=D.ex[k]||{};for(const id in e){if(e[id]==1)s.add(id);else s.delete(id);}return s;}
+function upcoming(gi,n){const t=jstNow(),out=[],list=D.dep[gi]||[];
+  for(let day=0;day<3&&out.length<n;day++){const dt=day?shift(t,day):t,act=active(dt);
+    for(const [m,r,h,s] of list){if(!act.has(D.svc[s]))continue;const abs=m+day*1440;
+      if(abs<t.min)continue;out.push({abs,m,r,h,day});if(out.length>=n)break;}}
+  return {t,out};}
+function fmt(m){m%=1440;return Math.floor(m/60)+':'+pad(m%60);}
+function hhmmJa(m){m%=1440;const h=Math.floor(m/60),mi=m%60;return (h<12?'午前':'午後')+((h%12)||(h==12?12:0))+'時'+(mi?mi+'分':'');}
+function leftJa(d){return d<=0?'まもなく':d<60?'あと '+d+' 分':'あと '+Math.floor(d/60)+' 時間 '+(d%60)+' 分';}
+function render(){if(cur==null)return;const s=D.stops[cur],{t,out}=upcoming(cur,3);
+  $('stopName').textContent=s.n;$('stopKana').textContent=s.k?s.k+'（'+s.e+'）':'';
+  $('now').textContent='いま '+t.h+':'+pad(t.mi)+'（'+t.m+'月'+t.d+'日 '+t.wdj+'曜日）';
+  const box=$('buses');box.innerHTML='';
+  if(!out.length){box.innerHTML='<div class="none">きょうと あした、このバス停から出るバスはありません。</div>';return;}
+  out.forEach((b,i)=>{const r=D.routes[b.r],el=document.createElement('div');el.className='bus'+(i?'':' first');
+    const daylab=b.day==1?'あした ':b.day==2?'あさって ':'';
+    el.innerHTML='<div class="t">'+daylab+fmt(b.m)+'</div><div class="left">'+leftJa(b.abs-t.min)+'</div><div class="dest">'+esc(D.heads[b.h])+' ゆき</div><span class="route" style="background:#'+r.c+';color:#'+r.t+'">'+esc(r.n)+'</span>';
+    box.appendChild(el);});}
+function destJa(h){const n=D.heads[h];return n===D.stops[cur].n?'ひとまわりして '+n+' にもどる':n+' ゆき';}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function speak(){if(!('speechSynthesis' in window)){alert('この端末は読み上げに対応していません');return;}
+  const s=D.stops[cur],{t,out}=upcoming(cur,2);let txt=(s.k||s.n)+'。';
+  if(!out.length)txt+='きょうは、もうバスはありません。';
+  out.forEach((b,i)=>{const r=D.routes[b.r];txt+=(i?'その次は、':'次のバスは、')+(b.day==1?'あしたの':'')+hhmmJa(b.m)+'、'+destJa(b.h)+'、'+r.n.replace('・','、')+'です。'+(b.day?'':leftJa(b.abs-t.min).replace('あと','あと')+'です。');});
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='ja-JP';u.rate=.85;speechSynthesis.speak(u);}
+function show(gi,push){cur=gi;$('pick').classList.add('hide');$('view').classList.remove('hide');
+  if(push!==false)history.replaceState(null,'','?stop='+encodeURIComponent(D.stops[gi].n));
+  document.title=D.stops[gi].n+' 次のバス｜おおきな字のバス時刻表 かこがわ';
+  try{localStorage.setItem('kakobus_stop',D.stops[gi].n)}catch(e){}
+  render();clearInterval(timer);timer=setInterval(render,20000);}
+function list(items){const ul=$('results');ul.innerHTML='';items.slice(0,12).forEach(([gi,extra])=>{const s=D.stops[gi],li=document.createElement('li'),b=document.createElement('button');
+  b.textContent=s.n+(s.k?'（'+s.k+'）':'')+(extra||'');b.onclick=()=>show(gi);li.appendChild(b);ul.appendChild(li);});
+  if(!items.length)ul.innerHTML='<li>見つかりませんでした。別の言い方で探してください。</li>';}
+const kata2hira=s=>s.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+const norm=s=>kata2hira(String(s).normalize('NFKC').toLowerCase()).replace(/[\s・（）()]/g,'');
+function search(){const q=norm($('q').value);if(!q){$('results').innerHTML='';return;}
+  list(D.stops.map((s,i)=>[i,s]).filter(([i,s])=>norm(s.n).includes(q)||norm(s.k).includes(q)||norm(s.e).includes(q)).map(([i])=>[i]));}
+function near(){if(!navigator.geolocation){alert('位置情報が使えません');return;}
+  $('results').innerHTML='<li>さがしています…</li>';
+  navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude;
+    const d=D.stops.map((s,i)=>{const dy=(s.la-la)*111000,dx=(s.lo-lo)*91000;return [i,Math.hypot(dx,dy)];}).sort((a,b)=>a[1]-b[1]).slice(0,6);
+    list(d.map(([i,m])=>[i,' ・約'+(m<1000?Math.round(m/10)*10+'m':(m/1000).toFixed(1)+'km')]));},
+    ()=>{$('results').innerHTML='<li>位置情報を使えませんでした。名前で探してください。</li>';},{enableHighAccuracy:true,timeout:10000});}
+function setFs(v){v=Math.min(1.8,Math.max(.8,v));document.documentElement.style.setProperty('--fs',v);try{localStorage.setItem('kakobus_fs',v)}catch(e){}}
+let fs=1;
+fetch('data.json').then(r=>r.json()).then(d=>{D=d;
+  $('info').textContent='データの版：'+d.version+'（有効期間 '+d.start.slice(0,4)+'/'+d.start.slice(4,6)+'/'+d.start.slice(6)+'〜'+d.end.slice(0,4)+'/'+d.end.slice(4,6)+'/'+d.end.slice(6)+'）。問い合わせ：'+d.agency+' '+d.phone;
+  if(d.url)$('cityLink').href=d.url;
+  const want=new URLSearchParams(location.search).get('stop')||(()=>{try{return localStorage.getItem('kakobus_stop')}catch(e){return null}})();
+  const gi=want?D.stops.findIndex(s=>s.n===want):-1;if(gi>=0)show(gi,false);});
+$('q').addEventListener('input',search);$('near').onclick=near;$('speak').onclick=speak;
+$('change').onclick=()=>{$('view').classList.add('hide');$('pick').classList.remove('hide');$('q').focus();clearInterval(timer);};
+try{fs=parseFloat(localStorage.getItem('kakobus_fs'))||1;if(localStorage.getItem('kakobus_dark')==='1')document.body.classList.add('dark');}catch(e){}
+setFs(fs);$('bigger').onclick=()=>setFs(fs=+(fs+.15).toFixed(2));$('smaller').onclick=()=>setFs(fs=+(fs-.15).toFixed(2));
+$('dark').onclick=()=>{document.body.classList.toggle('dark');try{localStorage.setItem('kakobus_dark',document.body.classList.contains('dark')?'1':'0')}catch(e){}};
+</script>
+</body>
+</html>
