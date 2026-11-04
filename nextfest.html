@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Next Fest 2027年2月 締切カレンダー（日本時間）＆体験版フィードバックフォーム設問メーカー｜無料</title>
+<meta name="description" content="Steam Next Fest 2027年2月版の登録締切・体験版提出・プレスプレビュー・開催期間を日本時間に換算してカウントダウン表示。体験版のフィードバックフォーム設問（日本語・英語・中国語）、ビルド番号を自動で入れるGoogleフォーム事前入力URL、ゲーム内バグ報告テンプレートも作れます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nextfest.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:28px;border-bottom:1px solid #ddd}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:14px;vertical-align:top}
+.past{color:#999}.soon{background:#fff3e0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{width:100%;height:240px;font-family:inherit;font-size:13px}input[type=text]{width:26em}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:4px 14px 4px 0}.err{color:#b00}
+</style>
+</head>
+<body>
+<h1>Steam Next Fest 2027年2月 締切カレンダー（日本時間）＆体験版フィードバックフォーム設問メーカー</h1>
+<p>Steam Next Fest（2027年2月版）の締切を日本時間に直して、今日から何日あるかを表示します。あわせて、体験版をプレイした人に聞くフィードバックフォームの設問（日本語・英語・中国語）、ビルド番号を自動で入れるGoogleフォームの事前入力URL、ゲーム内に置くバグ報告テンプレートを作れます。入力した内容はどこにも送信されません。</p>
+<p class="note">日程は第三者のまとめ記事（<a href="https://www.steampageanalyzer.com/blog/steam-next-fest-february-2027" rel="nofollow">steampageanalyzer.com</a>、2026年11月確認）にもとづく太平洋標準時（PST）の日付を日本時間（+17時間）に換算したものです。必ず<a href="https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest" rel="nofollow">Steamworks公式のNext Festページ</a>で確認してください。時刻の書かれていない締切は「その日のうちに（太平洋時間）」なので、日本時間では翌日の夕方まで余裕がありますが、前日中の提出をおすすめします。</p>
+
+<h2>1. 締切カレンダー（日本時間）</h2>
+<p>基準日：<input type="date" id="today"> <button id="recalc">再計算</button></p>
+<table id="cal"><thead><tr><th>日本時間</th><th>内容</th><th>あと</th></tr></thead><tbody></tbody></table>
+<p>参加条件（まとめ記事より）：ストアページが公開済み（「近日登場」の審査中ではない）、体験版が開催開始までに公開されている、発売が2027年3月1日より後、過去のNext Festに参加していないこと（1作品1回まで）。</p>
+
+<h2>2. 体験版フィードバックフォームの設問</h2>
+<p>ゲーム名：<input type="text" id="game" value="（ゲーム名）"><br>
+言語：<label><input type="checkbox" class="lang" value="ja" checked>日本語</label><label><input type="checkbox" class="lang" value="en" checked>English</label><label><input type="checkbox" class="lang" value="zh">简体中文</label><br>
+<label><input type="checkbox" id="contact">連絡先を聞く設問を入れる</label>
+<button id="mkq">設問を作る</button> <button id="copyq">コピー</button></p>
+<textarea id="qout" readonly></textarea>
+<p>コツ：必須は少なく（3問程度）。「バグがあった？」で「はい」の人だけバグ報告の欄へ分岐させると、感想とバグが混ざりません。スクリーンショットはファイル添付ではなくリンクで聞くと、Googleアカウントへのログインが不要で回答率が落ちにくくなります。</p>
+
+<h2>3. ビルド番号を自動で入れるGoogleフォームURL</h2>
+<p>Googleフォームの「事前入力したURLを取得」で作ったURLを貼り、ビルド番号を入れてください。<code>entry.数字=</code> の部分を探して、その値をビルド番号に置き換えます。</p>
+<p>事前入力URL：<input type="text" id="purl" placeholder="https://docs.google.com/forms/d/e/.../viewform?usp=pp_url&amp;entry.123456=x"><br>
+ビルド番号の欄（entry番号、空なら最初の欄）：<input type="text" id="entry" style="width:10em" placeholder="entry.123456"><br>
+ビルド番号：<input type="text" id="build" style="width:10em" value="0.9.0-nextfest"> <button id="mku">URLを作る</button></p>
+<p id="uout"></p>
+
+<h2>4. ゲーム内・itch.io・Discordに置くバグ報告テンプレート</h2>
+<p><label><input type="radio" name="bl" value="ja" checked>日本語</label><label><input type="radio" name="bl" value="en">English</label><label><input type="radio" name="bl" value="zh">简体中文</label><button id="mkb">作る</button></p>
+<textarea id="bout" readonly style="height:200px"></textarea>
+<p>報告の重要度の決め方や日英の整形は<a href="bug-report.html">ゲーム不具合報告書チェッカー</a>、テスト環境の組み合わせは<a href="pairwise.html">ペアワイズテストケース作成</a>、ストアページの翻訳は<a href="steam-check.html">Steamストアページ翻訳チェッカー</a>、画像サイズは<a href="steam-assets.html">Steamカプセル画像チェッカー</a>で確認できます。</p>
+<p class="note">体験版の日本語化・ストアページの日本語/中国語チェック・Next Fest期間中のバグ報告の仕分け（日英中）をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）</p>
+<p><a href="./">← 無料ツール一覧</a></p>
+<script>
+const EV=[
+ ["2026-12-08T10:00","Valve とのオンラインQ&A（Zoom、PST 10〜11時）",1],
+ ["2027-01-10T23:59","登録締切",1],
+ ["2027-01-18","公式イベントトレーラー用の予告編をSteamが取得",0],
+ ["2027-01-18","プレスプレビュー候補にするなら体験版ビルドとストアページを提出",0],
+ ["2027-02-01","必要なものをすべて審査に提出",0],
+ ["2027-02-11T10:00","トレーラー使用許可のオプトアウト締切・プレスプレビュー開始",1],
+ ["2027-02-22T10:00","Next Fest 開始",1],
+ ["2027-03-01T10:00","Next Fest 終了・まとめページ公開",1]];
+function jst(s,timed){ // PST(UTC-8) -> JST(UTC+9)
+ const [d,t]=s.split("T");const [y,m,dd]=d.split("-").map(Number);
+ let hh=0,mi=0;if(t){[hh,mi]=t.split(":").map(Number)}else{hh=23;mi=59}
+ const u=Date.UTC(y,m-1,dd,hh+8,mi);return new Date(u+9*3600e3);}
+const WD="日月火水木金土";
+function fmt(dt,timed){const s=`${dt.getUTCFullYear()}年${dt.getUTCMonth()+1}月${dt.getUTCDate()}日（${WD[dt.getUTCDay()]}）`;
+ return timed?s+` ${String(dt.getUTCHours()).padStart(2,"0")}:${String(dt.getUTCMinutes()).padStart(2,"0")}`:s+"（太平洋時間のこの日中・時刻の記載なし。日本時間では翌日16:59まで）";}
+function cal(){const tv=document.getElementById("today").value;const base=new Date(tv+"T00:00:00+09:00").getTime();
+ const tb=document.querySelector("#cal tbody");tb.innerHTML="";
+ EV.forEach(([s,l,timed])=>{const dt=jst(s,timed);const dShow=timed?dt:jst(s.split("T")[0]+"T00:00",1);
+  const days=Math.ceil((dt.getTime()-9*3600e3-base)/864e5);
+  const tr=document.createElement("tr");if(days<0)tr.className="past";else if(days<=14)tr.className="soon";
+  tr.innerHTML=`<td>${fmt(timed?dt:dShow,timed)}</td><td>${l}</td><td>${days<0?"終了":days+"日"}</td>`;tb.appendChild(tr);});}
+const Q={
+ja:["このビルドのバージョン（自動入力）","遊んだ環境（Windows／Steam Deck／Mac／その他）","遊んだ時間（10分未満／10〜30分／30〜60分／1時間以上）","体験版の最後まで遊びましたか？（はい／いいえ／わからない）【必須】","やめた場所と理由（「いいえ」の人のみ）","迷ったり、つまったりした場面はありましたか？何をしようとしていましたか？","いちばん印象に残った場面は？","バグはありましたか？（はい→バグ報告へ／いいえ→最後の質問へ）【必須】","【バグ】何が起きましたか？【必須】","【バグ】直前に何をしていましたか？","【バグ】どのくらい困りましたか？（見た目だけ／気になるが続けられた／やり直した／落ちた・データが消えた）","【バグ】スクリーンショットや動画のリンク","次のビルドも遊びたいですか？（1〜5）","ふだん遊ぶジャンル（複数選択）","ひとつだけ変えるなら？"],
+en:["Build version (pre-filled)","Where did you play? (Windows / Steam Deck / Mac / Other)","How long did you play? (<10 min / 10–30 / 30–60 / 1h+)","Did you reach the end of the demo? (Yes / No / Not sure) [required]","Where did you stop, and why? (only if No)","Was there a moment you felt confused or stuck? What were you trying to do?","What was the most memorable moment?","Did you run into any bugs? (Yes → bug section / No → final section) [required]","[Bug] What happened? [required]","[Bug] What were you doing just before?","[Bug] How bad was it? (Cosmetic / Annoying but kept playing / Had to restart / Crash or lost progress)","[Bug] Link to a screenshot or clip","How likely are you to play the next build? (1–5)","What genres do you usually play? (multiple)","One thing you would change?"],
+zh:["版本号（自动填写）","游玩平台（Windows／Steam Deck／Mac／其他）","游玩时长（少于10分钟／10–30分钟／30–60分钟／1小时以上）","是否玩到了试玩版结尾？（是／否／不确定）【必填】","在哪里停下的？为什么？（仅回答“否”的玩家）","有没有感到困惑或卡住的地方？当时想做什么？","印象最深的场景是？","遇到 bug 了吗？（是→填写 bug 报告／否→跳到最后）【必填】","【Bug】发生了什么？【必填】","【Bug】发生前你在做什么？","【Bug】影响程度（仅外观／有点烦但能继续／需要重来／崩溃或丢失进度）","【Bug】截图或视频链接","你有多大可能玩下一个版本？（1–5）","平时玩哪些类型？（可多选）","如果只能改一处，你会改什么？"]};
+const CT={ja:"答えについて連絡してもよいですか？（任意：連絡先）",en:"Can we contact you about your answers? (optional contact)",zh:"可以就你的回答联系你吗？（选填：联系方式）"};
+const HD={ja:"体験版フィードバック",en:"Demo feedback",zh:"试玩版反馈"};
+function mkq(){const g=document.getElementById("game").value.trim();const langs=[...document.querySelectorAll(".lang:checked")].map(x=>x.value);
+ const c=document.getElementById("contact").checked;let out=[];
+ langs.forEach(l=>{const qs=Q[l].slice();if(c)qs.push(CT[l]);out.push(`■ ${g} ${HD[l]}`);qs.forEach((q,i)=>out.push(`${i+1}. ${q}`));out.push("");});
+ document.getElementById("qout").value=out.join("\n").trim();return out;}
+function mku(){const u=document.getElementById("purl").value.trim(),e=document.getElementById("entry").value.trim(),b=document.getElementById("build").value.trim();const o=document.getElementById("uout");
+ let url;try{url=new URL(u)}catch(_){o.innerHTML='<span class="err">URLを読み取れません。Googleフォームの「事前入力したURLを取得」でできたURLを貼ってください。</span>';return null}
+ const keys=[...url.searchParams.keys()].filter(k=>/^entry\.\d+$/.test(k));
+ const key=e? (e.startsWith("entry.")?e:"entry."+e) : keys[0];
+ if(!key){o.innerHTML='<span class="err">entry.数字 の欄が見つかりません。事前入力でビルド番号の欄に何か入れてからURLを取得してください。</span>';return null}
+ url.searchParams.set(key,b);if(!url.searchParams.has("usp"))url.searchParams.set("usp","pp_url");
+ const r=url.toString();o.textContent="";const a=document.createElement("a");a.href=r;a.textContent=r;a.target="_blank";o.append("できたURL：",a,"　ゲームのタイトル画面やクリア画面の「感想を送る」ボタンにこのURLを設定し、ビルドごとに番号を変えてください。");return r;}
+const BT={
+ja:"【バグ報告】\nタイトル：（短く一言で）\nビルド番号：（タイトル画面の右下に表示）\n環境：（Windows 11／Steam Deck など）\nPCの性能：（CPU・GPU・メモリ。重い・表示がおかしい時だけ）\n起きたこと：\n本来どうなるはずか：\n再現手順：\n1.\n2.\n3.\nどのくらい起きるか：（毎回／ときどき／1回だけ）\nスクリーンショット・動画：（リンク可）\nセーブデータ・ログ：（あれば）",
+en:"[Bug report]\nTitle: (short summary)\nBuild version: (bottom right of the title screen)\nPlatform: (Windows 11 / Steam Deck / ...)\nHardware: (CPU, GPU, RAM; only for performance or graphics issues)\nWhat happened:\nWhat you expected:\nSteps to reproduce:\n1.\n2.\n3.\nHow often: (Every time / Sometimes / Once)\nScreenshot or video: (link is fine)\nSave file / log: (if any)",
+zh:"【Bug 报告】\n标题：（一句话概括）\n版本号：（标题画面右下角）\n平台：（Windows 11／Steam Deck 等）\n硬件：（CPU、GPU、内存；仅性能或画面问题时填写）\n发生了什么：\n应该是什么样：\n复现步骤：\n1.\n2.\n3.\n出现频率：（每次／有时／仅一次）\n截图或视频：（可填链接）\n存档／日志：（如有）"};
+function mkb(){const l=document.querySelector("input[name=bl]:checked").value;document.getElementById("bout").value=BT[l];return BT[l];}
+const t=new Date(Date.now()+9*3600e3);document.getElementById("today").value=t.toISOString().slice(0,10);
+document.getElementById("recalc").onclick=cal;document.getElementById("mkq").onclick=mkq;document.getElementById("mku").onclick=mku;document.getElementById("mkb").onclick=mkb;
+document.getElementById("copyq").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(document.getElementById("qout").value)};
+cal();mkq();mkb();
+</script>
+</body>
+</html>
