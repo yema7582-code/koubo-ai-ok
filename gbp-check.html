@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Googleビジネスプロフィール 店名・説明文 ポリシーチェッカー（2026年10月の「宣伝と勧誘」対応）＋Yahoo!プレイス終了の準備｜無料</title>
+<meta name="description" content="Googleビジネスプロフィールのビジネス名と説明文を貼るだけで、ガイドライン違反になりやすい表現（キャッチコピー・営業時間・駅前などの場所・電話番号やURL・®・記号・二言語表記、説明文の割引・価格・期間限定・今すぐお電話を・リンク・750文字超）を確認。AI（マップに相談）が答えに使う駐車場・予約・支払い・子ども連れ・バリアフリーの書き漏れもチェック。Yahoo!プレイス終了（新規申込2026年11月30日まで）の準備リスト付き。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/gbp-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.12em;border-left:5px solid #2a7;padding-left:8px;margin-top:28px}
+textarea{width:100%;height:170px;font-family:inherit;font-size:14px}input[type=text]{width:100%;box-sizing:border-box;padding:4px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.ng{color:#b00}.ok{color:#075}.mid{color:#a60}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+label{display:block;margin-top:6px}li{margin:2px 0}
+</style>
+</head>
+<body>
+<h1>Googleビジネスプロフィール 店名・説明文 ポリシーチェッカー</h1>
+<p>Googleマップに出る<strong>ビジネス名</strong>と<strong>ビジネスの説明</strong>を貼り付けてください。Googleのガイドラインで認められていない書き方を探し、AIの「マップに相談」やクチコミ要約が答えに使う情報の書き漏れも確認します。入力した内容は送信されず、このページの中だけで処理します。</p>
+<p class="note">2026年10月上旬、Googleのヘルプ「禁止および制限されているコンテンツ」の「宣伝と勧誘」に、店名や説明文など常に表示される部分へ<strong>期間限定のプロモーション・価格・直接的な行動を促すフレーズ</strong>を入れないことが明記されたと報じられています。キャンペーンは「投稿」で告知するのが安全です。判定は文字のパターンによる目安で、最終的な判断はGoogleの審査によります。</p>
+
+<h2>1. 入力</h2>
+<label>ビジネス名<input type="text" id="name" placeholder="例）グーグル コーヒー"></label>
+<label>ビジネスの説明（750文字まで）<textarea id="desc" placeholder="提供している商品・サービス、こだわり、沿革など"></textarea></label>
+<button id="run">チェックする</button><button id="sample">よくない例を入れる</button><button id="sample2">よい例を入れる</button>
+<div id="res"></div>
+
+<h2>2. 修正の提案は「通知から4日以内」</h2>
+<p>Googleのヘルプでは、ユーザーからの編集の提案について通知が届いたら<strong>4日以内に承認または拒否</strong>するよう案内しています。対応しないと、店のウェブサイトなど公開情報で裏付けられる内容は自動で公開されることがあります。</p>
+<label>通知が届いた日<input type="text" id="sug" placeholder="2026-11-05"></label>
+<button id="sugrun">期限を計算</button> <span id="sugout"></span>
+
+<h2>3. Yahoo!プレイス終了までにやること</h2>
+<table><tr><th>日付</th><th>できごと（LINEヤフーの告知による）</th><th>やること</th></tr>
+<tr><td>2026年11月30日（月）正午ごろ</td><td>Yahoo!プレイス・リザベーションマネージャーの新規申込（子施設の追加を含む）受付終了</td><td>開店予定の店舗を追加するならそれまでに</td></tr>
+<tr><td>2026年中</td><td>—</td><td>店名・住所・電話・営業時間をGoogleビジネスプロフィールと同じにそろえ、期限のある情報（年末年始・キャンペーン）を消す</td></tr>
+<tr><td>2027年1月まで</td><td>—</td><td>分析データとクチコミを保存（終了後は管理画面に入れない）</td></tr>
+<tr><td>2027年2月28日（日）</td><td>リザベーションマネージャーの新規予約受付・来店の最終日</td><td>予約導線をほかのサービスや自社サイトへ</td></tr>
+<tr><td>2027年3月31日（水）</td><td>サービス終了</td><td>解約手続きは不要（自動で終了）</td></tr></table>
+<p id="yahoo"></p>
+
+<p style="margin-top:28px;font-size:13px">参考：Google ビジネス プロフィール ヘルプ「Google に掲載するビジネス情報のガイドライン」「ビジネス プロフィールに対する Google による変更を管理する」、同「禁止および制限されているコンテンツ」（2026年10月の追記の報道）、LINEヤフー「Yahoo!プレイスサービス終了のお知らせ」（2026年9月28日）。店舗情報の整備・説明文の書き直しの相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ。<a href="nap-check.html">店名・住所・電話の表記ゆれチェッカー</a> ／ <a href="tenpo-jsonld.html">店舗の構造化データ作成</a> ／ <a href="kuchikomi-henshin.html">口コミ返信チェッカー</a> ／ <a href="./">ほかの無料ツール</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NAME_RULES=[
+ ['ng','キャッチコピー・宣伝文句',/(日本一|地域一番|No\.?\s?1|ナンバーワン|人気|話題|激安|格安|最安|安い|おすすめ|オススメ|口コミ|評判|満足度|高品質|専門店No|ランキング|気合|大好評|公式)/i],
+ ['ng','営業時間の情報',/(24時間|２４時間|年中無休|深夜営業|朝\d|営業中|営業時間|定休|無休)/],
+ ['ng','電話番号・URL',/(\d{2,4}[-‐ー−]\d{2,4}[-‐ー−]\d{3,4}|0120|https?:|www\.|\.(com|jp|net)\b)/i],
+ ['ng','所在地の説明（駅前・徒歩・すぐ・館内）',/(駅前|駅すぐ|駅近|徒歩\s*\d|徒歩|すぐ|近く|横|隣|館内|店内|内\)|内）|インター)/],
+ ['ng','出店先・カッコ書き',/[（(【［\[].+[）)】］\]]/],
+ ['ng','店舗コード',/[-‐ー−#＃]\s*\d{2,}$|No\.\s*\d+$/i],
+ ['ng','商標記号',/[®™©]/],
+ ['mid','特殊文字・記号（看板等で証明できる場合のみ可）',/[%$@\/"!！★☆♪◆■●◎♡❤|｜＠＄％]/],
+ ['mid','法人の種類の表記（社名の一部として使っている場合のみ）',/\b(LLC|LTD|INC|Co\.,?\s?Ltd)\b|株式会社|有限会社|合同会社|（株）|\(株\)|㈱|㈲/i],
+ ['mid','サービス・商品の説明（店名に業種や商品を足していないか）',/(専門|対応|エキスパート|スペシャリスト|出張|即日|当日|ランチ|テイクアウト|宅配|予約制|のお店|なら)/],
+];
+function nameCheck(n){
+ const out=[];if(!n.trim())return out;
+ for(const [lv,label,re] of NAME_RULES){const m=n.match(re);if(m)out.push([lv,label,m[0]]);}
+ const caps=n.match(/\b[A-Z]{4,}\b/g);if(caps)out.push(['mid','すべて大文字の単語（看板どおりでも Subway のような表記が基本）',caps.join(' ')]);
+ if(/[A-Za-z]{3,}/.test(n)&&/[ァ-ヶぁ-ん一-龠]{2,}/.test(n)&&/[\/／]/.test(n))out.push(['mid','2言語表記・読みの繰り返し（看板にあっても不可）','英字とカナ/漢字の併記']);
+ if(n.length>40)out.push(['mid','長すぎる店名（キーワードの詰め込みに見えやすい）',n.length+'文字']);
+ return out;
+}
+const DESC_RULES=[
+ ['ng','リンク（どのような種類も不可）',/(https?:\/\/|www\.|[a-z0-9-]+\.(com|jp|net|org|co\.jp|shop|me|link|ly)\b|@[A-Za-z0-9_]{3,})/gi],
+ ['ng','割引・特典の強調',/(\d+\s*[%％]\s*(OFF|オフ|引|割引)?|\d+\s*割引|[半]額|割引|値引|OFF|オフ|無料体験|初回(限定|無料|特典|半額)|特典|クーポン|プレゼント|ポイント\s*\d+倍)/gi],
+ ['ng','価格の表示',/(\d[\d,，]*\s*円|¥\s*\d|￥\s*\d|\d[\d,]*\s*yen)/gi],
+ ['ng','期間限定・キャンペーン',/(期間限定|今だけ|今月(末)?まで|月末まで|\d+月\d+日まで|キャンペーン|セール|先着|限定\d+|残りわずか)/g],
+ ['ng','行動を促すフレーズ',/(今すぐ|お気軽にお電話|お電話ください|お問い合わせください|ご予約はこちら|こちらから|クリック|タップ|LINE登録|友だち追加|フォローして|DMください|お急ぎください)/g],
+ ['mid','電話番号・メール（説明文より連絡先欄へ）',/(\d{2,4}[-‐ー−]\d{2,4}[-‐ー−]\d{3,4}|0120|[\w.+-]+@[\w-]+\.[\w.]+)/g],
+ ['mid','「No.1」「日本一」など根拠の要る表現',/(No\.?\s?1|ナンバーワン|日本一|地域一番|業界初|最高|絶対|必ず|100\s*[%％]|満足度\s*\d)/gi],
+ ['mid','目立たせる記号・絵文字',/([★☆♪◆■●◎♡❤!！]{2,}|[\u{1F300}-\u{1FAFF}\u2600-\u27BF])/gu],
+];
+const FACTS=[
+ ['駐車場',/(駐車|パーキング|P\d|駐輪)/],['予約の要否',/(予約)/],['支払い方法',/(現金|カード|クレジット|PayPay|電子マネー|QR|キャッシュレス|交通系|支払)/i],
+ ['子ども連れ',/(子ども|子供|お子様|キッズ|ベビー|赤ちゃん|ファミリー)/],['バリアフリー',/(バリアフリー|車いす|車椅子|段差|スロープ|エレベーター)/],
+ ['席数・個室・人数',/(席|個室|団体|名様|人数|貸切)/],['提供している商品・サービス',/(提供|メニュー|商品|サービス|施術|診療|取り扱|販売|修理|料理)/],['外国語対応',/(英語|中国語|韓国語|外国語|English|多言語)/i],
+];
+function descCheck(d){
+ const out=[];const len=[...d].length;
+ if(len>750)out.push(['ng','750文字を超えています',len+'文字（Googleの入力上限は750文字）']);
+ else if(d.trim()&&len<120)out.push(['mid','短すぎます（AIが答えに使える事実が少ない）',len+'文字']);
+ for(const [lv,label,re] of DESC_RULES){const m=d.match(re);if(m)out.push([lv,label,[...new Set(m)].slice(0,6).join('、')]);}
+ const w={};(d.match(/[ァ-ヶー]{3,}|[一-龠]{2,}/g)||[]).forEach(x=>w[x]=(w[x]||0)+1);
+ const rep=Object.entries(w).filter(([k,v])=>v>=5).map(([k,v])=>k+'×'+v);
+ if(rep.length)out.push(['mid','同じ語の繰り返し（キーワードの詰め込み）',rep.join('、')]);
+ return out;
+}
+function factCheck(d){return FACTS.map(([k,re])=>[k,re.test(d)]);}
+function table(rows){if(!rows.length)return '<p class="ok">問題になりやすい表現は見つかりませんでした。</p>';
+ return '<table><tr><th>判定</th><th>内容</th><th>見つかった語</th></tr>'+rows.map(([lv,l,m])=>`<tr><td class="${lv}">${lv==='ng'?'不可':'要確認'}</td><td>${esc(l)}</td><td>${esc(String(m))}</td></tr>`).join('')+'</table>';}
+function run(){
+ const n=$('name').value,d=$('desc').value;const nr=nameCheck(n),dr=descCheck(d),fc=factCheck(d);
+ const ngc=nr.concat(dr).filter(r=>r[0]==='ng').length;
+ let h=`<p><strong>${ngc?'<span class="ng">不可の可能性 '+ngc+'件</span>':'<span class="ok">不可にあたる表現は見つかりませんでした</span>'}</strong>（説明文 ${[...d].length}/750文字）</p>`;
+ h+='<h3>ビジネス名</h3>'+(n.trim()?table(nr):'<p>未入力</p>');
+ if(nr.length)h+='<p>店名には、看板や名刺で使っている名前だけを入れます。住所・営業時間・カテゴリは別の欄に入れてください。地名の入った支店名（例：ABC スポーツジム神田）は認められています。</p>';
+ h+='<h3>ビジネスの説明</h3>'+(d.trim()?table(dr):'<p>未入力</p>');
+ if(d.trim()){h+='<h3>AIの回答に使われやすい事実</h3><p>「マップに相談」などは、プロフィール・クチコミ・ウェブサイトに書かれたことを材料に答えます。書いていないことはAIも答えられません。</p><ul>'+fc.map(([k,ok])=>`<li class="${ok?'ok':'mid'}">${ok?'書いてある':'書いていない'}：${k}</li>`).join('')+'</ul>';}
+ h+='<p>キャンペーン・価格・「ご予約はこちら」などは、プロフィールの「投稿」や「特典」に移すのが安全です。</p>';
+ $('res').innerHTML=h;return {nr,dr,fc,ngc};
+}
+$('run').onclick=run;
+$('sample').onclick=()=>{$('name').value='【駅前徒歩1分】激安整体ひかり 24時間受付 03-1234-5678';$('desc').value='★★今月末まで初回50%OFF★★ 地域No.1の整体院！肩こり・腰痛なら整体ひかりへ。整体ひかりの整体で整体の効果を実感。料金は3,980円〜。ご予約はこちら https://example.com 今すぐお電話ください！';run();};
+$('sample2').onclick=()=>{$('name').value='整体ひかり';$('desc').value='2015年開業の整体院です。肩こり・腰痛・姿勢の相談を中心に、1回40分の手技による施術を行っています。施術の前に、痛む場所や生活の様子を伺い、その日の施術内容を説明します。完全予約制で、当日の空きがあれば電話でも受け付けます。お子様連れの方はベビーカーのまま入れます。入口に段差はありません。駐車場は店の裏に2台分あります。お支払いは現金、クレジットカード、PayPayが使えます。英語での簡単な受け答えもできます。';run();};
+function addDays(s,n){const m=s.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);if(!m)return null;const t=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]+n));return t.getUTCFullYear()+'年'+(t.getUTCMonth()+1)+'月'+t.getUTCDate()+'日（'+'日月火水木金土'[t.getUTCDay()]+'）';}
+$('sugrun').onclick=()=>{const r=addDays($('sug').value,4);$('sugout').textContent=r?'承認・拒否の目安：'+r+'まで（拒否する場合は自社サイトにも正しい情報を載せておく）':'日付を 2026-11-05 の形で入れてください';};
+(function(){const end=Date.UTC(2026,10,30,3);const d=Math.ceil((end-Date.now())/86400000);$('yahoo').textContent=d>0?'Yahoo!プレイスの新規申込受付の終了まで あと約'+d+'日です。':'Yahoo!プレイスの新規申込受付は終了しています。';})();
+if(typeof module!=='undefined')module.exports={nameCheck,descCheck,factCheck,addDays};
+</script>
+</body>
+</html>
