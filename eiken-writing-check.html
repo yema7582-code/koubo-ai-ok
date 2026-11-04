@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英検ライティング 語数・形式チェッカー｜要約・Eメール・意見論述（1級〜3級・準2級プラス）</title>
+<meta name="description" content="英検のライティング答案を貼るだけで、級と問題（要約・Eメール・意見論述）ごとの語数範囲、本文の丸写し、要約に自分の意見が混ざっていないか、Eメールの質問の数、理由2つと結論の型をチェックできる無料ツール。2025年度からの要約の語数指定に対応。入力はブラウザの中だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/eiken-writing-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:9em;font-size:1em;box-sizing:border-box}
+select{font-size:1em}label{display:inline-block;margin:6px 12px 6px 0}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.warn{background:#fdecea;padding:8px 12px;border-radius:8px;margin-top:8px}
+.ok{background:#e8f4fd;padding:8px 12px;border-radius:8px;margin-top:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+mark{background:#ffe08a}
+table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:3px 8px;font-size:.92em}
+</style>
+</head>
+<body>
+<h1>英検ライティング 語数・形式チェッカー</h1>
+<p>英検の答案を貼り付けると、級と問題の種類に合わせて、語数が範囲に入っているか、形式の抜けがないかを確かめます。採点はしません。提出前・添削前の見落とし確認用です。文章はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label>級 <select id="kyu">
+<option value="1">1級</option><option value="p1">準1級</option><option value="2" selected>2級</option><option value="p2p">準2級プラス</option><option value="p2">準2級</option><option value="3">3級</option></select></label>
+<label>問題 <select id="type"></select></label>
+<div id="srcwrap"><small id="srclabel">問題の英文（要約の本文や、相手のEメール）を貼ると、丸写しの確認ができます（任意）</small>
+<textarea id="src" placeholder="問題の英文（任意）"></textarea></div>
+<small>あなたの答案</small>
+<textarea id="t" placeholder="ここに答案を貼り付けてください"></textarea>
+<div class="res" id="r"></div>
+<div id="w"></div>
+<div id="hl"></div>
+</div>
+
+<h2>級と問題ごとの語数</h2>
+<table id="tbl"><tr><th>級</th><th>要約</th><th>Eメール</th><th>意見論述（英作文）</th></tr></table>
+<div class="note">
+<b>出典と注意</b><br>
+・要約の語数は、日本英語検定協会「英文要約問題の問題冊子指示文と解答用紙の表記 一部変更のお知らせ」（2025年4月15日）で、2025年度第1回から「目安」ではなく範囲として指示されるようになったものです。<br>
+・Eメールと意見論述の語数は、問題冊子の「語数の目安」です（過去問の表記による）。最新の問題冊子の表記を必ず確認してください。<br>
+・語数の数え方は公式に細かく決まっていないため、このツールは空白で区切った語を1語（I'm・don't・e-mail・2026 も1語、記号だけは数えない）として数えます。範囲の端ぎりぎりは避け、内側に収めると安心です。<br>
+・内容の正しさや英語の自然さは判定しません。<a href="kousei-check.html">日本語の校正チェッカー</a>や<a href="honyakucho-check.html">翻訳調チェッカー</a>もあります。
+</div>
+<p><a href="./">ほかの無料ツール</a> ／ 英作文の添削・教材づくりのご相談：shinji-work@mail.grokbot.com</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const L={ // [min,max,strict]
+ '1':{s:[90,110,1],o:[200,240,0]},
+ 'p1':{s:[60,70,1],o:[120,150,0]},
+ '2':{s:[45,55,1],o:[80,100,0]},
+ 'p2p':{s:[25,35,1],o:[50,60,0]},
+ 'p2':{e:[40,50,0],o:[50,60,0]},
+ '3':{e:[15,25,0],o:[25,35,0]}};
+const KN={'1':'1級','p1':'準1級','2':'2級','p2p':'準2級プラス','p2':'準2級','3':'3級'};
+const TN={s:'要約',e:'Eメール',o:'意見論述（英作文）'};
+for(const k in L){const r=L[k];const f=x=>x?`${x[0]}〜${x[1]}語${x[2]?'（指定）':'（目安）'}`:'—';
+ $('tbl').insertAdjacentHTML('beforeend',`<tr><td>${KN[k]}</td><td>${f(r.s)}</td><td>${f(r.e)}</td><td>${f(r.o)}</td></tr>`);}
+function words(s){return (s.match(/\S+/g)||[]).filter(w=>/[A-Za-z0-9]/.test(w));}
+function norm(w){return w.toLowerCase().replace(/^[^a-z0-9]+|[^a-z0-9]+$/g,'');}
+function sentences(s){return s.replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-Z"'])/).map(x=>x.trim()).filter(Boolean);}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fillTypes(){const k=$('kyu').value,cur=$('type').value;$('type').innerHTML='';
+ for(const t of ['s','e','o'])if(L[k][t])$('type').insertAdjacentHTML('beforeend',`<option value="${t}">${TN[t]}</option>`);
+ if([...$('type').options].some(o=>o.value===cur))$('type').value=cur;}
+function calc(){
+ const k=$('kyu').value,t=$('type').value,rng=L[k][t],s=$('t').value,src=$('src').value;
+ $('srcwrap').style.display=t==='o'?'none':'';
+ const ws=words(s),n=ws.length,sn=sentences(s),w=[],ok=[];
+ let st=n===0?'答案を貼り付けてください':(n<rng[0]?`あと${rng[0]-n}語以上必要です`:n>rng[1]?`${n-rng[1]}語多すぎます`:'範囲内です');
+ $('r').innerHTML=`<b>${KN[k]}・${TN[t]}</b>：<b style="font-size:1.3em">${n}</b> 語（${rng[0]}〜${rng[1]}語${rng[2]?'・指定':'・目安'}）→ ${st}<br>文の数：${sn.length}　平均 ${sn.length?(n/sn.length).toFixed(1):0} 語／文`;
+ if(!n){$('w').innerHTML='';$('hl').innerHTML='';return;}
+ if(n<rng[0]||n>rng[1])w.push(rng[2]?'要約の語数は2025年度から範囲で指定されています。範囲外は大きな減点や0点のおそれがあると案内する教室もあるので、必ず範囲内に収めてください。':'語数の目安から外れています。目安でも、大きく外れると内容や構成の点で不利になりやすいです。');
+ else if(n===rng[0]||n===rng[1])w.push('語数が範囲のちょうど端です。数え方の違いで外れないよう、1〜2語内側に収めると安心です。');
+ const low=s.toLowerCase();
+ if(/[^\x00-\x7F’‘“”–—…]/.test(s.replace(/\s/g,'')))w.push('全角文字（日本語・全角記号・全角スペースなど）が混ざっています。英文はすべて半角で書きます。');
+ if(/\b(i|you)\s+(can't|cannot|won't|don't|isn't|aren't|didn't|it's|i'm)\b/.test(low)||/\b(can't|don't|won't|isn't|it's|i'm|i've|didn't|doesn't)\b/.test(low)){if(t!=='e')w.push('短縮形（don\'t, it\'s など）があります。要約・意見論述では do not, it is のように書くのが無難です（Eメールなら問題ありません）。');}
+ if(t==='s'){
+  const op=low.match(/\b(i think|i believe|in my opinion|i agree|i disagree|i feel|personally|i would like to)\b/g);
+  if(op)w.push(`要約に自分の意見と取れる表現があります：${[...new Set(op)].join(', ')}。要約は本文の内容だけをまとめ、意見は足しません。`);
+  if(/\b(for example|for instance|such as)\b/.test(low))w.push('for example / such as があります。要約では具体例は省き、要点だけを残すのが基本です。');
+  if(/\b(first(ly)?|second(ly)?|finally)\b,/.test(low)&&n<80)w.push('First, Second, のような列挙は意見論述の型です。要約では However / Also / As a result などで論点をつなぐ方が自然です。');
+  if(sn.length<2)w.push('1文だけの要約です。本文の段落ごとの要点（多くは3段落）が入っているか確認してください。');
+ }
+ if(t==='e'){
+  const q=(s.match(/\?/g)||[]).length;
+  if(k==='p2'){if(q<2)w.push(`疑問符（?）が${q}個です。準2級のEメールでは、相手のメールの下線部について特徴をたずねる具体的な質問を2つ書く必要があります。`);else ok.push(`質問（?）が${q}個あります。下線部の特徴をたずねる内容になっているか確認してください。`);
+   w.push('相手のメール最後の質問への答え（自分の意見）も入れたか確認してください。');}
+  if(k==='3'){if(q>0)w.push('3級のEメールは相手の2つの質問に答える問題です。質問を返す必要はありません。');w.push('相手の質問2つに、それぞれ答える文が入っているか確認してください。');}
+  if(/\b(best wishes|sincerely|hi,? alex|thank you for your e-?mail)\b/.test(low))w.push('あいさつや結び（Hi, ... / Thank you for your e-mail. / Best wishes,）は解答用紙に印刷されている場合があります。解答欄に書く部分だけを数えているか確認してください。');
+ }
+ if(t==='o'){
+  const op=/\b(i think|i believe|in my opinion|i agree|i disagree|i do not think|i don't think|yes,|no,)\b/.test(low);
+  if(!op)w.push('最初に立場（I think ... / I agree that ... など）を書いているか確認してください。');
+  const cnt=(low.match(/\b(first(ly)?|second(ly)?|third(ly)?|also|another reason|in addition|additionally|moreover|finally)\b/g)||[]).length;
+  if(cnt<2&&k!=='3')w.push('理由のつなぎ言葉（First, / Second, / Also, など）が2つ見つかりません。理由が2つはっきり分かる書き方にすると構成の点で有利です。');
+  if(k!=='3'&&!/\b(in conclusion|for these reasons|therefore|to sum up|that is why|this is why)\b/.test(low))w.push('結論の文（For these reasons, ... / In conclusion, ...）が見つかりません。最後に立場をもう一度まとめると型がそろいます。');
+  if(k==='p1'||k==='1')w.push(k==='p1'?'準1級は問題のPOINTSのうち2つを使う指示があります。使ったPOINTSが答案から分かるか確認してください。':'1級は理由を3つ書く構成がよく使われます。');
+ }
+ // copying
+ let hl='';
+ if(t!=='o'&&src.trim()){
+  const sw=words(src).map(norm),aw=ws.map(norm),N=5,set=new Set();
+  for(let i=0;i+N<=sw.length;i++)set.add(sw.slice(i,i+N).join(' '));
+  const mark=new Array(aw.length).fill(false);
+  for(let i=0;i+N<=aw.length;i++)if(set.has(aw.slice(i,i+N).join(' ')))for(let j=i;j<i+N;j++)mark[j]=true;
+  const m=mark.filter(Boolean).length,p=Math.round(m/aw.length*100);
+  if(m){(t==='s'&&p>=40?w:ok).push(`問題の英文と5語以上続けて同じ部分が ${m}語（答案の${p}%）あります（黄色）。${t==='s'?'要約では本文の言い方をそのまま写さず、できるだけ言い換えると内容点で有利です。':'相手のメールの語句を使うのは問題ありませんが、写しすぎに注意してください。'}`);
+   hl='<div class="box"><small>本文と同じ部分</small><br>'+ws.map((x,i)=>mark[i]?`<mark>${esc(x)}</mark>`:esc(x)).join(' ')+'</div>';}
+  else ok.push('問題の英文と5語以上続けて同じ部分はありません。');
+ }
+ $('w').innerHTML=w.map(x=>`<div class="warn">${x}</div>`).join('')+ok.map(x=>`<div class="ok">${x}</div>`).join('');
+ $('hl').innerHTML=hl;
+}
+$('kyu').addEventListener('change',()=>{fillTypes();calc();});
+['type','t','src'].forEach(id=>$(id).addEventListener('input',calc));
+fillTypes();calc();
+</script>
+</body>
+</html>
