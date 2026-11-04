@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日本語 校正チェッカー｜重ね言葉・ら抜き言葉・二重敬語・慣用句の誤用・文末の単調さを無料で確認</title>
+<meta name="description" content="原稿・ブログ記事・公募作品・ビジネスメールの日本語を、提出前に自動でチェックする無料ツール。重ね言葉（頭痛が痛い・まず最初に・約〜ほど）、ら抜き言葉・れ足す言葉・さ入れ言葉、二重敬語（おっしゃられる・ご覧になられる）、慣用句の誤用（汚名挽回・的を得る）、バイト敬語、冗長表現、同じ文末の連続、読点のない長い文を一覧にし、安全な置き換えは一括修正できます。セリフ（「」内）を除外するモード付き。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kousei-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea,input[type=text]{width:100%;font-size:1em;box-sizing:border-box}
+textarea{min-height:12em}
+label{margin:4px 12px 4px 0;display:inline-block}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+.ok{background:#eef6ee}.ng{background:#fdecea}.mid{background:#fff8e1}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+small{color:#555}pre{white-space:pre-wrap;background:#f6f6f6;padding:10px;border-radius:8px}
+mark.ng{background:#f9c0b8}mark.mid{background:#ffe08a}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 0 0}
+#summary span{display:inline-block;margin-right:12px}
+</style>
+</head>
+<body>
+<h1>日本語 校正チェッカー（重ね言葉・ら抜き・二重敬語・誤用）</h1>
+<p>原稿・記事・公募作品・メールの文章を貼ると、<b>重ね言葉、ら抜き言葉、二重敬語、慣用句の誤用、バイト敬語、冗長な言い回し、同じ文末の連続、読点のない長い文</b>を一覧にします。決まった直し方がある項目は、まとめて置き換えることもできます。入力はこのブラウザの中だけで処理し、どこにも送信しません。</p>
+
+<div class="box">
+<label for="src" style="display:block;font-weight:600">チェックする文章</label>
+<textarea id="src" placeholder="例：まず最初に、皆様がおっしゃられたご意見を拝見させていただきました。"></textarea>
+<div style="margin-top:6px">
+<b>チェックする項目：</b><br>
+<label><input type="checkbox" class="cat" value="kasane" checked>重ね言葉</label>
+<label><input type="checkbox" class="cat" value="ranuki" checked>ら抜き・れ足す・さ入れ</label>
+<label><input type="checkbox" class="cat" value="keigo" checked>二重敬語・バイト敬語</label>
+<label><input type="checkbox" class="cat" value="goyou" checked>慣用句の誤用</label>
+<label><input type="checkbox" class="cat" value="jouchou" checked>冗長な言い回し</label>
+<label><input type="checkbox" class="cat" value="style" checked>文末の連続・読点・「の」の連続</label>
+</div>
+<div style="margin-top:4px">
+<label><input type="checkbox" id="skipQuote">「」『』内（セリフ・引用）はチェックしない</label>
+<label>読点なしで注意する文の長さ <input type="number" id="longLen" value="60" min="20" style="width:5em">字</label>
+</div>
+<label for="ignore" style="display:block;margin-top:6px">無視する語句（読点区切り。例：見れる、まず最初に）</label>
+<input type="text" id="ignore" placeholder="例：見れる">
+<button id="run">チェックする</button>
+<button id="sample">例文を入れる</button>
+</div>
+
+<div id="summary"></div>
+<div id="result"></div>
+<h2>指摘箇所の表示</h2>
+<div id="preview"><small>チェックすると、指摘箇所に色がつきます（赤＝直したほうがよい、黄＝確認したほうがよい）。</small></div>
+<h2>置き換え後の文章</h2>
+<p><small>「直し方」が1つに決まる項目（例：まず最初に→まず、おっしゃられた→おっしゃった）だけを置き換えます。文脈で判断が必要な項目はそのまま残します。</small></p>
+<button id="fix">安全な置き換えを適用</button><button id="copy">コピー</button>
+<pre id="fixed"></pre>
+
+<h2>このツールでわかること・わからないこと</h2>
+<div class="note">
+<ul>
+<li>辞書と規則による機械的なチェックです。誤字脱字、事実関係、文脈に合った言葉選びまでは判定しません。</li>
+<li>重ね言葉の中には「排気ガス」「被害を受ける」のように一般に許容されているものもあるため、よく指摘されるものに絞っています。</li>
+<li>ら抜き言葉は話し言葉では広く使われています。小説のセリフでわざと使う場合は「「」内はチェックしない」をオンにしてください。</li>
+<li>「お伺いする」「おられる」などは二重敬語ですが、慣習として定着しているとされるため黄色（確認）にしています。</li>
+<li>公募の規定（文字数・原稿用紙換算）は<a href="moji-count.html">文字数チェッカー</a>、表記ゆれやです・ます／だ・である混在は<a href="hyoki-yure.html">表記ゆれチェッカー</a>、翻訳調は<a href="honyakucho-check.html">翻訳調チェッカー</a>でも確認できます。</li>
+</ul>
+</div>
+
+<p style="margin-top:2em"><small>日本語の校正・リライト、日英中の翻訳のご相談：shinji-work@mail.grokbot.com ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+(function(){
+// ---- rules ----
+// lv: ng = should fix, mid = check. fix: replacement string (with $1..) or null.
+var K='[一-龠々〆ヵヶ]';
+var R=[];
+function add(cat,lv,re,msg,fix){R.push({cat:cat,lv:lv,re:new RegExp(re,'g'),msg:msg,fix:fix===undefined?null:fix});}
+// 重ね言葉
+add('kasane','ng','頭痛が痛(い|くて|かった|く)','重ね言葉：「頭痛がする」「頭が痛い」',function(m){return '頭痛が'+{'い':'する','くて':'して','かった':'した','く':'し'}[m[1]];});
+add('kasane','ng','まず(最初|初め|はじめ)に','重ね言葉：「まず」または「最初に」','まず');
+add('kasane','ng','一番(最初|最後|ベスト)','重ね言葉：「最初」「最後」「ベスト」だけで足ります','$1');
+add('kasane','ng','最もベスト','重ね言葉：「ベスト」「最もよい」','ベスト');
+add('kasane','ng','後で後悔','重ね言葉：「後悔」だけで「後で」の意味を含みます','後悔');
+add('kasane','ng','違和感を感じ','重ね言葉：「違和感を覚え」「違和感があ」','違和感を覚え');
+add('kasane','ng','被害を被','重ね言葉：「被害を受ける」',null);
+add('kasane','ng','馬から落馬','重ね言葉：「落馬」','落馬');
+add('kasane','ng','返事を返','重ね言葉：「返事をす」「返事を出」',null);
+add('kasane','ng','必ず必要','重ね言葉：「必ず要る」「必要」','必要');
+add('kasane','ng','過半数を超え','重ね言葉：「過半数を占め」「半数を超え」','過半数を占め');
+add('kasane','ng','今現在','重ね言葉：「現在」「今」','現在');
+add('kasane','ng','色が変色','重ね言葉：「変色」「色が変わ」','変色');
+add('kasane','ng','製造メーカー','重ね言葉：「メーカー」「製造元」','メーカー');
+add('kasane','ng','(あらかじめ|予め)予(約|定|告)','重ね言葉：「あらかじめ」は不要','予$2');
+add('kasane','ng','炎天下の下(で)?','重ね言葉：「炎天下で」','炎天下で');
+add('kasane','ng','犯罪を犯','重ね言葉：「罪を犯」','罪を犯');
+add('kasane','ng','余分な贅肉','重ね言葉：「贅肉」','贅肉');
+add('kasane','ng','日本に来日','重ね言葉：「来日」','来日');
+add('kasane','ng','留守を守','重ね言葉：「留守を預か」',null);
+add('kasane','ng','古来から','重ね言葉：「古来」「昔から」','古来');
+add('kasane','ng','従来(から|より)','重ね言葉：「従来」「以前から」','従来');
+add('kasane','ng','元旦の朝','重ね言葉：「元旦」は元日の朝','元旦');
+add('kasane','ng','最後の切り札','重ね言葉：「切り札」','切り札');
+add('kasane','ng','思いがけないハプニング','重ね言葉：「ハプニング」','ハプニング');
+add('kasane','ng','尽力を尽く','重ね言葉：「尽力す」「力を尽く」','力を尽く');
+add('kasane','ng','決着が着','重ね言葉：「決着がつ」','決着がつ');
+add('kasane','ng','すべて一任','重ね言葉：「一任」','一任');
+add('kasane','ng','期待して待','重ね言葉：「期待す」「楽しみに待」',null);
+add('kasane','ng','射程距離','重ね言葉：「射程」','射程');
+add('kasane','ng','第([0-9０-９一二三四五六七八九十]+)(回|番|位)目','重ね言葉：「第〜回」か「〜回目」のどちらか','第$1$2');
+add('kasane','mid','約[0-9０-９一二三四五六七八九十百千万.．,，]+[^、。\\s]{0,4}?(ほど|程度|くらい|ぐらい)','重ね言葉：「約」と「ほど／程度／くらい」はどちらか一方に',null);
+add('kasane','mid','各'+K+'{1,4}ごと','重ね言葉：「各〜」か「〜ごと」のどちらか',null);
+add('kasane','mid','(まだ|いまだ)未'+K,'重ね言葉の可能性：「まだ」と「未〜」',null);
+// ら抜き・れ足す・さ入れ
+var ichidan='(見|来|出|寝|着|似|居|食べ|起き|考え|決め|借り|降り|投げ|調べ|覚え|信じ|止め|逃げ|答え|生き|受け|続け|教え|変え|伝え|始め|集め|比べ|浴び|耐え|鍛え|生まれ|助け|育て|捨て|建て|立て|見せ|乗せ|載せ|任せ|合わせ|入れ|開け|閉め|落ち|着替え|迎え|超え|越え|揃え|整え|覚え|避け|続け|預け|届け|分け|掛け|避け)';
+add('ranuki','ng',ichidan+'れ(る|ない|ます|ません|た|なかった|なく|て|そう)','ら抜き言葉：「$1られ$2」','$1られ$2');
+add('ranuki','ng','(行け|書け|読め|飲め|話せ|言え|帰れ|休め|走れ|会え|歩け|泳げ|遊べ|使え|買え|待て|作れ|取れ|乗れ|送れ|思え|聞け|働け|頼め|持て)れ(る|ない|ます|ません|た|なかった|なく|て)','れ足す言葉：「$1$2」','$1$2');
+add('ranuki','mid','([かがたなばまわ])させ(て(いただ|頂|もら|くださ|下さ)|ていただ)','さ入れ言葉の可能性：「〜$1せて」（例：休まさせて→休ませて）',null);
+add('ranuki','ng','(行か|書か|読ま|休ま|帰ら|言わ|使わ|歌わ|やら|待た|作ら|取ら|送ら|思わ|聞か|働か|頼ま|持た|会わ|買わ|手伝わ|座ら|知ら|やすま|わから)させ','さ入れ言葉：「させ」→「せ」','$1せ');
+// 二重敬語・バイト敬語
+var RU={'る':'る','た':'った','ます':'ります','ました':'りました','て':'って','ない':'らない','ません':'りません'};
+var RUI={'る':'る','た':'った','ます':'います','ました':'いました','て':'って','ない':'らない','ません':'いません'};
+var TAIL='(る|た|ます|ました|て|ない|ません)';
+add('keigo','ng','(おっしゃ|いらっしゃ)られ'+TAIL,'二重敬語：「$1る」に「れる・られる」は重ねない',function(m){return m[1]+RUI[m[2]];});
+add('keigo','ng','召し上がられ'+TAIL,'二重敬語：「召し上がる」で十分',function(m){return '召し上が'+RU[m[1]];});
+add('keigo','ng','(ご覧|お[一-龠々ぁ-ん]{1,5}?|ご[一-龠々]{1,4})になられ'+TAIL,'二重敬語：「$1になる」に「れる・られる」は重ねない',function(m){return m[1]+'にな'+RU[m[2]];});
+add('keigo','ng','お召し上がりにな','二重敬語：「召し上が」',null);
+add('keigo','ng','拝(見|読|借|聴|察)させて(いただ|頂)(きます|きました|く|き|いて|ければ)','二重敬語：「拝$1します」「拝$1いたします」',function(m){return '拝'+m[1]+{'きます':'いたします','きました':'いたしました','く':'いたす','き':'いたし','いて':'いたして','ければ':'できれば'}[m[3]];});
+add('keigo','ng','(伺わ|申し上げ)させていただ','二重敬語：「伺い」「申し上げ」で十分',null);
+add('keigo','mid','お伺い(し|いた|させ)','二重敬語（慣習的に許容）：改まった文書では「伺い」',null);
+add('keigo','mid','(おられ|お見えにな)','慣習的に許容される敬語：社外向けなら「いらっしゃ」も検討',null);
+add('keigo','ng','よろしかったでしょうか','バイト敬語：「よろしいでしょうか」','よろしいでしょうか');
+add('keigo','mid','(こちら|それ|これ)[^。]{0,15}になります','バイト敬語の可能性：「〜でございます」「〜です」',null);
+add('keigo','mid','円から(お預かり|頂戴)','バイト敬語：「〜円お預かりします」','円$1');
+add('keigo','mid','の(ほう|方)(を)?(お持ち|お届け|ご用意|お預かり|確認)','バイト敬語の可能性：「のほう」は不要なことが多い',null);
+add('keigo','mid','ご苦労(様|さま)','目上の人には「お疲れさまです」',null);
+add('keigo','mid','了解(しました|です)','目上・取引先には「承知しました」「かしこまりました」',null);
+// 慣用句の誤用
+add('goyou','ng','汚名(を)?挽回','誤用：「汚名返上」または「名誉挽回」','汚名$1返上');
+add('goyou','ng','的を得','誤用とされることが多い：「的を射」','的を射');
+add('goyou','ng','怒り心頭に達','誤用：「怒り心頭に発」','怒り心頭に発');
+add('goyou','ng','熱にうなされ','誤用：「熱に浮かされ」（「悪夢にうなされる」は可）','熱に浮かされ');
+add('goyou','ng','押しも押されぬ','誤用：「押しも押されもせぬ」','押しも押されもせぬ');
+add('goyou','ng','取り付く(暇|ひま)(も|が)ない','誤用：「取り付く島もない」','取り付く島もない');
+add('goyou','ng','愛想を振りま','誤用：「愛嬌を振りま」','愛嬌を振りま');
+add('goyou','ng','口先三寸','誤用：「舌先三寸」','舌先三寸');
+add('goyou','ng','体調を壊','誤用：「体調を崩」「体を壊」','体調を崩');
+add('goyou','ng','頭をかしげ','誤用：「首をかしげ」','首をかしげ');
+add('goyou','ng','眉をしかめ','誤用：「眉をひそめ」「顔をしかめ」','眉をひそめ');
+add('goyou','ng','合いの手を打','誤用：「合いの手を入れ」',null);
+add('goyou','ng','腹をすえかね','誤用：「腹に据えかね」','腹に据えかね');
+add('goyou','ng','雪辱を晴ら','誤用：「雪辱を果た」「屈辱を晴ら」','雪辱を果た');
+add('goyou','ng','一つ返事','誤用：「二つ返事」','二つ返事');
+add('goyou','ng','公算が強','誤用：「公算が大き」','公算が大き');
+add('goyou','ng','白羽の矢が当た','誤用：「白羽の矢が立つ」',null);
+add('goyou','ng','苦虫をかみ殺','誤用：「苦虫をかみつぶ」','苦虫をかみつぶ');
+add('goyou','ng','二の舞を踏','誤用：「二の舞を演じ」または「二の足を踏」',null);
+add('goyou','ng','存亡の危機','本来は「存亡の機」（「危機」は重複とする辞書あり）',null);
+add('goyou','ng','寸暇を惜しまず','誤用：「寸暇を惜しんで」','寸暇を惜しんで');
+add('goyou','ng','上や下への大騒ぎ','誤用：「上を下への大騒ぎ」','上を下への大騒ぎ');
+add('goyou','ng','采配を振る(い|う|っ)','誤用とされる：「采配を振る」',null);
+add('goyou','ng','足元をすくわ','誤用とされることが多い：「足をすくわ」','足をすくわ');
+add('goyou','ng','間が持てな','誤用とされる：「間が持たな」','間が持たな');
+add('goyou','ng','声を荒(らげ|あげ)','表記：「声を荒らげ」（「あららげ」が本来の読み）',null);
+add('goyou','mid','役不足','意味の確認：「役不足」＝能力に比べて役目が軽すぎること。謙遜なら「力不足」',null);
+add('goyou','mid','確信犯','意味の確認：本来は「正しいと信じて行う犯罪」。「わざと」の意味なら「故意」',null);
+add('goyou','mid','姑息','意味の確認：本来は「一時しのぎ」。「卑怯」の意味ではない',null);
+add('goyou','mid','檄を飛ばし','意味の確認：本来は「主張を広く知らせ同意を求める」。「激励する」の意味ではない',null);
+add('goyou','mid','敷居が高','意味の確認：本来は「不義理があって行きにくい」。「高級で入りにくい」は新しい用法',null);
+// 冗長
+add('jouchou','mid','することができ','冗長：「できる」「〜せる」で足りることが多い',null);
+add('jouchou','mid','という(風|ふう)に','冗長：「ように」',null);
+add('jouchou','mid','なのではないでしょうか','冗長：「ではないでしょうか」','ではないでしょうか');
+add('jouchou','mid','(となって|になって)おります','冗長な丁寧表現：「です」「となります」で足りることが多い',null);
+add('jouchou','mid','していきたいと(思|考)い?ま','冗長：「します」「していきます」と言い切る',null);
+add('jouchou','mid','(させて|して)いただければと(思|存)','冗長：「〜いただけますか」「〜ください」',null);
+add('jouchou','mid','ないことはない','二重否定：意味がぼやけます',null);
+add('jouchou','mid','かもしれないと思','冗長：「かもしれない」「と思う」のどちらか',null);
+add('jouchou','mid','(と|も)言えるでしょう','冗長：言い切れるなら「〜です」',null);
+add('jouchou','mid','(の|な)ような感じ','あいまい：「感じ」を取ると締まります',null);
+add('jouchou','mid','的な(もの|こと|感じ)','あいまい：「〜的な」は具体的に',null);
+
+var CATNAME={kasane:'重ね言葉',ranuki:'ら抜き・れ足す・さ入れ',keigo:'敬語',goyou:'慣用句・意味',jouchou:'冗長・あいまい',style:'文末・読点・「の」'};
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function maskQuotes(line){
+  // replace text inside 「」『』 with U+3000 of same length (keep indices)
+  var out='',depth=0;
+  for(var i=0;i<line.length;i++){var c=line[i];
+    if(c==='「'||c==='『'){depth++;out+=c;continue;}
+    if((c==='」'||c==='』')&&depth>0){depth--;out+=c;continue;}
+    out+=depth>0?'\u3000':c;}
+  return out;
+}
+function expand(fix,m){if(typeof fix==='function')return fix(m);return fix.replace(/\$(\d)/g,function(_,n){return m[+n]||'';});}
+
+function check(text,opt){
+  var cats=opt.cats,ign=opt.ignore||[],hits=[];
+  var lines=text.replace(/\r\n?/g,'\n').split('\n');
+  lines.forEach(function(raw,li){
+    var line=opt.skipQuote?maskQuotes(raw):raw;
+    R.forEach(function(r){
+      if(!cats[r.cat])return;
+      r.re.lastIndex=0;var m;
+      while((m=r.re.exec(line))){
+        if(m[0].length===0){r.re.lastIndex++;continue;}
+        var s=m[0];
+        if(ign.some(function(w){return w&&(s.indexOf(w)>=0||w.indexOf(s)>=0);}))continue;
+        hits.push({line:li+1,start:m.index,end:m.index+s.length,text:s,cat:r.cat,lv:r.lv,
+          msg:r.msg.replace(/\$(\d)/g,function(_,n){return m[+n]||'';}),
+          repl:r.fix!==null?expand(r.fix,m):null});
+      }
+    });
+    if(cats.style){
+      // 「の」の連続
+      var re=/([^、。！？「」『』\s\u3000]{1,8}?(?<![こそあども])の(?![でだ])){3,}/g,m2;
+      while((m2=re.exec(line))){hits.push({line:li+1,start:m2.index,end:m2.index+m2[0].length,text:m2[0],cat:'style',lv:'mid',msg:'「の」が3回以上続いています。言い換えや語順の入れ替えを検討',repl:null});}
+      // long sentence without 読点
+      var sre=/[^。！？!?\n]+[。！？!?]?/g,sm;
+      while((sm=sre.exec(line))){var seg=sm[0];
+        var core=seg.replace(/\u3000/g,'');
+        if(core.length>=opt.longLen&&!/https?:\/\/|^\s*#/.test(seg)&&seg.indexOf('、')<0&&seg.indexOf('，')<0)
+          hits.push({line:li+1,start:sm.index,end:sm.index+seg.length,text:seg.length>30?seg.slice(0,30)+'…':seg,cat:'style',lv:'mid',msg:'読点のない長い文（'+core.length+'字）。区切りを入れると読みやすくなります',repl:null,noMark:false});
+        var commas=(seg.match(/[、，]/g)||[]).length;
+        if(commas>=6)hits.push({line:li+1,start:sm.index,end:sm.index+seg.length,text:seg.length>30?seg.slice(0,30)+'…':seg,cat:'style',lv:'mid',msg:'読点が'+commas+'個ある長い文。2文に分けられないか確認',repl:null});
+      }
+    }
+  });
+  // 文末の連続（全文の文単位）
+  if(cats.style){
+    var sents=[],li2=0;
+    lines.forEach(function(raw,li){var line=opt.skipQuote?maskQuotes(raw):raw;
+      var re=/[^。！？!?]*[。！？!?]/g,m;
+      while((m=re.exec(line))){var s=m[0].replace(/[\s\u3000」』）)]+$/,'');var body=s.replace(/[。！？!?]$/,'');
+        if(body.replace(/\u3000/g,'').length<4)continue;
+        sents.push({line:li+1,end:body.slice(-3),idx:m.index,len:m[0].length});}
+    });
+    var run=1;
+    for(var i=1;i<=sents.length;i++){
+      var same=i<sents.length&&sents[i].end===sents[i-1].end&&/[ぁ-ん]/.test(sents[i].end);
+      if(same){run++;}
+      else{ if(run>=3){var f=sents[i-run];hits.push({line:f.line,start:f.idx,end:f.idx+f.len,text:'…'+sents[i-1].end+'。',cat:'style',lv:'mid',msg:'同じ文末「…'+sents[i-1].end+'。」が'+run+'文続いています（'+f.line+'行目から）。語尾に変化を',repl:null});}
+        run=1;}
+    }
+  }
+  hits=hits.filter(function(h,i){return !hits.some(function(o,j){
+    if(j===i||o.line!==h.line)return false;
+    if(o.start===h.start&&o.end===h.end&&o.msg===h.msg)return j<i;
+    return h.lv==='mid'&&o.cat===h.cat&&o.repl!==null&&h.repl===null&&o.start<h.end&&o.end>h.start;});});
+  hits.sort(function(a,b){return a.line-b.line||a.start-b.start;});
+  return {hits:hits,lines:lines};
+}
+
+function applyFix(text,res){
+  var lines=res.lines.slice();
+  var byLine={};
+  res.hits.forEach(function(h){if(h.repl!==null&&h.cat!=='style'){(byLine[h.line]=byLine[h.line]||[]).push(h);}});
+  Object.keys(byLine).forEach(function(k){
+    var arr=byLine[k].sort(function(a,b){return a.start-b.start||b.end-a.end;});
+    var kept=[],last=-1;arr.forEach(function(h){if(h.start>=last){kept.push(h);last=h.end;}});
+    var L=lines[k-1];
+    for(var i=kept.length-1;i>=0;i--){var h=kept[i];L=L.slice(0,h.start)+h.repl+L.slice(h.end);}
+    lines[k-1]=L;
+  });
+  return lines.join('\n');
+}
+
+function renderPreview(res){
+  return res.lines.map(function(L,i){
+    var hs=res.hits.filter(function(h){return h.line===i+1&&h.end-h.start<=40;}).sort(function(a,b){return a.start-b.start;});
+    var out='',pos=0;
+    hs.forEach(function(h){if(h.start<pos)return;out+=esc(L.slice(pos,h.start))+'<mark class="'+h.lv+'" title="'+esc(h.msg)+'">'+esc(L.slice(h.start,h.end))+'</mark>';pos=h.end;});
+    return out+esc(L.slice(pos));
+  }).join('\n');
+}
+
+function opts(){
+  var cats={};Array.prototype.forEach.call(document.querySelectorAll('.cat'),function(c){cats[c.value]=c.checked;});
+  return {cats:cats,skipQuote:$('skipQuote').checked,longLen:Math.max(20,+$('longLen').value||60),
+    ignore:$('ignore').value.split(/[、,，\s]+/).filter(Boolean)};
+}
+var last=null;
+function run(){
+  var text=$('src').value;var res=check(text,opts());last=res;
+  var ng=res.hits.filter(function(h){return h.lv==='ng';}).length,mid=res.hits.length-ng;
+  var cnt={};res.hits.forEach(function(h){cnt[h.cat]=(cnt[h.cat]||0)+1;});
+  var chars=text.replace(/\s/g,'').length;
+  $('summary').innerHTML='<p><span>文字数（空白・改行を除く）：<b>'+chars+'</b></span><span class="ng">要修正：<b>'+ng+'</b></span><span class="mid">要確認：<b>'+mid+'</b></span></p><p><small>'+Object.keys(cnt).map(function(k){return CATNAME[k]+' '+cnt[k];}).join('／')+'</small></p>';
+  if(!res.hits.length){$('result').innerHTML='<p class="ok" style="padding:8px">指摘はありませんでした。</p>';}
+  else{$('result').innerHTML='<table><tr><th>行</th><th>分類</th><th>該当箇所</th><th>内容・直し方</th><th>置き換え</th></tr>'+res.hits.map(function(h){
+    return '<tr class="'+h.lv+'"><td>'+h.line+'</td><td>'+CATNAME[h.cat]+'</td><td>'+esc(h.text)+'</td><td>'+esc(h.msg)+'</td><td>'+(h.repl!==null&&h.cat!=='style'?esc(h.repl):'—')+'</td></tr>';}).join('')+'</table>';}
+  $('preview').innerHTML='<pre>'+renderPreview(res)+'</pre>';
+  $('fixed').textContent=applyFix(text,res);
+}
+$('run').addEventListener('click',run);
+$('fix').addEventListener('click',function(){if(!last)run();$('src').value=$('fixed').textContent;run();});
+$('copy').addEventListener('click',function(){var t=$('fixed').textContent;if(navigator.clipboard)navigator.clipboard.writeText(t);});
+$('sample').addEventListener('click',function(){
+  $('src').value='まず最初に、先日の打ち合わせで皆様がおっしゃられたご意見を拝見させていただきました。\n資料はこちらになります。ご確認のほうよろしかったでしょうか。\n今回の件で汚名挽回を図り、的を得た提案をしたいと思います。\n朝早く起きれる人は少ないので、約3日ほどで返事を返します。\n「明日なら来れるよ」と彼は言った。\n会議を行いました。資料を配りました。意見を聞きました。\n弊社の営業部の東京支店の担当者の山田が伺います。';
+  run();});
+window.KouseiCheck={check:check,applyFix:applyFix};
+})();
+</script>
+</body>
+</html>
