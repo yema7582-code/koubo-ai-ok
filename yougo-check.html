@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>対訳・用語集チェッカー｜用語の訳し忘れ・訳ゆれ・数字の不一致・タグ崩れを無料で確認（XLIFF/TMX/CSV）</title>
+<meta name="description" content="翻訳の原文と訳文（2列のCSV・TSV、XLIFF、TMX）を用語集と突き合わせ、指定訳語の使い忘れ、禁止訳語、同じ原文の訳ゆれ、数字の抜け・違い、{0}・%s・タグの崩れ、未翻訳を一覧にする無料ツール。ブラウザ内で処理し、ファイルは送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yougo-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.cols{display:flex;gap:12px;flex-wrap:wrap}.cols>div{flex:1;min-width:280px}
+textarea{width:100%;min-height:13em;font-size:.92em;box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,monospace}
+table{border-collapse:collapse;width:100%;font-size:.9em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top;word-break:break-all}th{background:#f3f3f3}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.e{color:#b00020;font-weight:bold}.w{color:#a15c00}.i{color:#555}
+button{font-size:1em;padding:4px 12px}small{color:#555}
+</style>
+</head>
+<body>
+<h1>対訳・用語集チェッカー（訳し忘れ・訳ゆれ・数字・タグ）</h1>
+<p>翻訳の<b>原文と訳文の組</b>を、<b>用語集</b>と突き合わせて、納品前によく残るミスを一覧にします。機械翻訳やAI翻訳を直したあと（MTPE）の最終確認、外注した訳文の受け入れ確認にも使えます。日英・英日・日中など、どの言語の組み合わせでも使えます。ファイルはブラウザの中だけで処理し、送信しません。</p>
+<div class="box">
+<div class="cols">
+<div><b>対訳（原文と訳文）</b> <input type="file" id="fp" accept=".csv,.tsv,.txt,.xlf,.xliff,.sdlxliff,.mxliff,.tmx,.xml"><br>
+<textarea id="pairs" placeholder="原文[TAB]訳文 を1行に1組（Excelから2列コピーでOK）&#10;Click Save to keep your changes.	変更を保存するには［保存］をクリックします。&#10;Up to 3 users can join for $10/month.	月額10ドルで最大5人まで参加できます。&#10;Click Save to keep your changes.	変更を残すには［保存］を押します。"></textarea>
+<small>2列のCSV・TSV（1行目が見出しでも可）、XLIFF（.xlf/.sdlxliff/.mxliff）、TMX を読み込めます。</small></div>
+<div><b>用語集</b> <input type="file" id="fg" accept=".csv,.tsv,.txt"><br>
+<textarea id="gloss" placeholder="原語[TAB]訳語 を1行に1語&#10;Save	保存&#10;user	ユーザー|利用者&#10;!ユーザ&#10;sign in	サインイン	!ログイン"></textarea>
+<small>訳語が複数OKなら「|」で区切る。3列目以降に「!語」で、その原語の訳として使ってはいけない語。行頭が「!」の行は、どこにも使ってはいけない語（表記ルールなど）。</small></div>
+</div>
+<p><label><input type="checkbox" id="optCase"> 用語の大文字・小文字を区別する</label>
+<label><input type="checkbox" id="optNum" checked> 数字のチェック</label>
+<label><input type="checkbox" id="optTag" checked> タグ・プレースホルダのチェック</label>
+<label><input type="checkbox" id="optCons" checked> 訳ゆれ（同じ原文に別の訳）</label></p>
+<button id="go">チェックする</button> <button id="csv" disabled>結果をCSVで保存</button>
+</div>
+<div id="out"></div>
+<h2>チェックする内容</h2>
+<ul>
+<li><span class="e">用語の訳し忘れ</span>：原文に用語集の原語があるのに、訳文に指定の訳語がどれも入っていない。英語の原語は語の区切りで探し、複数形（users など）も拾います。</li>
+<li><span class="e">禁止訳語</span>：その原語の訳として使ってはいけない語、または全体で使わない表記（例：ユーザ → ユーザー）が訳文に入っている。</li>
+<li><span class="e">数字の違い</span>：原文の数字が訳文に見当たらない、または訳文にだけある数字。全角数字、3桁区切りのカンマ、小数点の書き方の違いは同じとみなします。漢数字や「万」を使った書き換えは「注意」として表示するので、目で確かめてください。</li>
+<li><span class="e">タグ・プレースホルダ崩れ</span>：{0}・{name}・%s・%1$d・&lt;b&gt;・XLIFFのタグなどの数が原文と合わない。</li>
+<li><span class="w">訳ゆれ</span>：まったく同じ原文に、違う訳文がついている（逆に、違う原文に同じ訳文がついているものは参考として表示）。</li>
+<li><span class="w">未翻訳の疑い</span>：訳文が空、または原文とまったく同じ。</li>
+<li><span class="i">空白</span>：訳文の先頭・末尾の空白や、連続した空白。</li>
+</ul>
+<div class="note">このツールは機械的な突き合わせです。用語集にない語の誤訳や、文の意味の取り違えまでは見つけられません。訳文の確認・ネイティブチェック・用語集づくりのご依頼は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ（日本語・英語・中国語）。</div>
+<p><small><a href="index.html">AI利用OKの公募まとめ</a> ／ 関連：<a href="i18n-check.html">翻訳ファイル（JSON/PO）チェッカー</a> ／ <a href="honyakucho-check.html">翻訳調チェッカー</a> ／ <a href="hyoki-yure.html">表記ゆれチェッカー</a></small></p>
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function decodeEnt(s){return s.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(m,n)=>String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi,(m,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&amp;/g,"&")}
+// keep inline tags as tokens like <g id="1">, <x id="2"/>, <ph>..</ph>
+function xmlInner(s){return decodeEnt(s.replace(/<(\/?)(g|x|bx|ex|ph|bpt|ept|it|mrk|pc|sc|ec)\b([^>]*)>/gi,(m,sl,t)=>"\u27e6"+sl+t.toLowerCase()+"\u27e7").replace(/<[^>]+>/g,"")).replace(/\u27e6/g,"<").replace(/\u27e7/g,">")}
+function parseCSVLine(text,delim){const rows=[];let row=[],f="",q=false;for(let i=0;i<text.length;i++){const c=text[i];
+ if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+ else if(c==='"'&&f==="")q=true;else if(c===delim){row.push(f);f=""}else if(c==="\n"){row.push(f);rows.push(row);row=[];f=""}else if(c!=="\r")f+=c}
+ if(f!==""||row.length){row.push(f);rows.push(row)}return rows}
+function parsePairs(t){t=t.replace(/^\uFEFF/,"");const out=[];
+ if(/<tmx[\s>]/i.test(t)){const tus=t.match(/<tu[\s>][\s\S]*?<\/tu>/gi)||[];tus.forEach((tu,k)=>{const s=(tu.match(/<tuv[\s\S]*?<seg>([\s\S]*?)<\/seg>/gi)||[]).map(x=>xmlInner(x.replace(/^[\s\S]*?<seg>/i,"").replace(/<\/seg>$/i,"")));if(s.length>=2)out.push({id:"TU "+(k+1),src:s[0],tgt:s[1]})});return out}
+ if(/<(trans-unit|unit)[\s>]/i.test(t)){const us=t.match(/<(trans-unit|segment)[\s>][\s\S]*?<\/(trans-unit|segment)>/gi)||[];us.forEach((u,k)=>{const id=(u.match(/\bid="([^"]*)"/)||[])[1]||String(k+1);
+  let s=(u.match(/<source[^>]*>([\s\S]*?)<\/source>/i)||[])[1];let g=(u.match(/<target[^>]*>([\s\S]*?)<\/target>/i)||[])[1];
+  const segs=u.match(/<seg-source>[\s\S]*?<\/seg-source>/i);if(segs){const ms=segs[0].match(/<mrk[^>]*mtype="seg"[^>]*>([\s\S]*?)<\/mrk>/gi);if(ms&&g!==undefined){/* sdlxliff: use whole */}}
+  if(s===undefined)return;out.push({id:id,src:xmlInner(s),tgt:g===undefined?"":xmlInner(g)})});return out}
+ const first=t.split("\n")[0];const delim=first.includes("\t")?"\t":",";const rows=parseCSVLine(t,delim);
+ rows.forEach((r,k)=>{if(r.length<2&&!(r[0]||"").trim())return;out.push({id:"行 "+(k+1),src:r[0]||"",tgt:r.length>1?r[1]:""})});
+ if(out.length&&/^(原文|source|src|英語|english|日本語|ja|en)$/i.test(out[0].src.trim())&&/^(訳文|target|tgt|翻訳|translation|日本語|中国語|english|ja|en|zh)$/i.test(out[0].tgt.trim()))out.shift();
+ return out}
+function parseGloss(t){t=t.replace(/^\uFEFF/,"");const G=[],ban=[];const delim=t.split("\n")[0].includes("\t")?"\t":(t.includes("\t")?"\t":",");
+ parseCSVLine(t,delim).forEach(r=>{r=r.map(x=>x.trim());if(!r[0])return;
+  if(r[0].startsWith("!")){ban.push(r[0].slice(1).trim());return}
+  if(/^(原語|source|term|用語)$/i.test(r[0]))return;
+  const tg=(r[1]||"").split("|").map(x=>x.trim()).filter(x=>x&&!x.startsWith("!"));const bad=[];
+  r.slice(1).forEach(c=>c.split("|").forEach(x=>{x=x.trim();if(x.startsWith("!"))bad.push(x.slice(1).trim())}));
+  G.push({src:r[0],tgt:tg,bad:bad.filter(Boolean)})});return {G,ban:ban.filter(Boolean)}}
+function rxEsc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+const LATIN=/[A-Za-z0-9]/;
+function termRx(term,cs){let body=rxEsc(term).replace(/\s+/g,"\\s+");
+ if(/[A-Za-z]$/.test(term))body+="(?:s|es|'s)?";
+ const pre=LATIN.test(term[0])?"(?<![A-Za-z0-9])":"",post=LATIN.test(term[term.length-1])?"(?![A-Za-z0-9])":"";
+ return new RegExp(pre+body+post,cs?"g":"gi")}
+function has(text,term,cs){return termRx(term,cs).test(text)}
+function count(text,term,cs){return (text.match(termRx(term,cs))||[]).length}
+function z2h(s){return s.replace(/[０-９．，－＋]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))}
+function nums(s){s=z2h(s);const m=s.match(/\d+(?:[.,]\d+)*/g)||[];return m.map(x=>{
+ if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(x))return x.replace(/,/g,"");
+ if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(x))return x.replace(/\./g,"").replace(",",".");
+ if(/^\d+,\d{1,2}$/.test(x))return x.replace(",",".");
+ return x.replace(/,/g,"")}).map(x=>x.replace(/^0+(?=\d)/,""))}
+function tags(s){const m=s.match(/\{\{?[^{}\s]{0,40}\}\}?|%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[sdifuxXeEgGc@%]|<\/?[A-Za-z][^<>]{0,80}>|\$\{[^}]+\}|\[\[[^\]]+\]\]/g)||[];
+ return m.map(x=>x.replace(/\s+/g," ").replace(/\s*\/?>$/,x.endsWith("/>")?"/>":">"))}
+function multiset(a){const o={};a.forEach(x=>o[x]=(o[x]||0)+1);return o}
+function diffMs(a,b){const A=multiset(a),B=multiset(b),miss=[],extra=[];Object.keys(A).forEach(k=>{for(let i=0;i<A[k]-(B[k]||0);i++)miss.push(k)});Object.keys(B).forEach(k=>{for(let i=0;i<B[k]-(A[k]||0);i++)extra.push(k)});return {miss,extra}}
+const KANJI=/[〇一二三四五六七八九十百千万億兆]|[零壹贰叁肆伍陆柒捌玖拾佰仟]/;
+function check(P,GL,opt){const R=[];const add=(lv,p,type,msg)=>R.push({lv,id:p.id,type,msg,src:p.src,tgt:p.tgt});
+ const norm=s=>s.trim().replace(/\s+/g," ");
+ P.forEach(p=>{const s=p.src,t=p.tgt;
+  if(!t.trim()){add("w",p,"未翻訳","訳文が空です");return}
+  if(norm(s)===norm(t)&&/[A-Za-z\u3040-\u30ff\u4e00-\u9fff]{2}/.test(s))add("w",p,"未翻訳の疑い","訳文が原文と同じです");
+  GL.G.forEach(g=>{if(!has(s,g.src,opt.cs))return;
+   if(g.tgt.length){const n=count(s,g.src,opt.cs);const got=g.tgt.reduce((a,x)=>a+count(t,x,opt.cs),0);
+    if(got===0)add("e",p,"用語の訳し忘れ","「"+g.src+"」の訳語「"+g.tgt.join("／")+"」が訳文にありません");
+    else if(got<n)add("w",p,"用語の回数","「"+g.src+"」が原文に"+n+"回、訳語は"+got+"回です")}
+   g.bad.forEach(b=>{if(has(t,b,opt.cs))add("e",p,"禁止訳語","「"+g.src+"」の訳に「"+b+"」は使わない指定です")})});
+  GL.ban.forEach(b=>{const rx=termRx(b,opt.cs);let hit=false;
+   // allow when the banned form is part of an allowed longer form (ユーザ inside ユーザー)
+   const allowed=GL.G.flatMap(g=>g.tgt).filter(x=>x!==b&&x.includes(b));let tt=t;allowed.forEach(a=>{tt=tt.split(a).join("\u0000")});
+   if(rx.test(tt))add("e",p,"使わない表記","「"+b+"」が訳文にあります")});
+  if(opt.num){const a=nums(s),b=nums(t);const d=diffMs(a,b);
+   if(d.miss.length||d.extra.length){const soft=KANJI.test(t)||KANJI.test(s)||/\b(one|two|three|four|five|six|seven|eight|nine|ten|first|second|third|half|dozen|hundred|thousand|million)\b/i.test(s+t);
+    add(soft?"w":"e",p,"数字の違い",(d.miss.length?"訳文にない数字："+d.miss.join("、"):"")+(d.miss.length&&d.extra.length?"／":"")+(d.extra.length?"訳文にだけある数字："+d.extra.join("、"):"")+(soft?"（漢数字や言葉での書き換えがあるかもしれません）":""))}}
+  if(opt.tag){const d=diffMs(tags(s),tags(t));if(d.miss.length||d.extra.length)add("e",p,"タグ・プレースホルダ",(d.miss.length?"訳文にない："+d.miss.join(" "):"")+(d.miss.length&&d.extra.length?"／":"")+(d.extra.length?"訳文にだけある："+d.extra.join(" "):""))}
+  if(/^\s|\s$/.test(t)!==/^\s|\s$/.test(s)||/ {2,}/.test(t)&&!/ {2,}/.test(s))add("i",p,"空白","先頭・末尾の空白、または連続した空白が原文と違います")});
+ if(opt.cons){const bySrc={},byTgt={};P.forEach(p=>{if(!p.tgt.trim())return;const k=norm(p.src),v=norm(p.tgt);(bySrc[k]=bySrc[k]||new Map()).set(v,(bySrc[k].get(v)||[]).concat(p.id));(byTgt[v]=byTgt[v]||new Map()).set(k,(byTgt[v].get(k)||[]).concat(p.id))});
+  Object.keys(bySrc).forEach(k=>{const m=bySrc[k];if(m.size>1){const v=[...m.entries()];R.push({lv:"w",id:v.map(x=>x[1].join(",")).join(" / "),type:"訳ゆれ",msg:"同じ原文に"+m.size+"通りの訳があります",src:k,tgt:v.map(x=>"・"+x[0]).join("\n")})}});
+  Object.keys(byTgt).forEach(v=>{const m=byTgt[v];if(m.size>1){const s=[...m.entries()];R.push({lv:"i",id:s.map(x=>x[1].join(",")).join(" / "),type:"同じ訳文",msg:"違う原文に同じ訳文がついています（意図どおりか確認）",src:s.map(x=>"・"+x[0]).join("\n"),tgt:v})}})}
+ return R}
+let LAST=[];
+function readFile(inp,ta){inp.addEventListener("change",()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{ta.value=r.result};r.readAsText(f,"utf-8")})}
+if(typeof document!=="undefined"){
+readFile(document.getElementById("fp"),document.getElementById("pairs"));readFile(document.getElementById("fg"),document.getElementById("gloss"));
+document.getElementById("go").onclick=()=>{const out=document.getElementById("out");
+ let pt=document.getElementById("pairs").value,gt=document.getElementById("gloss").value;
+ if(!pt.trim()){pt=document.getElementById("pairs").placeholder.split("\n").slice(1).join("\n");gt=gt.trim()?gt:document.getElementById("gloss").placeholder.split("\n").slice(1).join("\n");out.innerHTML='<p class="i">入力が空なので、例のデータでチェックしました。</p>'}else out.innerHTML="";
+ const P=parsePairs(pt),GL=parseGloss(gt);
+ const opt={cs:document.getElementById("optCase").checked,num:document.getElementById("optNum").checked,tag:document.getElementById("optTag").checked,cons:document.getElementById("optCons").checked};
+ const R=check(P,GL,opt);LAST=R;document.getElementById("csv").disabled=!R.length;
+ const ne=R.filter(r=>r.lv==="e").length,nw=R.filter(r=>r.lv==="w").length;
+ let h='<div class="res">対訳 '+P.length+' 組、用語 '+GL.G.length+' 語（使わない表記 '+GL.ban.length+'）で確認しました。<span class="e">エラー '+ne+'</span>、<span class="w">注意 '+nw+'</span>、参考 '+(R.length-ne-nw)+'。'+(R.length?'':'問題は見つかりませんでした。')+'</div>';
+ if(R.length){const ord={e:0,w:1,i:2};R.sort((x,y)=>ord[x.lv]-ord[y.lv]);
+  h+='<table><tr><th>種類</th><th>位置</th><th>内容</th><th>原文</th><th>訳文</th></tr>';
+  R.forEach(r=>{h+='<tr><td class="'+r.lv+'">'+esc(r.type)+'</td><td>'+esc(r.id)+'</td><td>'+esc(r.msg)+'</td><td>'+esc(r.src).replace(/\n/g,"<br>")+'</td><td>'+esc(r.tgt).replace(/\n/g,"<br>")+'</td></tr>'});h+='</table>'}
+ out.innerHTML+=h};
+document.getElementById("csv").onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const L={e:"エラー",w:"注意",i:"参考"};
+ const csv="\uFEFF"+["レベル,種類,位置,内容,原文,訳文"].concat(LAST.map(r=>[L[r.lv],r.type,r.id,r.msg,r.src,r.tgt].map(q).join(","))).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="yougo-check.csv";a.click()};
+}
+if(typeof module!=="undefined")module.exports={parsePairs,parseGloss,check,nums,tags};
+</script>
+</body>
+</html>
