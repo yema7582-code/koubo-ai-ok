@@ -10,6 +10,7 @@
 - [MTPE単価の時給換算チェッカー](https://yema7582-code.github.io/koubo-ai-ok/mtpe-calc.html): 機械翻訳ポストエディットの「通常単価の○%」を、処理速度・マッチ率の割引表・チェック時間から実質時給に直し、今の時給を保つ処理速度と最低の割合を出す。
 - [小説コンテスト 企画書・あらすじチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kikakusho-check.html): タイトル・キャッチコピー・あらすじの文字数、結末を伏せたあらすじ、固有名詞の多さ、主人公の登場位置を応募前に確認
 - [ゲーム不具合報告書（バグレポート）チェッカー＆日英整形](https://yema7582-code.github.io/koubo-ai-ok/bug-report.html)
+- [自動採点つき小テスト作成](https://yema7582-code.github.io/koubo-ai-ok/kotae-quiz.html): 1行1問の問題と答えから、ブラウザ内で採点される単体HTMLの小テストを作成（記述・選択、別解、表記ゆれ許容、解き直し、送信なし）
 - [ネットショップ問い合わせ 返信テンプレ＆AIチャット用FAQ作成](https://yema7582-code.github.io/koubo-ai-ok/ec-toiawase.html)
 - [Google口コミ返信 下書きチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kuchikomi-henshin.html)
 - [内容証明 字数・行数チェック＆謄本レイアウト・料金計算](https://yema7582-code.github.io/koubo-ai-ok/naiyo-shomei.html)

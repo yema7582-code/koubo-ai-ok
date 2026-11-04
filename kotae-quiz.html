@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自動採点つき小テスト作成（1つのHTMLファイル・別解OK・ひらがな/カタカナ・全角半角のゆれを許容）｜無料</title>
+<meta name="description" content="問題と答えを1行ずつ貼るだけで、ブラウザで解いてその場で採点される小テストを1つのHTMLファイルとして保存できます。記述・選択問題、別解、全角半角・ひらがなカタカナ・大文字小文字・空白のゆれの許容、問題の並べ替え、まちがえた問題だけ解き直し。サーバー不要、オフライン可、送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kotae-quiz.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}label{display:inline-block;margin:4px 14px 4px 0}
+textarea{width:100%;height:220px;font-family:inherit;font-size:14px}input[type=text]{width:22em}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.err{color:#b00}iframe{width:100%;height:520px;border:1px solid #bbb;border-radius:6px}
+code{background:#f3f3f3;padding:0 4px}
+</style>
+</head>
+<body>
+<h1>自動採点つき小テスト作成（1つのHTMLファイル）</h1>
+<p>問題と答えを1行に1問ずつ書くと、ブラウザで解いて「採点する」を押すとその場で丸つけされる小テストができます。できたファイルは1つのHTMLだけなので、メールやLINE、Googleクラシルーム・Teamsの課題に添付したり、学習用タブレットに入れてオフラインで使えます。答えはどこにも送信されません。</p>
+<p class="note">書き方：<code>問題 ｜ 正解 ｜ 別解（／で区切る） ｜ 選択肢のまちがい（／で区切る）</code><br>
+区切りは「｜」「|」タブのどれでも。3つめ・4つめは省略できます。4つめを書くと選択問題（選択肢は毎回まぜます）、書かなければ答えを入力する問題になります。<code>#</code>で始まる行と空行は無視します。</p>
+<textarea id="src"># 例：社会（都道府県庁所在地）
+北海道の道庁所在地は？｜札幌市｜札幌／さっぽろ
+愛媛県の県庁所在地は？｜松山市｜松山
+日本でいちばん面積が大きい湖は？｜琵琶湖｜びわ湖／びわこ
+1 + 2 × 3 = ?｜7
+「water」の意味は？｜水｜みず
+日本の首都は？｜東京｜｜大阪／京都／名古屋</textarea>
+<div>
+<label>タイトル <input type="text" id="ttl" value="小テスト"></label>
+<label><input type="checkbox" id="kana" checked> ひらがな・カタカナを同じとみなす</label>
+<label><input type="checkbox" id="wide" checked> 全角・半角、大文字・小文字を同じとみなす</label>
+<label><input type="checkbox" id="sp" checked> 空白・句読点を無視</label>
+<label><input type="checkbox" id="shuf"> 問題の順番をまぜる</label>
+<label><input type="checkbox" id="show" checked> 採点後に正解を表示</label>
+<label>合格ライン <input type="number" id="pass" value="80" min="0" max="100" style="width:4em">%</label>
+</div>
+<button id="mk">作る（下で試せます）</button><button id="dl">HTMLファイルを保存</button>
+<div id="msg"></div>
+<iframe id="pv" title="できた小テストの試し画面"></iframe>
+<h2>使い方のヒント</h2>
+<ul>
+<li>漢字で書かせたい問題は「ひらがな・カタカナを同じとみなす」を外すか、別解にひらがなを入れないでください（ひらがなの答えは漢字の正解とは一致しません）。</li>
+<li>単位や「市」の有無で迷う問題は、別解に両方書いておくと丸になります。数字は全角・半角どちらでも採点できます。</li>
+<li>採点は解く人のブラウザの中だけで行うので、答えはファイルの中に入っています。成績をつける本番テストではなく、宿題・復習・自習用に使ってください。</li>
+</ul>
+<p><a href="./">AI利用OKの公募まとめ（トップ）</a> ／ <a href="keisan-drill.html">計算ドリル作成</a> ／ <a href="kanji-sheet.html">漢字練習シート作成</a> ／ <a href="rubric.html">ルーブリック作成</a></p>
+<p style="font-size:13px">教材づくりのご相談：shinji-work@mail.grokbot.com</p>
+<script>
+function ck(i){return document.getElementById(i).checked}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function parse(t){const qs=[],errs=[];t.split(/\r?\n/).forEach((l,i)=>{if(!l.trim()||/^\s*#/.test(l))return;const c=l.split(/[｜|\t]/).map(s=>s.trim());
+if(c.length<2||!c[0]||!c[1]){errs.push(`${i+1}行目：問題と正解の間に「｜」がありません`);return}
+const sp=s=>(s||'').split(/[／\/]/).map(x=>x.trim()).filter(Boolean);
+qs.push({q:c[0],a:c[1],alt:sp(c[2]),wrong:sp(c[3])})});return{qs,errs}}
+function build(){const {qs,errs}=parse(document.getElementById('src').value);const m=document.getElementById('msg');
+if(errs.length||!qs.length){m.innerHTML='<p class="err">'+(errs.length?errs.map(esc).join('<br>'):'問題がありません')+'</p>';return null}
+const opt={kana:ck("kana"),wide:ck("wide"),sp:ck("sp"),shuf:ck("shuf"),show:ck("show"),pass:+document.getElementById('pass').value||0};
+const title=document.getElementById('ttl').value||'小テスト';
+const nmc=qs.filter(q=>q.wrong.length).length;
+m.innerHTML=`<p>${qs.length}問（入力 ${qs.length-nmc}問・選択 ${nmc}問）のテストを作りました。下で試してから保存してください。</p>`;
+const data=JSON.stringify({title,opt,qs}).replace(/</g,'\\u003c');
+return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><style>body{font-family:system-ui,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:760px;margin:0 auto;padding:14px;line-height:1.7}.q{border-bottom:1px solid #ddd;padding:10px 0}input[type=text]{font-size:16px;padding:4px;width:min(18em,90%)}button{font-size:16px;padding:6px 16px;margin:6px 6px 0 0}.ok{color:#080;font-weight:bold}.ng{color:#c00;font-weight:bold}.sc{font-size:1.4em;font-weight:bold}label{display:block}</style></head><body><h1 id="t"></h1><div id="name">なまえ <input type="text" id="nm" style="width:10em"></div><form id="f"></form><button id="g">採点する</button><button id="r" hidden>まちがえた問題だけもう一度</button><button id="all" hidden>はじめから</button><div id="res"></div><p style="font-size:12px;color:#777">自動採点つき小テスト作成で作成（https://yema7582-code.github.io/koubo-ai-ok/kotae-quiz.html）</p><script>
+const D=${data};document.getElementById('t').textContent=D.title;document.title=D.title;
+function norm(s){s=String(s);if(D.opt.wide)s=s.normalize('NFKC').toLowerCase();if(D.opt.kana)s=s.replace(/[\\u30a1-\\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));if(D.opt.sp)s=s.replace(/[\\s、。，．,.!！?？・「」『』（）()]/g,'');return s.trim()}
+function sh(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function e(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+let cur=[];
+function render(list){cur=D.opt.shuf?sh(list):list.slice();const f=document.getElementById('f');f.innerHTML=cur.map((q,i)=>{let h='<div class="q"><div>'+(i+1)+'. '+e(q.q)+'</div>';
+if(q.wrong.length){h+=sh([q.a].concat(q.wrong)).map(c=>'<label><input type="radio" name="q'+i+'" value="'+e(c)+'"> '+e(c)+'</label>').join('')}else h+='<input type="text" name="q'+i+'" autocomplete="off">';
+return h+'<div class="fb" id="fb'+i+'"></div></div>'}).join('');document.getElementById('res').innerHTML='';document.getElementById('g').hidden=false;document.getElementById('r').hidden=true;document.getElementById('all').hidden=true}
+function grade(){let ok=0;const wrong=[];cur.forEach((q,i)=>{const el=q.wrong.length?document.querySelector('input[name=q'+i+']:checked'):document.querySelector('input[name=q'+i+']');const v=el?el.value:'';
+const good=v!==''&&[q.a].concat(q.alt).some(a=>norm(a)===norm(v));if(good)ok++;else wrong.push(q);
+document.getElementById('fb'+i).innerHTML=good?'<span class="ok">○ 正解</span>':'<span class="ng">× </span>'+(D.opt.show?'正解：'+e(q.a)+(q.alt.length?'（'+q.alt.map(e).join('、')+' も可）':''):'');
+document.querySelectorAll('input[name=q'+i+']').forEach(x=>x.disabled=true)});
+const p=Math.round(ok/cur.length*100);const nm=document.getElementById('nm').value;
+document.getElementById('res').innerHTML='<p class="sc">'+e(nm?nm+'さん ':'')+ok+' / '+cur.length+' 問 正解（'+p+'%）'+(p>=D.opt.pass?' 合格':'')+'</p><p>'+new Date().toLocaleString('ja-JP')+'</p>';
+document.getElementById('g').hidden=true;document.getElementById('all').hidden=false;window._wrong=wrong;document.getElementById('r').hidden=!wrong.length}
+document.getElementById('g').onclick=grade;document.getElementById('r').onclick=()=>render(window._wrong);document.getElementById('all').onclick=()=>render(D.qs);
+document.getElementById('f').onsubmit=ev=>ev.preventDefault();render(D.qs);
+<\/script></body></html>`}
+let last=null;
+document.getElementById('mk').onclick=()=>{last=build();if(last)document.getElementById('pv').srcdoc=last};
+document.getElementById('dl').onclick=()=>{last=build();if(!last)return;document.getElementById('pv').srcdoc=last;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([last],{type:'text/html'}));a.download=(document.getElementById('ttl').value||'quiz').replace(/[\\/:*?"<>|]/g,'_')+'.html';a.click()};
+document.getElementById('mk').click();
+</script>
+</body>
+</html>
