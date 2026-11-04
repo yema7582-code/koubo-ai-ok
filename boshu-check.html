@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フリーランス募集文チェッカー（フリーランス法12条 的確表示の6項目）＆怪しい募集の見分け｜無料・登録不要</title>
+<meta name="description" content="業務委託・フリーランスの募集文（求人サイト、SNS、案件メール）を貼るだけで、厚生労働省の通達で必須とされた6項目（名称・住所・連絡先・業務の内容・場所・報酬）がそろっているか、報酬が「見合い」だけになっていないか、いつ時点の情報か書いてあるかを確認。闇バイトによくある言い回しも警告。足りない項目を埋めた募集文のひな形も作れます。ブラウザ内で処理、送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/boshu-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.12em;border-left:5px solid #2a7;padding-left:8px;margin-top:28px}
+textarea{width:100%;height:190px;font-family:inherit;font-size:14px}input[type=text]{width:100%;box-sizing:border-box;padding:4px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.ng{color:#b00}.ok{color:#075}.mid{color:#a60}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+.out{background:#f6faf8;padding:10px 12px;border-radius:8px;white-space:pre-wrap}label{display:block;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>フリーランス募集文チェッカー（フリーランス法12条・的確表示）</h1>
+<p>業務委託でフリーランスを募集する文（求人サイト、SNS投稿、SESの案件メール、クラウドソーシングの依頼文）を貼り付けてください。厚生労働省の令和6年12月18日付の通達で「1つでも欠けると誤解を生じさせる表示になる」とされた6項目がそろっているかを確認します。応募する側が<strong>怪しい募集を見分ける</strong>のにも使えます。入力はこのページの中だけで処理し、どこにも送信しません。</p>
+<p class="note">6項目：①募集する者の氏名・名称 ②住所（所在地） ③連絡先 ④業務の内容 ⑤業務に従事する場所 ⑥報酬。<br>報酬は「1件1,500円〜」「月40万円〜（要相談）」のような目安でよいとされていますが、「スキル見合い」「応相談」だけでは不十分です。また、いつ時点の情報かを明らかにし、募集を終えたら速やかに消すことが指針で求められています。これは機械的な目安で、法的な判断ではありません。</p>
+
+<h2>1. 募集文を貼り付け</h2>
+<textarea id="src" placeholder="例）【急募】Java開発 高単価！ 場所：都内 単価：スキル見合い 期間：長期"></textarea>
+<button id="run">チェックする</button><button id="sample">悪い例を入れる</button><button id="sample2">良い例を入れる</button>
+<div id="res"></div>
+
+<h2>2. 足りない項目を埋めて募集文を作る</h2>
+<label>募集する者の名称<input type="text" id="f_name" placeholder="株式会社〇〇／屋号 〇〇"></label>
+<label>住所（所在地）<input type="text" id="f_addr" placeholder="東京都港区〇〇1-2-3"></label>
+<label>連絡先（電話・メール）<input type="text" id="f_tel" placeholder="03-0000-0000／info@example.co.jp"></label>
+<label>業務の内容（成果物・工程・必要なスキル）<input type="text" id="f_work" placeholder="ECサイト商品説明文の作成（1本800字、月20本）／SEOライティング経験1年以上"></label>
+<label>業務の場所・期間・時間<input type="text" id="f_place" placeholder="フルリモート／2026年12月1日〜2027年3月31日（更新あり）"></label>
+<label>報酬（金額・幅・支払期日・方法）<input type="text" id="f_pay" placeholder="1本4,000円（税込）／月末締め翌月20日払い・銀行振込（手数料当社負担）"></label>
+<label>契約の形・解除の条件など（任意）<input type="text" id="f_other" placeholder="業務委託（請負）契約／中途解除は30日前に予告"></label>
+<button id="gen">募集文を作る</button><button id="copy">コピー</button>
+<div id="gout" class="out"></div>
+
+<p style="margin-top:28px;font-size:13px">参考：厚生労働省「特定受託事業者に係る取引の適正化等に関する法律」第12条、同指針、令和6年12月18日付通達（募集情報の6項目）。闇バイトの警告語は警察庁・各都道府県警の注意喚起でよく挙がる表現をもとにしています。ご意見・作成代行の相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ。<a href="./">ほかの無料ツール</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const CHECKS=[
+ {k:'名称',re:[/株式会社|有限会社|合同会社|一般社団法人|\(株\)|（株）|屋号|事務所|社名|会社名|運営(者|会社)|発注者|募集者|代表/]},
+ {k:'住所',re:[/(東京都|北海道|(京都|大阪)府|..?.?県)[^\s、。]{1,20}(市|区|町|村|郡)/,/〒?\d{3}-\d{4}/,/所在地|住所/]},
+ {k:'連絡先',re:[/0\d{1,4}-\d{1,4}-\d{3,4}/,/[\w.+-]+@[\w-]+\.[\w.]+/,/(TEL|Tel|電話|お問い?合わせ|連絡先|メール)[:：\s]/]},
+ {k:'業務の内容',re:[/業務(の)?内容|仕事内容|作業内容|依頼内容|内容[:：]|開発|制作|作成|入力|翻訳|ライティング|設計|テスト|デザイン|運用|サポート/]},
+ {k:'業務の場所',re:[/場所|勤務地|作業場所|リモート|在宅|オンライン|駅|出社|常駐|現地/]},
+ {k:'報酬',re:[/報酬|単価|月額|時給|日給|1件|１件|円|万円|\d+万/]}
+];
+const VAGUE=/見合い|応相談|要相談|相談に応じ|スキルに応じ|経験に応じ/;
+const AMOUNT=/\d[\d,，]*\s*(円|万円|万)|[¥￥]\s*\d/;
+const DATE=/(20\d\d|令和\s*\d+)\s*年\s*\d+\s*月|\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2}|時点|掲載日|更新日/;
+const RED=[
+ [/即日|当日払い|日払い.*高額|高額報酬|高収入|1日\s*\d+万|日給\s*[3-9]\d?万|簡単.*高収入|誰でもできる.*万/,'「即日・高額・誰でも」型の報酬の強調'],
+ [/荷物.*(受け取|運|届け)|受け取り.*荷物|運び|受け子|出し子|回収(する|の)?(だけ|のみ)|現金.*(回収|受け取)|カード.*受け取/,'荷物や現金・カードの受け取り・運搬'],
+ [/テレグラム|Telegram|シグナル|Signal|ワイヤー|Wire|秘匿|DMで(詳細|連絡)|詳細は\s*DM|LINE.*のみ/,'連絡が匿名性の高いアプリやDMだけ'],
+ [/身分証.*(写真|画像|送)|免許証.*(写真|画像|送)|顔写真.*送|家族.*(情報|連絡先)|住所.*家族/,'身分証・家族の情報を先に送らせる'],
+ [/ホワイト案件|グレー|闇|裏バイト|叩き|タタキ|飛ばし|口座.*(貸|売|譲)|携帯.*(契約|名義)/,'口座・携帯の名義貸しや隠語'],
+ [/登録料|保証金|初期費用|教材費.*(必要|負担)|先に.*(振込|支払)/,'応募者が先にお金を払う']
+];
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function check(t){
+ const rows=CHECKS.map(c=>({k:c.k,hit:c.re.some(r=>r.test(t))}));
+ const pay=rows.find(r=>r.k==='報酬');
+ const hasAmt=AMOUNT.test(t), vague=VAGUE.test(t);
+ if(pay.hit&&!hasAmt) pay.hit=false;
+ const issues=[];
+ if(vague&&!hasAmt) issues.push(['ng','報酬が「見合い・応相談」などだけで金額がありません。目安の金額か幅（例：月50万〜70万円）を書いてください。']);
+ else if(vague) issues.push(['mid','「応相談」などの表現がありますが金額もあるので、目安としては足ります。']);
+ if(!DATE.test(t)) issues.push(['mid','いつ時点の募集か（掲載日・更新日）が見当たりません。「※2026年11月5日時点の募集情報です」のように書くのが指針の求めです。']);
+ if(!/支払|払い|振込|締め/.test(t)) issues.push(['mid','支払期日・支払方法の記載がありません（必須6項目ではありませんが、書くのが望ましい事項です）。']);
+ if(!/期間|〜|～|まで|長期|短期|単発/.test(t)) issues.push(['mid','期間の記載がありません（書くのが望ましい事項です）。']);
+ const reds=RED.filter(r=>r[0].test(t)).map(r=>r[1]);
+ return {rows,issues,reds,missing:rows.filter(r=>!r.hit).map(r=>r.k)};
+}
+function render(t){
+ if(!t.trim()){$('res').innerHTML='<p class="ng">募集文を入れてください。</p>';return}
+ const r=check(t);
+ let h='<table><tr><th>必須6項目</th><th>判定</th></tr>'+r.rows.map(x=>`<tr><td>${x.k}</td><td class="${x.hit?'ok':'ng'}">${x.hit?'あり（と思われる）':'見当たらない'}</td></tr>`).join('')+'</table>';
+ h+= r.missing.length?`<p class="ng"><b>${r.missing.length}項目が欠けています（${r.missing.join('・')}）。</b>この状態だと12条の「誤解を生じさせる表示」にあたるおそれがあります。</p>`:'<p class="ok"><b>6項目はそろっているようです。</b></p>';
+ h+=r.issues.map(i=>`<p class="${i[0]}">・${i[1]}</p>`).join('');
+ if(r.reds.length) h+=`<div class="note"><b class="ng">怪しい募集によくある特徴：</b><br>${r.reds.map(esc).join('<br>')}<br>応募する側の方は、会社名・住所・電話番号を自分で調べて実在を確かめ、身分証や家族の情報は送らないでください。不安なときは警察相談専用電話 #9110 へ。</div>`;
+ $('res').innerHTML=h;
+}
+function today(){const d=new Date();return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`}
+function gen(){
+ const v=id=>$(id).value.trim()||'（未記入）';
+ let s=`※${today()}時点の募集情報です\n\n■募集者：${v('f_name')}\n■所在地：${v('f_addr')}\n■連絡先：${v('f_tel')}\n■業務の内容：${v('f_work')}\n■場所・期間：${v('f_place')}\n■報酬：${v('f_pay')}`;
+ if($('f_other').value.trim()) s+=`\n■契約・その他：${$('f_other').value.trim()}`;
+ s+='\n\n募集を終了・変更したときは、この掲載を速やかに削除・更新します。';
+ const miss=['f_name','f_addr','f_tel','f_work','f_place','f_pay'].filter(id=>!$(id).value.trim()).length;
+ $('gout').textContent=s+(miss?`\n\n【注意】必須項目のうち${miss}つが未記入です。`:'');
+}
+$('run').onclick=()=>render($('src').value);
+$('sample').onclick=()=>{$('src').value='【急募】Java開発 高単価！\n場所：都内\n単価：スキル見合い\n期間：長期\n詳細はDMで。';render($('src').value)};
+$('sample2').onclick=()=>{$('src').value='件名：【フリーランス募集】Java開発（業務委託・準委任）\n※2026年10月1日時点の募集情報です\n■業務の内容：金融系Webシステムの詳細設計〜テスト\n■場所：東京都港区（田町駅）／週2日リモート可\n■期間：2026年10月19日〜12月末\n■報酬：月65万〜80万円（精算140〜180h）\n■支払い：月末締め翌月末払い\n株式会社〇〇 営業部\n東京都港区芝浦1-2-3\nTEL：03-0000-0000 Mail：sales@example.co.jp';render($('src').value)};
+$('gen').onclick=gen;
+$('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('gout').textContent)};
+if(typeof module!=='undefined')module.exports={check};
+</script>
+</body>
+</html>

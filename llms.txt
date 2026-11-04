@@ -10,6 +10,7 @@
 - [MTPE単価の時給換算チェッカー](https://yema7582-code.github.io/koubo-ai-ok/mtpe-calc.html): 機械翻訳ポストエディットの「通常単価の○%」を、処理速度・マッチ率の割引表・チェック時間から実質時給に直し、今の時給を保つ処理速度と最低の割合を出す。
 - [小説コンテスト 企画書・あらすじチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kikakusho-check.html): タイトル・キャッチコピー・あらすじの文字数、結末を伏せたあらすじ、固有名詞の多さ、主人公の登場位置を応募前に確認
 - [ゲーム不具合報告書（バグレポート）チェッカー＆日英整形](https://yema7582-code.github.io/koubo-ai-ok/bug-report.html)
+- [フリーランス募集文チェッカー](https://yema7582-code.github.io/koubo-ai-ok/boshu-check.html): 業務委託の募集文がフリーランス法12条の必須6項目（名称・住所・連絡先・業務内容・場所・報酬）を満たすか、掲載日の有無、闇バイトによくある表現を確認し、募集文ひな形を作成
 - [飲食料品 消費税1%対応チェッカー](https://yema7582-code.github.io/koubo-ai-ok/shokuhin-1pct.html): 令和9年4月〜の飲食料品1%（法案段階）に向けた価格表の一括換算、経過措置8%判定、税率混在の請求書の端数処理、免税事業者の還付目安
 - [自動採点つき小テスト作成](https://yema7582-code.github.io/koubo-ai-ok/kotae-quiz.html): 1行1問の問題と答えから、ブラウザ内で採点される単体HTMLの小テストを作成（記述・選択、別解、表記ゆれ許容、解き直し、送信なし）
 - [ネットショップ問い合わせ 返信テンプレ＆AIチャット用FAQ作成](https://yema7582-code.github.io/koubo-ai-ok/ec-toiawase.html)
