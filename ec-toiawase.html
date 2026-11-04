@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ネットショップ問い合わせ 返信テンプレ＆AIチャット用FAQ作成｜無料</title>
+<meta name="description" content="ネットショップ（Shopify・BASE・STORES・楽天・Amazon等）によく来る問い合わせ（配送状況・届かない・返品交換・不良品・キャンセル・住所変更・領収書・再入荷）への返信テンプレートを、お店のルールから一括作成。AIチャットボットに読ませるFAQ（Markdown）とFAQPage構造化データも出力し、返品特約の書き漏れ（特定商取引法の8日間ルール）も確認します。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ec-toiawase.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+input,select{font-size:1em;max-width:100%}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+li{margin:4px 0}button{font-size:.95em;padding:4px 12px;margin:2px}
+pre{white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>ネットショップ問い合わせ 返信テンプレ＆AIチャット用FAQ作成</h1>
+<p>お店の発送・返品・キャンセルのルールを一度入れると、よく来る問い合わせ8種類への返信テンプレートをまとめて作ります。同じ内容を、AIチャットボット（Shopifyのチャットアプリ・ChatGPTのGPTs等）に読ませるFAQと、商品ページやFAQページに貼れる構造化データ（FAQPage）としても出力します。ルール同士の食い違いや、返品特約の書き漏れも確認します。</p>
+<div class="box">
+<div class="grid">
+<label>ショップ名：<input id="shop" value="" placeholder="例：〇〇ストア"></label>
+<label>担当者名（任意）：<input id="staff" placeholder="例：山田"></label>
+<label>発送までの日数（営業日）：<input id="ship" type="number" min="0" value="2" style="width:5em"></label>
+<label>配送業者：<input id="carrier" value="ヤマト運輸" placeholder="例：ヤマト運輸・日本郵便"></label>
+<label>お届けまでの目安（発送後・日）：<input id="transit" type="number" min="0" value="2" style="width:5em"></label>
+<label>お問い合わせへの返信目安（営業日）：<input id="resp" type="number" min="0" value="1" style="width:5em"></label>
+<label>営業日・時間：<input id="hours" value="平日10時〜17時"></label>
+<label>お客様都合の返品：<select id="ret"><option value="ok">受け付ける</option><option value="ng">受け付けない</option><option value="none">決めていない・表示していない</option></select></label>
+<label>返品の期限（商品到着後・日）：<input id="retdays" type="number" min="0" value="7" style="width:5em"></label>
+<label>お客様都合の返品送料：<select id="retfee"><option value="buyer">お客様負担</option><option value="shop">当店負担</option></select></label>
+<label>キャンセルの受付：<select id="cancel"><option value="before">発送準備に入る前まで</option><option value="beforeship">発送前まで</option><option value="ng">ご注文後は不可</option></select></label>
+<label>住所変更：<select id="addr"><option value="before">発送前なら当店で変更</option><option value="carrier">発送後は配送業者で変更をご案内</option><option value="ng">ご注文後は不可</option></select></label>
+<label>領収書：<select id="rcpt"><option value="mypage">マイページからダウンロード</option><option value="mail">ご依頼後にPDFをメール送付</option><option value="none">発行していない</option></select></label>
+<label>再入荷のお知らせ：<select id="restock"><option value="notify">商品ページの「再入荷通知」で受付</option><option value="sns">SNS・メルマガでお知らせ</option><option value="none">未定のためお答えできない</option></select></label>
+<label>不良品・誤配送の連絡期限（到着後・日）：<input id="defdays" type="number" min="0" value="7" style="width:5em"></label>
+<label>文体：<select id="tone"><option value="polite">丁寧（メール）</option><option value="short">簡潔（チャット・モール内メッセージ）</option></select></label>
+</div>
+<button id="go">作成する</button>
+</div>
+<div id="out"></div>
+<h2>使い方のポイント</h2>
+<ul>
+<li>［ ］の部分（注文番号・お名前・追跡番号など）は、送る前に必ず実際の内容に置き換えてください。</li>
+<li>AIチャットボットに読ませるFAQは、返信テンプレートと同じルールから作っているので、人の返信とAIの返信で答えが食い違いません。ルールを変えたら、両方を作り直してください。</li>
+<li>返金・キャンセル・住所変更を<b>AIに自動で実行させる</b>場合は、上のルール（期限・発送状況）を満たすときだけ実行し、それ以外は人に回す設定にしてください。</li>
+</ul>
+<div class="note">通信販売では、返品の可否・条件（返品特約）を広告や商品ページ、最終確認画面に分かりやすく表示していないと、お客様は商品を受け取った日から8日以内なら契約を解除して返品できます（特定商取引法第15条の3。返品送料はお客様負担）。不良品・誤配送は返品特約とは別の話で、通常はお店が対応します。このツールは文例と確認の目安で、法的な助言ではありません。</div>
+<p>EC問い合わせの返信テンプレートづくり、FAQ・AIチャットボット用ナレッジの整備、問い合わせ対応の代行のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。</p>
+<p><a href="index.html">← 無料ツール一覧へ</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function cfg(){const n=id=>Math.max(0,parseInt($(id).value||'0',10)||0);
+  return {shop:$('shop').value.trim()||'［ショップ名］',staff:$('staff').value.trim(),ship:n('ship'),carrier:$('carrier').value.trim()||'配送業者',transit:n('transit'),resp:n('resp'),hours:$('hours').value.trim()||'営業時間内',ret:$('ret').value,retdays:n('retdays'),retfee:$('retfee').value,cancel:$('cancel').value,addr:$('addr').value,rcpt:$('rcpt').value,restock:$('restock').value,defdays:n('defdays'),tone:$('tone').value};}
+function rules(c){ // plain-language answers shared by templates, FAQ and JSON-LD
+  const r={};
+  r.ship=`ご注文（お支払い確認）から${c.ship}営業日以内に${c.carrier}で発送し、発送後はおおむね${c.transit}日でお届けします（地域・天候により前後します）。発送時に追跡番号をメールでお知らせします。`;
+  r.late=`発送のお知らせメールの追跡番号で配送状況をご確認ください。お届け予定日を${c.transit+2}日以上過ぎても届かない場合や、「配達完了」なのに見当たらない場合は、注文番号を添えてご連絡ください。${c.carrier}に調査を依頼します。`;
+  if(c.ret==='ok')r.ret=`お客様のご都合による返品・交換は、商品到着後${c.retdays}日以内・未使用の場合に承ります。返品の送料は${c.retfee==='buyer'?'お客様のご負担':'当店負担'}です。返品の前に、必ず注文番号を添えてご連絡ください。`;
+  else if(c.ret==='ng')r.ret=`お客様のご都合による返品・交換はお受けしておりません（商品ページ・特定商取引法に基づく表記に記載しています）。不良品・誤配送の場合は下記の通り対応します。`;
+  else r.ret=`［返品の可否と期限・送料を決めて記入してください］`;
+  r.def=`商品の破損・不良や、ご注文と違う商品が届いた場合は、到着後${c.defdays}日以内に注文番号と商品の写真を添えてご連絡ください。送料は当店負担で、交換または返金で対応します。`;
+  r.cancel={before:'キャンセルは、発送準備に入る前（発送のお知らせメールの前）まで承ります。準備に入った後は、商品到着後の返品のご案内となります。',beforeship:'キャンセルは発送前まで承ります。発送後は、商品到着後の返品のご案内となります。',ng:'ご注文確定後のキャンセルはお受けしておりません。'}[c.cancel];
+  r.addr={before:'発送前であれば、当店でお届け先を変更できます。注文番号と新しいご住所をお知らせください。',carrier:`発送前であれば当店で変更します。発送後は、追跡番号を使って${c.carrier}のサービスでお届け先の変更をお申し込みください。`,ng:'ご注文確定後のお届け先の変更はお受けしておりません。'}[c.addr];
+  r.rcpt={mypage:'領収書は、マイページの注文履歴からダウンロードできます。宛名はダウンロード時に入力できます。',mail:'領収書は、ご依頼をいただいてからPDFでメールにてお送りします。宛名と但し書きをお知らせください。',none:'恐れ入りますが、当店では領収書を発行しておりません。ご注文確認メールや明細をご利用ください。'}[c.rcpt];
+  r.restock={notify:'再入荷の時期は未定の場合があります。商品ページの「再入荷通知」に登録いただくと、入荷時にメールでお知らせします。',sns:'再入荷が決まりましたら、SNSとメールマガジンでお知らせします。',none:'再入荷の予定は現時点で未定のため、お答えできません。'}[c.restock];
+  r.resp=`お問い合わせには${c.resp}営業日以内にお返事します（営業日・時間：${c.hours}）。`;
+  return r;}
+const TYPES=[['late','配送状況・まだ届かない','注文した商品がまだ届きません。いつ届きますか？'],['ship','発送日の確認','注文した商品はいつ発送されますか？'],['ret','返品・交換（お客様都合）','サイズが合わないので返品・交換できますか？'],['def','不良品・誤配送','届いた商品が壊れていました／違う商品が届きました。'],['cancel','キャンセル','注文をキャンセルしたいです。'],['addr','お届け先の変更','お届け先の住所を変更したいです。'],['rcpt','領収書','領収書はもらえますか？'],['restock','再入荷','売り切れの商品は再入荷しますか？']];
+function tpl(c,r,k,q){
+  const sig=`${c.shop}${c.staff?'　'+c.staff:''}`;
+  const extra={late:'［追跡番号：　　　］で現在の状況を確認しましたところ、［状況］となっております。',ship:'［ご注文番号］のご注文は、［発送予定日］の発送を予定しております。',ret:'',def:'このたびはご迷惑をおかけし、誠に申し訳ございません。',cancel:'［ご注文番号］のご注文について、［キャンセルを承りました／すでに発送準備に入っております］。',addr:'',rcpt:'',restock:''}[k];
+  if(c.tone==='short')return `［お名前］様\nお問い合わせありがとうございます。${extra?'\n'+extra:''}\n${r[k]}\n${sig}`;
+  return `［お名前］様\n\nこのたびは${c.shop}をご利用いただき、誠にありがとうございます。\n${c.staff?c.shop+'の'+c.staff+'でございます。\n':''}\n${k==='def'?'':'お問い合わせの件、ご案内いたします。\n'}${extra?extra+'\n':''}${r[k]}\n\nご不明な点がございましたら、このメールにご返信ください。\n今後とも${c.shop}をよろしくお願いいたします。\n\n${c.shop}\n${c.hours}`;}
+function checks(c){const a=[];const add=(l,m)=>a.push([l,m]);
+  if(c.ret==='none')add('ng','お客様都合の返品の可否を決めて、商品ページ・特定商取引法に基づく表記・注文の最終確認画面に表示してください。表示がないと、商品到着から8日以内の返品（返品送料はお客様負担）を受け付ける必要があります。');
+  else if(c.ret==='ok'&&c.retdays<8)add('mid',`返品期限が到着後${c.retdays}日です。返品特約として表示していれば有効ですが、表示が漏れていると「到着から8日以内」の法定ルールが優先されます。商品ページと最終確認画面にも書いてあるか確認してください。`);
+  else if(c.ret==='ng')add('mid','「返品不可」は、商品ページ・特定商取引法に基づく表記・最終確認画面の3か所に分かりやすく書いてあるか確認してください。不良品・誤配送は返品不可でも対応が必要です。');
+  if(c.cancel==='ng'&&c.ship>=3)add('mid',`発送まで${c.ship}営業日あるのにキャンセル不可だと、問い合わせが増えがちです。「発送準備前まで可」にすると対応が楽になる場合があります。`);
+  if(c.defdays<c.transit)add('ng','不良品の連絡期限が配送日数より短く、届いた時点で期限切れになるおそれがあります。');
+  if(c.ret==='ok'&&c.defdays<c.retdays)add('mid',`不良品の連絡期限（${c.defdays}日）が、お客様都合の返品期限（${c.retdays}日）より短くなっています。お客様には不自然に見えるので揃えるのがおすすめです。`);
+  if(c.resp>=3)add('mid',`返信目安が${c.resp}営業日です。配送の問い合わせは急ぎのことが多いので、1営業日以内を目安にするとクレームになりにくくなります。`);
+  if(c.shop==='［ショップ名］')add('mid','ショップ名が空欄です。');
+  if(!a.length)add('ok','ルール同士の食い違いは見つかりませんでした。');
+  return a;}
+$('go').onclick=()=>{const c=cfg(),r=rules(c);
+  let h='<div class="box"><b>ルールの確認</b><ul>'+checks(c).map(([l,m])=>`<li class="${l}">${esc(m)}</li>`).join('')+'</ul></div>';
+  const all=[];
+  h+='<h2>返信テンプレート</h2>';
+  TYPES.forEach(([k,t],i)=>{const s=tpl(c,r,k);all.push(`■ ${t}\n${s}`);h+=`<details${i===0?' open':''}><summary>${esc(t)}</summary><pre id="t${i}">${esc(s)}</pre><button data-i="${i}" class="cp">コピー</button></details>`;});
+  const md=`# ${c.shop} お問い合わせ対応ルール（AIチャット用）\n\n- 回答はこのルールの範囲だけで行い、分からないことは推測せず「担当者から${c.resp}営業日以内にご連絡します」と案内する。\n- 返金・キャンセル・住所変更は、条件を満たすか確認できない場合は担当者に回す。\n- 注文番号・お名前・ご住所などの個人情報を、ほかのお客様に伝えない。\n\n`+TYPES.map(([k,t,q])=>`## ${q}\n${r[k]}\n`).join('\n')+`\n## お問い合わせへの返信はいつですか？\n${r.resp}\n`;
+  const ld={"@context":"https://schema.org","@type":"FAQPage","mainEntity":TYPES.concat([['resp','','お問い合わせへの返信はいつですか？']]).map(([k,t,q])=>({"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":r[k]}}))};
+  const js='<script type="application/ld+json">\n'+JSON.stringify(ld,null,2)+'\n<\/script>';
+  h+=`<h2>AIチャットボット用FAQ（Markdown）</h2><pre id="md">${esc(md)}</pre><button id="cpm">コピー</button><button id="dlm">.mdで保存</button>`;
+  h+=`<h2>FAQページ用 構造化データ（JSON-LD）</h2><pre id="ld">${esc(js)}</pre><button id="cpl">コピー</button>`;
+  h+=`<p><button id="cpa">返信テンプレートを全部コピー</button></p>`;
+  $('out').innerHTML=h;
+  const cp=t=>navigator.clipboard&&navigator.clipboard.writeText(t);
+  document.querySelectorAll('.cp').forEach(b=>b.onclick=()=>cp($('t'+b.dataset.i).textContent));
+  $('cpm').onclick=()=>cp(md);$('cpl').onclick=()=>cp(js);$('cpa').onclick=()=>cp(all.join('\n\n'));
+  $('dlm').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='faq.md';a.click();};
+};
+</script>
+</body>
+</html>
