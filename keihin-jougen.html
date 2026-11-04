@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>プレゼントキャンペーン 景品の上限チェッカー（一般懸賞・共同懸賞・総付景品・オープン懸賞／景品表示法・無料）</title>
+<meta name="description" content="SNSキャンペーン、購入者抽選、もれなくプレゼント、先着ノベルティなどの企画が、景品表示法の景品規制（一般懸賞・共同懸賞・総付景品）の上限に収まるかを計算します。オープン懸賞かどうかの見分け方つき。ブラウザ内で完結し、入力はどこにも送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/keihin-jougen.html">
+<meta property="og:title" content="プレゼントキャンペーン 景品の上限チェッカー（景品表示法）">
+<meta property="og:url" content="https://yema7582-code.github.io/koubo-ai-ok/keihin-jougen.html">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"プレゼントキャンペーン 景品の上限チェッカー","url":"https://yema7582-code.github.io/koubo-ai-ok/keihin-jougen.html","applicationCategory":"BusinessApplication","operatingSystem":"Any","inLanguage":"ja","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"dateModified":"2026-11-04"}</script>
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.4rem}fieldset{border:1px solid #ddd;border-radius:8px;margin:12px 0;padding:10px 14px}
+legend{font-weight:600}label{display:block;margin:4px 0}input[type=number]{width:11em;padding:4px}
+.res{border-radius:8px;padding:12px;margin:12px 0}.ok{background:#e9f7ee;border:1px solid #9bd3ae}.ng{background:#fdecec;border:1px solid #eea3a3}.info{background:#eef4fb;border:1px solid #a9c4e6}
+.warn{color:#a86b00}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border:1px solid #ddd;padding:6px 8px}th{background:#f4f4f4;text-align:left}
+footer{margin-top:28px;font-size:.85rem;color:#555}
+</style>
+</head>
+<body>
+<h1>プレゼントキャンペーン 景品の上限チェッカー</h1>
+<p>購入者向けの抽選、来店者へのもれなくプレゼント、SNSのフォロー＆リポスト企画などで「この賞品の金額は大丈夫？」を確かめるための計算ツールです。景品表示法の景品規制（一般懸賞・共同懸賞・総付景品）の上限と、規制がかからないオープン懸賞かどうかを判定します。入力はブラウザの中だけで処理します。</p>
+
+<fieldset><legend>1. 応募の条件</legend>
+<label><input type="radio" name="cond" value="buy" checked> 商品の購入やサービスの利用が条件（レシート応募、購入者限定、会員の利用者限定など）</label>
+<label><input type="radio" name="cond" value="visit"> 購入は不要だが、来店（店舗・会場）が条件</label>
+<label><input type="radio" name="cond" value="open"> 購入も来店も不要（Web・SNS・はがき等で誰でも応募できる）</label>
+</fieldset>
+
+<fieldset id="fs-how"><legend>2. 景品の渡し方</legend>
+<label><input type="radio" name="how" value="lot" checked> 抽選・くじ・じゃんけん・クイズの正解者・コンテストの優劣で選ぶ（懸賞）</label>
+<label><input type="radio" name="how" value="all"> 条件を満たした人にもれなく／先着順で渡す（総付景品）</label>
+<label id="lb-joint"><input type="checkbox" id="joint"> 商店街・地域の事業者の相当多数などが共同で行う懸賞（共同懸賞）</label>
+</fieldset>
+
+<fieldset id="fs-num"><legend>3. 金額（税込）</legend>
+<label>取引価額（1回の購入額など。最低価格で考えます）：<input type="number" id="tv" min="0" step="1" value="3000"> 円</label>
+<label id="lb-tv100" class="warn" hidden>来店が条件で購入不要のときは、取引価額は原則100円です（通常の取引の最低価格が明らかに100円を超える業種はその価格）。</label>
+<label>いちばん高い景品1つの価額（市価・税込）：<input type="number" id="maxp" min="0" step="1" value="50000"> 円</label>
+<label class="lot-only">景品の総額：<input type="number" id="total" min="0" step="1" value="300000"> 円</label>
+<label class="lot-only">この懸賞の期間・対象の売上予定総額：<input type="number" id="sales" min="0" step="1" value="20000000"> 円</label>
+</fieldset>
+
+<div id="out" class="res info">入力すると結果が出ます。</div>
+
+<h2>よくある企画の分類</h2>
+<table>
+<tr><th>企画の例</th><th>分類の目安</th></tr>
+<tr><td>Xでフォロー＆リポストした人から抽選（購入不要）</td><td>オープン懸賞（金額の上限なし）</td></tr>
+<tr><td>商品を買ったレシートで応募、抽選で旅行券</td><td>一般懸賞</td></tr>
+<tr><td>購入者全員にオリジナルグッズ</td><td>総付景品</td></tr>
+<tr><td>先着100名の来店者に粗品</td><td>総付景品（取引価額は原則100円）</td></tr>
+<tr><td>商店街の歳末福引</td><td>共同懸賞</td></tr>
+<tr><td>レビュー投稿者から抽選（購入が前提）</td><td>一般懸賞。あわせてステマ規制の表示にも注意</td></tr>
+</table>
+
+<h2>注意点</h2>
+<ul>
+<li>景品の価額は、同じものが市販されていればその通常の購入価格（税込）で見ます。自社商品でも「原価」ではありません。</li>
+<li>総付景品でも、商品の使用に必要な物、見本・宣伝用の物、自店で使える割引券、開店披露・創業記念の記念品などで正常な商慣習の範囲なら、上限の対象外になる場合があります。</li>
+<li>新聞・雑誌・不動産・医療用医薬品などは業種別の告示や公正競争規約があり、上限が異なります。</li>
+<li>購入者だけが当選しやすいなど、実質的に購入が条件になっている「オープン懸賞」は懸賞として扱われるおそれがあります。</li>
+</ul>
+
+<footer>
+<p>出典：消費者庁「景品規制の概要」（一般懸賞・共同懸賞・総付景品の限度額、オープン懸賞の上限撤廃〔平成18年4月〕）、各告示の運用基準。2026年11月4日確認。法律上の助言ではありません。判断に迷う場合は消費者庁や都道府県の景品表示法の窓口に相談してください。</p>
+<p>キャンペーン要項の文面づくり・多言語化のご相談：shinji-work@mail.grokbot.com ／ <a href="./">ほかの無料ツール・公募まとめ</a></p>
+</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const yen=n=>Math.floor(n).toLocaleString('ja-JP')+'円';
+function val(name){return document.querySelector('input[name='+name+']:checked').value}
+function calc(){
+  const cond=val('cond'),how=val('how'),joint=$('joint').checked;
+  $('fs-how').hidden=$('fs-num').hidden=(cond==='open');
+  $('lb-tv100').hidden=(cond!=='visit');
+  $('lb-joint').hidden=(how!=='lot');
+  document.querySelectorAll('.lot-only').forEach(e=>e.hidden=(how!=='lot'));
+  const out=$('out');
+  if(cond==='open'){out.className='res ok';out.innerHTML='<strong>オープン懸賞</strong>に当たる可能性が高く、景品表示法の景品規制（金額の上限）はかかりません（上限1,000万円は平成18年4月に撤廃）。<br>ただし応募に購入・来店が実質的に必要になっていないか、当選者の選び方や個人情報の扱い、景品の表示（「総額」「〇名様」）が正確かは確認してください。';return out}
+  const tv=+$('tv').value||0,maxp=+$('maxp').value||0,total=+$('total').value||0,sales=+$('sales').value||0;
+  let msgs=[],bad=false,kind,maxLimit,totLimit=null;
+  if(how==='all'){kind='総付景品';maxLimit=tv<1000?200:tv*0.2;
+    msgs.push('最高額の上限：'+(tv<1000?'取引価額1,000円未満なので 200円':'取引価額の10分の2 ＝ '+yen(maxLimit)));
+  }else if(joint){kind='共同懸賞';maxLimit=300000;totLimit=sales*0.03;
+    msgs.push('最高額の上限：取引価額にかかわらず 300,000円');msgs.push('総額の上限：売上予定総額の3% ＝ '+yen(totLimit));
+  }else{kind='一般懸賞';maxLimit=tv<5000?tv*20:100000;totLimit=sales*0.02;
+    msgs.push('最高額の上限：'+(tv<5000?'取引価額5,000円未満なので20倍 ＝ '+yen(maxLimit):'取引価額5,000円以上なので 100,000円'));msgs.push('総額の上限：売上予定総額の2% ＝ '+yen(totLimit));}
+  if(maxp>maxLimit){bad=true;msgs.push('<strong>最高額オーバー：</strong>'+yen(maxp)+' ＞ '+yen(maxLimit)+'（'+yen(maxp-maxLimit)+' 超過）。取引価額の条件を上げる、景品を下げる、購入不要のオープン懸賞にする、などを検討してください。')}
+  else msgs.push('最高額：'+yen(maxp)+' は上限内です。');
+  if(totLimit!==null){ if(total>totLimit){bad=true;msgs.push('<strong>総額オーバー：</strong>'+yen(total)+' ＞ '+yen(totLimit)+'。当選数を減らすか、対象期間・商品を広げて売上予定総額の見込みを見直してください。')}
+    else msgs.push('総額：'+yen(total)+' は上限内です。'); if(maxp>total&&total>0)msgs.push('<span class="warn">最高額が総額より大きくなっています。入力を確認してください。</span>')}
+  out.className='res '+(bad?'ng':'ok');
+  out.innerHTML='<strong>'+kind+'</strong>として計算しました（取引価額 '+yen(tv)+'）。<br>'+msgs.join('<br>');
+  return out;
+}
+document.querySelectorAll('input').forEach(e=>e.addEventListener('input',calc));
+document.querySelectorAll('input[name=cond]').forEach(e=>e.addEventListener('change',()=>{if(val('cond')==='visit'&&+$('tv').value>100)$('tv').value=100;calc()}));
+calc();
+</script>
+</body>
+</html>
