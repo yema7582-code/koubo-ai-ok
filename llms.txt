@@ -7,6 +7,7 @@
 - [特定商取引法に基づく表記 記載項目チェッカー](https://yema7582-code.github.io/koubo-ai-ok/tokusho-check.html)
 - [ステマ規制 PR表記チェッカー](https://yema7582-code.github.io/koubo-ai-ok/stema-check.html)
 - [字幕ファイル（SRT/VTT）チェッカー](https://yema7582-code.github.io/koubo-ai-ok/jimaku-check.html): YouTube・講座動画の字幕の読む速さ（文字/秒）、1行の文字数、行数、表示時間、重なり、番号崩れを確認し、タイミングの一括ずらしとSRT⇔VTT変換
+- [MTPE単価の時給換算チェッカー](https://yema7582-code.github.io/koubo-ai-ok/mtpe-calc.html): 機械翻訳ポストエディットの「通常単価の○%」を、処理速度・マッチ率の割引表・チェック時間から実質時給に直し、今の時給を保つ処理速度と最低の割合を出す。
 - [小説コンテスト 企画書・あらすじチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kikakusho-check.html): タイトル・キャッチコピー・あらすじの文字数、結末を伏せたあらすじ、固有名詞の多さ、主人公の登場位置を応募前に確認
 - [ゲーム不具合報告書（バグレポート）チェッカー＆日英整形](https://yema7582-code.github.io/koubo-ai-ok/bug-report.html)
 - [Google口コミ返信 下書きチェッカー](https://yema7582-code.github.io/koubo-ai-ok/kuchikomi-henshin.html)

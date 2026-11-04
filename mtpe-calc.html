@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTPE（機械翻訳ポストエディット）単価の時給換算・受ける前のチェック｜無料</title>
+<meta name="description" content="翻訳会社から「MTPEは通常単価の○%で」と言われたとき、本当の時給がいくらになるかを計算します。文字単価・ワード単価、マッチ率ごとの割引表（CAT）、1時間に処理できる量から時給を出し、今の時給を保つのに必要な処理速度と、受けてよい最低の割合を表示します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/mtpe-calc.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+input[type=number]{width:7em}select{font-size:1em}label{margin-right:14px;display:inline-block}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.92em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}
+.ng{background:#fdecea}.mid{background:#fff8e1}.ok{background:#eef6ee}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+button{font-size:1em;padding:6px 14px;margin:6px 6px 0 0}small{color:#555}
+</style>
+</head>
+<body>
+<h1>MTPE 単価の時給換算チェッカー</h1>
+<p>「今回は機械翻訳のポストエディット（MTPE）なので、通常単価の○%で」と言われたときに、<b>実際の時給がいくらになるか</b>を計算します。あわせて、今の時給を保つには1時間にどれだけ処理する必要があるか、何%未満なら断ったほうがよいかも出します。入力した内容はこのページの中だけで計算し、どこにも送りません。</p>
+
+<div class="box">
+<h2>1. ふだんの翻訳</h2>
+<p>
+<label>単位 <select id="unit"><option value="char">原文1文字あたり（円）</option><option value="word">原文1ワードあたり</option></select></label>
+<label>通貨 <input id="cur" value="円" style="width:4em"></label><br>
+<label>通常の翻訳単価 <input type="number" id="rate" value="10" step="0.1"></label>
+<label>通常の翻訳で1時間に訳せる量 <input type="number" id="tput" value="400"> <span class="u">文字</span></label>
+</p>
+<h2>2. 今回の MTPE の条件</h2>
+<p>
+<label>MTPE の単価は通常の <input type="number" id="pct" value="50"> %</label>
+<label>ポストエディットで1時間に処理できる量（見込み） <input type="number" id="ptput" value="700"> <span class="u">文字</span></label><br>
+<label>案件の分量 <input type="number" id="vol" value="20000"> <span class="u">文字</span></label>
+<label>原文と訳文の両方を読むためのチェック時間（全体に対して） <input type="number" id="qa" value="10"> %</label>
+</p>
+<h2>3. マッチ率ごとの割引（翻訳支援ツールの分析結果がある場合だけ）</h2>
+<p><small>翻訳メモリとの一致率ごとの分量と、支払われる割合を入れます。分量が空なら、この表は使わず「案件の分量」で計算します。</small></p>
+<table id="grid"><tr><th>区分</th><th>分量</th><th>支払われる割合（%）</th><th>処理速度の倍率（MTPE比）</th></tr></table>
+<p><button id="run">計算する</button><button id="reset">初期値に戻す</button></p>
+</div>
+
+<div id="out"></div>
+
+<div class="note">
+<b>読み方のヒント</b><br>
+・MTPE の割合は、軽いポストエディット（意味が通れば良い）で通常の40〜50%、完全なポストエディット（人が訳したのと同じ品質）で70〜90%がよく見られる目安です。完全なポストエディットを軽い方の割合で頼まれていないか、最初に書面で確認しておくと安心です。<br>
+・ポストエディットは「速い翻訳」ではなく、原文と機械訳の両方を読む作業です。疲れやすいぶん、1日の後半は処理速度が落ちることも見込んでおきましょう。<br>
+・機械訳の質が低い、専門性が高い、ファイルが複雑、といった場合は、ワード・文字単価ではなく時間単価で相談するのも手です。
+</div>
+
+<p><small>翻訳・機械翻訳の手直し（日本語・英語・中国語）、用語集づくりのご相談：<a href="mailto:shinji-work@mail.grokbot.com?subject=MTPE%E3%83%BB%E7%BF%BB%E8%A8%B3%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> ／ 用語や数字の訳もれは<a href="yougo-check.html">対訳・用語集チェッカー</a>で確認できます ／ <a href="./">ほかの無料ツール</a></small></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const ROWS=[['101%・コンテキストマッチ',0,0,4],['100%マッチ・繰り返し',0,10,3],['95〜99%',0,30,1.8],['85〜94%',0,60,1.3],['75〜84%',0,100,1],['マッチなし（機械翻訳のみ）',0,100,1]];
+function build(){const g=$('grid');while(g.rows.length>1)g.deleteRow(1);
+ ROWS.forEach((r,i)=>{const tr=g.insertRow();tr.innerHTML='<td>'+r[0]+'</td><td><input type="number" id="v'+i+'" value="'+(r[1]||'')+'" style="width:6em"></td><td><input type="number" id="p'+i+'" value="'+r[2]+'" style="width:5em"></td><td><input type="number" id="s'+i+'" value="'+r[3]+'" step="0.1" style="width:5em"></td>';});}
+const n=v=>{v=parseFloat(v);return isFinite(v)?v:0};
+const f=(x,d=0)=>isFinite(x)?x.toLocaleString('ja-JP',{maximumFractionDigits:d,minimumFractionDigits:d}):'—';
+function calc(){
+ const unit=$('unit').value==='word'?'ワード':'文字';document.querySelectorAll('.u').forEach(e=>e.textContent=unit);
+ const cur=$('cur').value||'',rate=n($('rate').value),tput=n($('tput').value),pct=n($('pct').value)/100,ptput=n($('ptput').value),qa=n($('qa').value)/100;
+ const dec=rate<1?3:rate<10?2:1;
+ const baseHour=rate*tput;
+ // grid or plain
+ let gv=0,pay=0,hours=0;
+ ROWS.forEach((r,i)=>{const v=n($('v'+i).value);if(v>0){gv+=v;pay+=v*rate*pct*n($('p'+i).value)/100;const sp=Math.max(n($('s'+i).value),0.01);hours+=v/(ptput*sp);}});
+ let vol=gv;
+ if(!gv){vol=n($('vol').value);pay=vol*rate*pct;hours=ptput>0?vol/ptput:Infinity;}
+ hours*=1+qa;
+ const hourly=hours>0?pay/hours:0;
+ const ratio=baseHour>0?hourly/baseHour:0;
+ // needed throughput to match base hourly (plain case)
+ const needT=pct>0?tput/pct*(1+qa):Infinity;
+ // minimum pct to match base hourly at given ptput
+ const minPct=ptput>0?tput*(1+qa)/ptput*100:Infinity;
+ const lv=ratio>=1?'ok':ratio>=0.85?'mid':'ng';
+ const msg=ratio>=1?'ふだんの翻訳と同じか、それ以上の時給です。':ratio>=0.85?'ふだんより少し下がります。分量や継続性しだいで判断しましょう。':'ふだんの時給を大きく下回ります。割合か処理速度の前提を見直すか、時間単価での相談を考えましょう。';
+ $('out').innerHTML='<div class="box '+lv+'"><b>MTPE の実質時給：'+f(hourly)+' '+cur+'</b>（ふだんの翻訳は '+f(baseHour)+' '+cur+'／時、比べると '+f(ratio*100)+'%）<br>'+msg+'</div>'+
+ '<table><tr><th>項目</th><th>値</th></tr>'+
+ '<tr><td>対象の分量</td><td>'+f(vol)+' '+unit+(gv?'（マッチ率の表から）':'')+'</td></tr>'+
+ '<tr><td>受け取る金額</td><td>'+f(pay)+' '+cur+'（MTPE単価 '+f(rate*pct,dec)+' '+cur+'／'+unit+'）</td></tr>'+
+ '<tr><td>かかる時間（チェック時間を含む）</td><td>'+f(hours,1)+' 時間（1日6時間なら約 '+f(hours/6,1)+' 日）</td></tr>'+
+ (gv?'':'<tr><td>今の時給を保つのに必要な処理速度</td><td>1時間に '+f(needT)+' '+unit+'（ふだんの '+f(needT/tput,2)+' 倍）</td></tr>')+
+ (gv?'':'<tr><td>この処理速度で、今の時給を保てる最低の割合</td><td>通常単価の '+f(minPct)+' %'+(minPct>100?'（100%でも届きません）':'')+'</td></tr>')+
+ '</table>';
+ return {hourly,baseHour,ratio,needT,minPct,pay,hours};
+}
+$('run').onclick=calc;$('reset').onclick=()=>{build();calc();};
+['unit','rate','tput','pct','ptput','vol','qa','cur'].forEach(id=>$(id).addEventListener('input',calc));
+build();calc();
+</script>
+</body>
+</html>
