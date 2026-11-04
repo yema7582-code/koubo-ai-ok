@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>個人事業税 かかる？いくら？チェッカー（70業種の税率・事業主控除290万円の月割・青色申告特別控除の足し戻し／フリーランス向け・無料）</title>
+<meta name="description" content="フリーランス・個人事業主の個人事業税を試算します。法定70業種の税率（5%・4%・3%）、事業主控除290万円と開業・廃業年の月割額、青色申告特別控除の足し戻し、白色の専従者控除の上限、繰越損失を反映し、8月・11月の納付額の目安まで出します。翻訳・ライター・プログラマーなど判定が分かれる仕事の注意つき。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kojin-jigyouzei.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input[type=number]{font-size:1.05em;padding:4px;width:9em}select{font-size:1em;padding:3px;max-width:100%}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border-bottom:1px solid #eee;padding:5px;text-align:left;vertical-align:top}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.big{font-size:1.3em;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>個人事業税 かかる？いくら？チェッカー</h1>
+<p>個人事業税は、所得税の確定申告をすれば別に申告しなくてよい代わりに、夏に突然都道府県から納税通知書が届く税金です。<strong>法定70業種に当たるか</strong>、<strong>事業主控除290万円（開業・廃業の年は月割）</strong>、<strong>青色申告特別控除（65万円など）は差し引けない</strong>点で、所得税の感覚とずれます。ここでは業種と金額を入れるだけで、かかるかどうかと税額の目安を出します。入力はこのページの中だけで計算し、どこにも送信しません。</p>
+
+<div class="box">
+<label>主な業種
+<select id="gyo"></select></label>
+<div id="gyonote" class="note" style="display:none"></div>
+
+<label>事業所得の金額（確定申告書 第一表の事業所得。青色申告特別控除を引いた後の額）<br><input type="number" id="jigyo" value="4000000"> 円</label>
+<label><input type="checkbox" id="fudoChk"> 不動産所得も事業税の対象（都道府県の認定基準を満たす不動産貸付業・駐車場業に当たる）</label>
+<label>不動産所得の金額<br><input type="number" id="fudo" value="0"> 円</label>
+<label>申告の種類
+<select id="aoiro"><option value="65">青色（65万円控除）</option><option value="55">青色（55万円控除）</option><option value="10">青色（10万円控除）</option><option value="0">白色</option></select></label>
+<label>今年事業を行った月数（開業・廃業の年は暦の月数、1か月未満の端数は1か月）
+<select id="tsuki"></select></label>
+
+<details><summary>専従者・損失の繰越など（該当する人だけ）</summary>
+<label>所得税で差し引いた事業専従者給与（青色）／専従者控除（白色）の合計<br><input type="number" id="senju" value="0"> 円</label>
+<label>白色の専従者の人数：配偶者 <select id="wSp"><option>0</option><option>1</option></select> 人、それ以外 <input type="number" id="wOth" value="0" style="width:4em"> 人</label>
+<label>前年以前3年間の繰越損失（事業税で控除できる額）<br><input type="number" id="kuri" value="0"> 円</label>
+<label>事業用資産（機械・車両・備品など。土地・建物は除く）の譲渡損失<br><input type="number" id="joto" value="0"> 円</label>
+</details>
+</div>
+
+<div id="out"></div>
+
+<div class="note">
+<p><strong>計算式</strong>（東京都主税局・大阪府などの案内による）：（事業所得＋不動産所得＋所得税の専従者給与（控除）額－事業税の専従者給与（控除）額＋青色申告特別控除額－繰越損失など－事業主控除）×税率。課税標準は1,000円未満、税額は100円未満を切り捨てています。</p>
+<p>業種の判定は事務所のある都道府県が実態で決めます。同じ「プログラマー」「翻訳」でも、契約や働き方で扱いが分かれることがあります。このツールは目安で、税務相談ではありません。迷うときは都道府県税事務所に確認してください。</p>
+<p>納付は原則8月と11月の2回で、年税額が1万円以下なら8月に全額です（大阪府・滋賀県の案内）。払った個人事業税は、払った年の必要経費になります。</p>
+<p>ほかの無料ツール：<a href="shoukyaku-hantei.html">少額減価償却資産 判定</a> ／ <a href="keihi-check.html">経費・請求書CSV 取り込み前チェッカー</a> ／ <a href="./">一覧</a>。帳簿の見直しや年末の準備の相談は shinji-work@mail.grokbot.com まで（日本語・中文・English）。</p>
+</div>
+
+<script>
+const G=[
+['物品販売業（ネットショップ・転売・ハンドメイド販売など）',5,1],['請負業（受託開発・制作の請負など）',5,1],['広告業（アフィリエイト・広告代理など）',5,1],['代理業',5,1],['仲立業',5,1],['周旋業',5,1],['問屋業',5,1],['出版業',5,1],['印刷業',5,1],['写真業',5,1],['製造業',5,1],['飲食店業',5,1],['料理店業',5,1],['旅館業',5,1],['運送業',5,1],['運送取扱業',5,1],['倉庫業',5,1],['物品貸付業',5,1],['不動産貸付業',5,1],['駐車場業',5,1],['不動産売買業',5,1],['金銭貸付業',5,1],['保険業',5,1],['両替業',5,1],['商品取引業',5,1],['電気通信事業',5,1],['電気供給業',5,1],['土石採取業',5,1],['船舶定係場業',5,1],['席貸業',5,1],['演劇興行業',5,1],['遊技場業',5,1],['遊覧所業',5,1],['興信所業',5,1],['案内業',5,1],['冠婚葬祭業',5,1],['公衆浴場業（むし風呂等）',5,1],
+['畜産業',4,2],['水産業',4,2],['薪炭製造業',4,2],
+['デザイン業（グラフィック・Web・イラストを含むことが多い）',5,3],['コンサルタント業',5,3],['設計監督者業',5,3],['諸芸師匠業（習い事の先生など）',5,3],['理容業',5,3],['美容業',5,3],['クリーニング業',5,3],['印刷製版業',5,3],['医業',5,3],['歯科医業',5,3],['薬剤師業',5,3],['獣医業',5,3],['弁護士業',5,3],['司法書士業',5,3],['行政書士業',5,3],['公証人業',5,3],['弁理士業',5,3],['税理士業',5,3],['公認会計士業',5,3],['計理士業',5,3],['社会保険労務士業',5,3],['不動産鑑定業',5,3],['歯科衛生士業',5,3],['歯科技工士業',5,3],['測量士業',5,3],['土地家屋調査士業',5,3],['海事代理士業',5,3],['公衆浴場業（銭湯）',5,3],
+['あんま・マッサージ・指圧・はり・きゅう・柔道整復など',3,3],['装蹄師業',3,3],
+['（判定が分かれる）翻訳・通訳',null,0,'翻訳・通訳は70業種に名前がありません。個人として自分の技能で訳す場合は対象外とされることが多い一方、制作物の請負契約や外注を使う形だと「請負業」「代理業」と判断されることがあります。'],
+['（判定が分かれる）ライター・文筆・作家',null,0,'文筆業は70業種にありません。ただし広告記事の制作を請け負う、アフィリエイトで稼ぐ、といった実態だと「請負業」「広告業」に当たることがあります。'],
+['（判定が分かれる）プログラマー・エンジニア',null,0,'時間単価の準委任で常駐・技術提供をしている場合は対象外とされることがある一方、成果物の納品を約束する請負契約だと「請負業」（5%）に当たるとされることが多い仕事です。'],
+['（判定が分かれる）YouTuber・配信者',null,0,'広告収入が中心なら「広告業」、物販なら「物品販売業」とされることがあります。投げ銭中心の場合などは都道府県の判断です。'],
+['（判定が分かれる）講師・コーチ',null,0,'習い事として教えるなら「諸芸師匠業」、企業向け助言なら「コンサルタント業」とされることがあります。学習塾などは対象外とされる例もあります。'],
+['70業種のどれにも当たらない（例：文筆業・芸術家・スポーツ選手・保育など）',0,0,'法定業種に当たらない事業には個人事業税はかかりません。']];
+const KOJO=[0,242000,484000,725000,967000,1209000,1450000,1692000,1934000,2175000,2417000,2659000,2900000];
+const sel=document.getElementById('gyo');G.forEach((g,i)=>{const o=document.createElement('option');o.value=i;o.textContent=g[0]+(g[1]!=null?(g[1]?'　'+g[1]+'%（第'+g[2]+'種）':'　対象外'):'　→ 5%で仮計算');sel.appendChild(o)});
+const ts=document.getElementById('tsuki');for(let m=12;m>=1;m--){const o=document.createElement('option');o.value=m;o.textContent=m+'か月（事業主控除 '+KOJO[m].toLocaleString()+'円）';ts.appendChild(o)}
+const v=id=>Math.max(0,Number(document.getElementById(id).value)||0);
+const yen=n=>Math.round(n).toLocaleString('ja-JP')+'円';
+function calc(){
+  const g=G[sel.value];const rate=g[1]==null?5:g[1];
+  const note=document.getElementById('gyonote');if(g[3]){note.style.display='';note.textContent=g[3]}else note.style.display='none';
+  const jig=Number(document.getElementById('jigyo').value)||0;
+  const fudo=document.getElementById('fudoChk').checked?(Number(document.getElementById('fudo').value)||0):0;
+  const ao=Number(document.getElementById('aoiro').value);const blue=ao>0;
+  const aoAdd=blue?ao*10000:0;
+  const senju=v('senju');
+  let senjuJ=senju;let senjuNote='';
+  if(!blue&&senju>0){const sp=Number(document.getElementById('wSp').value),ot=Math.floor(v('wOth'));const n=sp+ot;
+    if(n>0){const pre=jig+fudo+senju;const cap1=sp*860000+ot*500000;const cap2=Math.floor(pre/(n+1))*n;senjuJ=Math.min(cap1,cap2);senjuNote='白色の専従者控除は、配偶者86万円・その他50万円か、控除前所得÷（人数＋1）の低い方です。'}}
+  const m=Number(ts.value);const kojo=KOJO[m];
+  const pre=jig+fudo+senju-senjuJ+aoAdd-v('kuri')-v('joto');
+  const base=Math.max(0,Math.floor((pre-kojo)/1000)*1000);
+  const tax=g[1]===0?0:Math.floor(base*rate/100/100)*100;
+  let h='<div class="box">';
+  if(g[1]===0)h+='<p class="big">個人事業税はかかりません（法定業種に当たらない場合）</p>';
+  else if(tax===0)h+='<p class="big">個人事業税はかかりません（所得が事業主控除以下）</p>';
+  else h+='<p class="big">個人事業税の目安：'+yen(tax)+'</p><p>'+(tax<=10000?'年税額が1万円以下なので、8月に全額を納める見込みです。':'8月に約'+yen(Math.ceil(tax/2/100)*100)+'、11月に残りの約'+yen(tax-Math.ceil(tax/2/100)*100)+'を納める見込みです（端数の振り分けは通知書に従ってください）。')+'</p>';
+  h+='<table><tr><td>事業所得＋不動産所得</td><td class="n">'+yen(jig+fudo)+'</td></tr>';
+  if(aoAdd)h+='<tr><td>＋ 青色申告特別控除の足し戻し（事業税では使えません）</td><td class="n">'+yen(aoAdd)+'</td></tr>';
+  if(senju)h+='<tr><td>＋ 所得税の専従者給与（控除）額 － 事業税の専従者給与（控除）額</td><td class="n">'+yen(senju-senjuJ)+'</td></tr>';
+  if(v('kuri')||v('joto'))h+='<tr><td>－ 繰越損失・事業用資産の譲渡損失</td><td class="n">'+yen(v('kuri')+v('joto'))+'</td></tr>';
+  h+='<tr><td>－ 事業主控除（'+m+'か月）</td><td class="n">'+yen(kojo)+'</td></tr>';
+  h+='<tr><td>課税標準（1,000円未満切り捨て）</td><td class="n">'+yen(base)+'</td></tr>';
+  h+='<tr><td>税率</td><td class="n">'+(g[1]===0?'対象外':rate+'%'+(g[1]==null?'（仮）':''))+'</td></tr></table>';
+  const w=[];
+  if(blue&&jig+fudo<=kojo&&jig+fudo+aoAdd>kojo)w.push('所得税の所得は'+yen(kojo)+'以下でも、青色申告特別控除を足し戻すと事業主控除を超えるため課税されます。「290万円以下だから非課税」と思い込みやすい落とし穴です。');
+  if(m<12)w.push('開業・廃業の年は事業主控除が月割になります。廃業した場合は、廃業の日から1か月以内に事業税の申告が別に必要です。');
+  if(fudo)w.push('不動産所得が事業税の対象になるのは、貸付の規模が都道府県の認定基準を満たす場合だけです。基準は都道府県のページで確認してください。');
+  if(senjuNote)w.push(senjuNote);
+  if(g[1]==null)w.push('判定が分かれる仕事なので、課税される場合の5%で仮計算しています。');
+  if(w.length)h+='<ul>'+w.map(x=>'<li class="warn">'+x+'</li>').join('')+'</ul>';
+  h+='</div>';document.getElementById('out').innerHTML=h;
+}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));calc();
+</script>
+</body>
+</html>
