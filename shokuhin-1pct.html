@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>飲食料品 消費税1%（令和9年4月〜）対応チェッカー｜価格表の一括換算・経過措置8%判定・インボイス端数・免税事業者の還付目安｜無料</title>
+<meta name="description" content="令和9年4月1日から2年間、飲食料品の消費税率が1%に引き下げられる案（令和8年9月閣議決定）への準備用。8%税込価格表を1%に一括換算（CSV）、定期便・通販の経過措置で8%のままになるかの判定、8%・1%・10%が混ざる請求書の税率ごとの端数処理、免税事業者・簡易課税事業者の還付・納税額の目安。ブラウザ内で計算、送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/shokuhin-1pct.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.12em;border-left:5px solid #2a7;padding-left:8px;margin-top:28px}
+label{display:inline-block;margin:4px 14px 4px 0}textarea{width:100%;height:150px;font-family:inherit;font-size:14px}
+input[type=number]{width:9em}input[type=date]{width:11em}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}.warn{color:#b00}.ok{color:#075}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:right}td:first-child,th:first-child{text-align:left}
+code{background:#f3f3f3;padding:0 4px}.out{background:#f6faf8;padding:10px 12px;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>飲食料品 消費税1%（令和9年4月〜令和11年3月）対応チェッカー</h1>
+<p>令和9年4月1日から2年間、飲食料品（酒類・外食を除く、今の8%対象と同じ範囲）の消費税率を<strong>1%（国0.78%＋地方0.22%）</strong>にする案への準備用ツールです。新聞の定期購読は8%のまま、その他は10%のままです。計算はすべてこのページの中で行い、入力した内容はどこにも送信されません。</p>
+<p class="note">根拠：国税庁「飲食料品に係る2年間の消費税率引下げに関するQ&amp;A」「2年間の消費税率引下げについて」（令和8年9月）。この内容は令和8年9月15日閣議決定の大綱に基づく<strong>法案段階</strong>のもので、国会で成立した場合のものです。成立後の法令・通達で必ず確かめてください。税務の個別判断は税理士・税務署へ。</p>
+
+<h2>1. 価格表を1%に一括換算</h2>
+<p>1行に1品：<code>品名 ｜ 今の税込価格（8%） ｜ 区分</code>。区分は <code>食品</code>（省略時）・<code>酒</code>・<code>外食</code>（店内飲食・ケータリング）・<code>新聞</code>・<code>その他</code>。区切りは「｜」「|」タブのどれでも（「｜」がない行だけ「,」で区切ります）。</p>
+<textarea id="p_src">おにぎり 鮭｜162
+幕の内弁当｜648｜食品
+缶ビール 350ml｜237｜酒
+店内飲食 ランチ｜1100｜外食
+日経新聞 定期購読｜4900｜新聞
+タオル｜550｜その他</textarea>
+<label>新しい税込価格の端数 <select id="p_round"><option value="floor">1円未満切捨て</option><option value="round">四捨五入</option><option value="ceil">切上げ</option><option value="10">10円未満切捨て</option></select></label>
+<label><input type="checkbox" id="p_keep"> 税込価格は据え置く（値下げしない場合の手取りの増え方を見る）</label><br>
+<button id="p_go">換算する</button><button id="p_csv">CSVで保存</button>
+<div id="p_out" class="out"></div>
+
+<h2>2. 4月1日以後も8%のままになる取引か（経過措置）</h2>
+<label>取引の形 <select id="k_type"><option value="normal">ふつうの販売（店頭・卸など）</option><option value="teiki">定期供給契約（定期便など、不特定多数向け）</option><option value="tsuhan">通信販売（ネットショップ・カタログ）</option></select></label><br>
+<label>引渡し（販売）日 <input type="date" id="k_sale" value="2027-04-10"></label>
+<label id="k_l1">契約日 <input type="date" id="k_c" value="2026-12-01"></label>
+<label id="k_l2">代金の受取日 <input type="date" id="k_p" value="2027-03-20"></label><br>
+<label><input type="checkbox" id="k_1pct"> 契約・販売条件に「4月1日以後は1%で計算する」旨の定めがある／契約を変更した</label><br>
+<button id="k_go">判定する</button>
+<div id="k_out" class="out"></div>
+
+<h2>3. 8%・1%・10%が混ざる請求書の消費税額（税率ごとに1回の端数処理）</h2>
+<p>1行に1明細：<code>品名 ｜ 金額 ｜ 税率（1・8・10）</code>。インボイスの消費税額は「1枚につき税率ごとに1回」だけ端数処理します（インボイスQ&amp;A 問57）。明細ごとに処理して足した額は記載事項として認められません。3月分（8%）と4月分（1%）が混ざる月またぎの請求書は、分けて発行するか、同じ請求書の中で8%分と1%分を区分して書きます。</p>
+<textarea id="i_src">3/28 鮭切身｜5,000｜8
+4/2 鮭切身｜5,000｜1
+4/8 野菜セット｜35,000｜1
+4/15 タオルセット｜2,000｜10
+4/20 レジ袋｜333｜10</textarea>
+<label>金額は <select id="i_mode"><option value="ex">税抜</option><option value="in">税込</option></select></label>
+<label>端数処理 <select id="i_round"><option value="floor">切捨て</option><option value="round">四捨五入</option><option value="ceil">切上げ</option></select></label>
+<button id="i_go">計算する</button>
+<div id="i_out" class="out"></div>
+
+<h2>4. 免税事業者・簡易課税事業者：課税を選ぶと還付になるかの目安（1年分）</h2>
+<p>売上の多くが1%の飲食料品で、仕入や経費に10%のもの（包装資材・家賃・光熱費・設備）が多いと、本則課税（一般課税）では売上の税より仕入の税が大きくなり、<strong>還付</strong>になることがあります。金額は税込で入れてください（概算。国・地方の合計で計算します）。</p>
+<label>飲食料品の売上（1%） <input type="number" id="r_s1" value="12000000"></label>
+<label>その他の売上（10%） <input type="number" id="r_s10" value="1000000"></label><br>
+<label>飲食料品の仕入（1%） <input type="number" id="r_b1" value="6000000"></label>
+<label>10%の仕入・経費 <input type="number" id="r_b10" value="3300000"></label><br>
+<label>簡易課税の業種（その他の売上分のみなし仕入率） <select id="r_mr"><option value="0.8">第2種 小売 80%</option><option value="0.9">第1種 卸売 90%</option><option value="0.7">第3種 製造・農業 70%</option><option value="0.6">第4種 飲食店など 60%</option><option value="0.5">第5種 サービス 50%</option></select></label><br>
+<button id="r_go">比べる</button>
+<div id="r_out" class="out"></div>
+<p class="note">届出の特例（案）：飲食料品を売る免税事業者は、<strong>令和9年4月1日を含む課税期間中</strong>（個人なら令和9年12月31日まで）に「消費税課税事業者選択届出書」を出せば、<strong>その課税期間の初め</strong>から課税事業者になれます。個人なら令和9年1月1日からとなり、1〜3月の飲食料品は8%、令和9年・10年の2年間は課税事業者が続きます。簡易課税をやめる届出（簡易課税制度選択不適用届出書）にも同じ時期の特例があります。また簡易課税のまま申告する場合は、業種にかかわらず<strong>1%の飲食料品売上の税額と同じ額を仕入税額とみなす</strong>特例（案）があり、その分の納税は実質ゼロになります。</p>
+
+<p>ほかの無料ツール：<a href="sanwari-tokurei.html">2割特例のあと：3割特例・簡易課税・本則課税の比較</a> ／ <a href="keihi-check.html">経費・請求書CSV 取り込み前チェッカー</a> ／ <a href="nijuu-kakaku.html">セール「通常価格」表示チェッカー</a> ／ <a href="index.html">一覧</a>。価格表の差し替えやPOP・ネットショップの一括修正の相談：shinji-work@mail.grokbot.com</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=s=>Number(String(s).replace(/[,，円¥\s]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)));
+const rnd=(x,m)=>m==='ceil'?Math.ceil(x-1e-9):m==='round'?Math.round(x):m==='10'?Math.floor(x/10+1e-9)*10:Math.floor(x+1e-9);
+const yen=n=>(Math.round(n)||0).toLocaleString('ja-JP');
+const split=l=>(/[｜|\t]/.test(l)?l.split(/[｜|\t]/):l.split(',')).map(s=>s.trim());
+const RATE={'食品':1,'酒':10,'外食':10,'新聞':8,'その他':10};
+let pRows=[];
+function prices(){
+  const m=$('p_round').value,keep=$('p_keep').checked;pRows=[];let h='',errs=[];
+  $('p_src').value.split(/\n/).forEach((l,i)=>{if(!l.trim()||l.trim()[0]==='#')return;const f=split(l);const v=num(f[1]);const k=(f[2]||'食品').replace('食料品','食品');
+    if(!(v>0)||!(k in RATE)){errs.push((i+1)+'行目：'+esc(l));return}
+    const oldR=k==='食品'?8:RATE[k],newR=RATE[k];const ex=v*100/(100+oldR);
+    let nv=newR===oldR?v:(keep?v:rnd(ex*(100+newR)/100,m));const nex=nv*100/(100+newR);
+    pRows.push([f[0],k,v,oldR,nv,newR,Math.round(nex-ex)]);});
+  h='<table><tr><th>品名</th><th>区分</th><th>今の税込</th><th>今</th><th>4月以後の税込</th><th>新税率</th><th>税抜の増減</th></tr>'+pRows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+r[1]+'</td><td>'+yen(r[2])+'</td><td>'+r[3]+'%</td><td>'+yen(r[4])+'</td><td>'+r[5]+'%</td><td>'+(r[6]>0?'+':'')+yen(r[6])+'</td></tr>').join('')+'</table>';
+  h+='<p>'+(keep?'税込を据え置くと、飲食料品は税抜（手取り）が約6.5%増えます。ただし「税率引下げ分を値下げした」と受け取られる表示や、端数の付け方に注意。':'税抜価格を変えずに1%で計算し直した税込価格です。')+' 酒類・外食（店内飲食・ケータリング）・その他は10%のまま、新聞の定期購読は8%のままです。テイクアウト・出前は1%の対象です。</p>';
+  if(errs.length)h+='<p class="warn">読めなかった行（金額か区分を確認）：<br>'+errs.join('<br>')+'</p>';
+  $('p_out').innerHTML=h;}
+$('p_go').onclick=prices;
+$('p_csv').onclick=()=>{prices();const c='\ufeff品名,区分,今の税込,今の税率,4月以後の税込,新税率\n'+pRows.map(r=>[r[0],r[1],r[2],r[3]+'%',r[4],r[5]+'%'].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='kakaku_1pct.csv';a.click()};
+
+function keika(){
+  const t=$('k_type').value,sale=$('k_sale').value,c=$('k_c').value,p=$('k_p').value,one=$('k_1pct').checked;let r,why;
+  if(!sale){$('k_out').innerHTML='<p class="warn">引渡し日を入れてください。</p>';return}
+  if(sale<'2027-04-01'){r=8;why='令和9年3月31日以前の引渡しなので8%です（売上計上基準で4月1日0時台の売上を3月31日分にしている場合も8%で可：Q&A問1-3）。'}
+  else if(sale>'2029-03-31'){r=8;why='令和11年4月1日以後は8%（軽減税率）に戻る予定です。'}
+  else if(t==='normal'){r=1;why='4月1日以後の引渡しなので1%です。3月以前に結んだ契約に基づく販売でも、経過措置の対象でなければ1%です。'}
+  else if(one){r=1;why='1%を前提とする定め・契約変更があるので、経過措置は使われず1%です。'}
+  else if(t==='teiki'){const a=c&&c<'2027-01-01',b=p&&p<'2027-04-01';r=(a&&b)?8:1;why=(a&&b)?'令和9年1月1日前に結んだ定期供給契約で、4月1日前に代金を受け取っている分なので8%のままです（受け取っていない部分は1%）。':'定期供給の経過措置は「令和9年1月1日前の契約」かつ「4月1日前に代金を受け取った部分」だけです。'+(a?'':'契約日が条件に合いません。')+(b?'':'代金の受取が4月1日以後です。')}
+  else{const a=c&&c<'2027-01-01',b=p&&p<'2027-04-01';r=(a&&b)?8:1;why=(a&&b)?'令和9年1月1日前に販売条件を示し、4月1日前に申込みを受けた通信販売なので8%のままです。':'通信販売の経過措置は「令和9年1月1日前の販売条件の提示」かつ「4月1日前の申込み」です。'+(a?'':'条件の提示日が条件に合いません。')+(b?'':'申込みが4月1日以後です。')}
+  $('k_out').innerHTML='<p><strong>適用税率：'+r+'%</strong></p><p>'+why+'</p>'+(t!=='normal'?'<p>経過措置は選べるものではなく、条件に当てはまれば自動的に8%です。年末年始の定期便・おせち・ふるさと納税返礼品の予約販売などで、令和9年1月1日より前に8%前提の条件を出すと4月以後も8%になる点に注意してください。</p>':'');
+  $('k_l2').firstChild.textContent=t==='tsuhan'?'申込み日 ':'代金の受取日 ';$('k_l1').firstChild.textContent=t==='tsuhan'?'販売条件を示した日 ':'契約日 ';}
+$('k_go').onclick=keika;$('k_type').onchange=keika;
+
+function inv(){
+  const mode=$('i_mode').value,m=$('i_round').value;const g={},rows=[];let errs=[];
+  $('i_src').value.split(/\n/).forEach((l,i)=>{if(!l.trim())return;const f=split(l);const v=num(f[1]),r=num(f[2]);if(!(v>=0)||![1,8,10].includes(r)){errs.push((i+1)+'行目');return}rows.push([f[0],v,r]);g[r]=(g[r]||0)+v});
+  let h='<table><tr><th>税率</th><th>対象の合計（'+(mode==='ex'?'税抜':'税込')+'）</th><th>消費税額（1回の端数処理）</th><th>明細ごとに処理して足した額（不可）</th></tr>';let tot=0,totTax=0;
+  [10,8,1].forEach(r=>{if(g[r]===undefined)return;const base=g[r];const tax=rnd(mode==='ex'?base*r/100:base*r/(100+r),m);
+    const per=rows.filter(x=>x[2]===r).reduce((s,x)=>s+rnd(mode==='ex'?x[1]*r/100:x[1]*r/(100+r),m),0);
+    tot+=base;totTax+=tax;h+='<tr><td>'+r+'%対象</td><td>'+yen(base)+'</td><td>'+yen(tax)+'</td><td>'+yen(per)+(per!==tax?' <span class="warn">（'+(per-tax>0?'+':'')+(per-tax)+'円ずれ）</span>':'')+'</td></tr>'});
+  h+='</table><p>合計 '+yen(mode==='ex'?tot+totTax:tot)+'円（税込）／消費税 '+yen(totTax)+'円</p>';
+  if(g[8]!==undefined&&g[1]!==undefined)h+='<p class="warn">8%と1%の飲食料品が同じ請求書にあります。3月分（8%）と4月分（1%）は区分して書くか、請求書を分けてください。8%の明細が4月以後の引渡しなら、経過措置の対象か（上の2.）を確認してください。</p>';
+  h+='<p>飲食料品の明細には従来どおり「※軽減税率対象」などの印を付ければよく、「1%対象」の印を新たに付ける必要はありません（Q&A問2-1）。</p>';
+  if(errs.length)h+='<p class="warn">読めなかった行：'+errs.join('、')+'（税率は1・8・10のどれか）</p>';
+  $('i_out').innerHTML=h;}
+$('i_go').onclick=inv;
+
+function refund(){
+  const s1=+$('r_s1').value||0,s10=+$('r_s10').value||0,b1=+$('r_b1').value||0,b10=+$('r_b10').value||0,mr=+$('r_mr').value;
+  const ts1=s1/101,ts10=s10*10/110,tb=b1/101+b10*10/110;
+  const gen=ts1+ts10-tb;const simp=Math.max(0,ts10*(1-mr));
+  let h='<table><tr><th>方式</th><th>売上の税</th><th>差し引く仕入の税</th><th>納税（－は還付）</th></tr>';
+  h+='<tr><td>免税事業者のまま</td><td>—</td><td>—</td><td>0</td></tr>';
+  h+='<tr><td>本則課税（一般課税）</td><td>'+yen(ts1+ts10)+'</td><td>'+yen(tb)+'</td><td>'+(gen<0?'<span class="ok">':'')+yen(gen)+(gen<0?'</span>':'')+'</td></tr>';
+  h+='<tr><td>簡易課税（1%分の特例込み）</td><td>'+yen(ts1+ts10)+'</td><td>'+yen(ts1+ts10*mr)+'</td><td>'+yen(simp)+'</td></tr></table>';
+  h+=gen<0?'<p class="ok">本則課税なら年 約'+yen(-gen)+'円の還付の目安です。ただし課税事業者になると2年間続き、帳簿・インボイスの保存、申告の手間がかかります。インボイス登録をすると取引先へインボイスを出せます。</p>':'<p>本則課税でも還付にはならない目安です。取引先からインボイスを求められていなければ、免税事業者のままが有利な場合が多いです。</p>';
+  h+='<p>概算（税込の金額から割り戻し、国・地方合計、1年まるごと新税率・中間納付なし）。個人で令和9年1月1日から課税事業者になる場合、1〜3月の飲食料品は8%で計算するため、実際の額は変わります。</p>';
+  $('r_out').innerHTML=h;}
+$('r_go').onclick=refund;
+prices();keika();inv();refund();
+</script>
+</body>
+</html>
