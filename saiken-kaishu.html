@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>未払い報酬の回収 手続き別の費用計算（令和8年5月改正の新手数料：訴え・少額訴訟・支払督促・民事調停／書面と電子申立て・時効の目安）</title>
+<meta name="description" content="フリーランス・個人事業主の未払い報酬や売掛金を回収するときに、少額訴訟・通常訴訟・支払督促・民事調停の申立手数料を比べます。令和8年5月21日施行の改正民事訴訟費用法（郵便費用を手数料に一本化、電子申立ては書面より安い）に対応。簡易裁判所か地方裁判所か、少額訴訟が使えるか、消滅時効の目安、遅延損害金の概算も出します。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/saiken-kaishu.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}label{display:block;margin:8px 0 2px}
+input[type=number]{font-size:1.05em;padding:4px;width:10em}input[type=date]{font-size:1em;padding:3px}select{font-size:1em;padding:3px;max-width:100%}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:.93em}td,th{border-bottom:1px solid #eee;padding:5px;text-align:left;vertical-align:top}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.big{font-size:1.2em;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>未払い報酬の回収 手続き別の費用計算</h1>
+<p>納品したのに報酬が払われない。内容証明を送っても反応がない。そんなときに使える裁判所の手続き（少額訴訟・通常訴訟・支払督促・民事調停）の<strong>申立手数料</strong>を並べて比べます。<strong>令和8年5月21日から</strong>、訴えや支払督促では送達用の郵便切手を別に納める仕組みがなくなって手数料に一本化され、オンライン（電子申立て）のほうが書面より安くなりました。古い解説の「印紙代＋切手代」とは金額が違うので注意してください。入力はこのページの中だけで計算し、どこにも送信しません。</p>
+
+<div class="box">
+<label>請求する元本（未払いの報酬額。遅延損害金や利息は含めない）<br><input type="number" id="gaku" value="300000" min="1"> 円</label>
+<label>相手方（被告）の数<br><input type="number" id="hikoku" value="1" min="1" style="width:4em"> 人・社</label>
+<label>支払期日（請求できるようになった日）<br><input type="date" id="kijitsu"></label>
+<label>遅延損害金の年率（約定がなければ法定利率。取適法・フリーランス法の対象取引で期日を過ぎた場合は14.6%になることがあります）<br><input type="number" id="rate" value="3" step="0.1" style="width:5em"> %</label>
+<label>今年すでに同じ簡易裁判所で少額訴訟を起こした回数<br><input type="number" id="kaisu" value="0" min="0" style="width:4em"> 回</label>
+</div>
+<div id="out"></div>
+
+<div class="note">
+<p><strong>計算の根拠：</strong>手数料は民事訴訟費用等に関する法律と、裁判所の「手数料額早見表」（令和8年9月15日改訂）の新法適用事件の欄に合わせています。訴えの手数料は、従来の訴額に応じた額（100万円までは10万円ごとに1,000円、500万円までは20万円ごとに1,000円、1,000万円までは50万円ごとに2,000円、10億円までは100万円ごとに3,000円）に、書面なら2,500円、電子なら1,400円を足した額です。被告が2人以上なら、1人増えるごとに2,000円が加わります。支払督促は従来額の半分に、書面なら2,700円、電子なら2,500円を足した額です。民事調停は従来どおりの算定（郵便費用は別途、裁判所の指示に従う）です。</p>
+<p><strong>使い分けの目安：</strong>少額訴訟は60万円以下の金銭請求で、原則1回の期日で判決が出ます（同じ簡易裁判所で年10回まで）。支払督促は書類審査だけで進み、相手が異議を出すと通常の訴訟に移って、差額の手数料を追加で納めます。請求額が140万円以下なら簡易裁判所、超えると地方裁判所です。遅延損害金は訴額に含めません。</p>
+<p>このページは目安を出すためのもので、法律相談ではありません。申立ての前に、申立先の裁判所の案内か、法テラス・弁護士・司法書士に確認してください。資力が乏しいときは訴訟上の救助や法テラスの立替制度もあります。請求書や督促文の作成、日英中の取引先とのやりとりのご相談は shinji-work@mail.grokbot.com まで。</p>
+<p>関連：<a href="naiyo-shomei.html">内容証明 字数・行数チェック＆料金計算</a> ／ <a href="shiharai-kijitsu.html">支払期日60日ルール チェッカー</a> ／ <a href="freelance-terms-check.html">フリーランス新法 取引条件チェックリスト</a> ／ <a href="./">ツール一覧</a></p>
+</div>
+
+<script>
+const yen=n=>n.toLocaleString('ja-JP')+'円';
+const v=id=>Number(document.getElementById(id).value)||0;
+const M=10000,OKU=100000000;
+function base(x){ // 別表第一1の項（従来の訴え手数料）
+  if(x<=100*M)return Math.ceil(x/(10*M))*1000;
+  if(x<=500*M)return 10000+Math.ceil((x-100*M)/(20*M))*1000;
+  if(x<=1000*M)return 30000+Math.ceil((x-500*M)/(50*M))*2000;
+  if(x<=10*OKU)return 50000+Math.ceil((x-1000*M)/(100*M))*3000;
+  if(x<=50*OKU)return 3020000+Math.ceil((x-10*OKU)/(500*M))*10000;
+  return 11020000+Math.ceil((x-50*OKU)/(1000*M))*10000;
+}
+function chotei(x){
+  if(x<=100*M)return Math.ceil(x/(10*M))*500;
+  if(x<=500*M)return 5000+Math.ceil((x-100*M)/(20*M))*500;
+  if(x<=1000*M)return 15000+Math.ceil((x-500*M)/(50*M))*1000;
+  if(x<=10*OKU)return 25000+Math.ceil((x-1000*M)/(100*M))*1200;
+  return null;
+}
+function fmtD(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'}
+function calc(){
+  const x=Math.max(0,Math.floor(v('gaku'))),n=Math.max(1,Math.floor(v('hikoku')));
+  const out=document.getElementById('out');
+  if(!x){out.innerHTML='';return}
+  const b=base(x),add=(n-1)*2000,c=chotei(x);
+  const kan=x<=140*M,shogaku=x<=60*M&&v('kaisu')<10;
+  const rows=[];
+  if(shogaku)rows.push(['少額訴訟（簡易裁判所）',b+2500+add,b+1400+add,'1回の期日で審理。相手が通常訴訟への移行を求めることもあります。']);
+  rows.push(['通常訴訟（'+(kan?'簡易裁判所':'地方裁判所')+'）',b+2500+add,b+1400+add,kan?'簡易裁判所では司法書士（認定）も代理できます。':'地方裁判所では代理人は原則として弁護士です。']);
+  rows.push(['支払督促（相手方の住所地の簡易裁判所書記官）',b/2+2700,b/2+2500,'異議が出ると訴訟に移り、訴えの手数料との差額を追加で納めます。']);
+  rows.push(['民事調停（簡易裁判所）',c,null,'話し合いでの解決。郵便費用は別に指示されることがあります。']);
+  let h='<div class="box"><p class="big">'+yen(x)+'の請求にかかる申立手数料の目安</p><table><tr><th>手続き</th><th>書面で申立て</th><th>電子申立て</th><th>メモ</th></tr>';
+  rows.forEach(r=>{h+='<tr><td>'+r[0]+'</td><td class="n">'+(r[1]==null?'早見表で確認':yen(r[1]))+'</td><td class="n">'+(r[2]==null?'－':yen(r[2]))+'</td><td>'+r[3]+'</td></tr>'});
+  h+='</table>';
+  const w=[];
+  if(!shogaku)w.push(x>60*M?'60万円を超えるので少額訴訟は使えません。60万円以下に分けて何度も起こすことは認められない扱いになるおそれがあります。':'同じ簡易裁判所での少額訴訟は年10回までです。');
+  if(n>1)w.push('被告が'+n+'人なので、訴えの手数料に'+yen(add)+'を加えています。');
+  if(c!=null&&x>0&&c<b/2+2500)w.push('費用だけなら民事調停が最も安くなりますが、相手が出てこなければ成立しません。');
+  const kd=document.getElementById('kijitsu').value;
+  if(kd){
+    const d=new Date(kd+'T00:00:00'),now=new Date();now.setHours(0,0,0,0);
+    const days=Math.max(0,Math.round((now-d)/86400000));
+    const chien=Math.floor(x*v('rate')/100*days/365);
+    const jiko=new Date(d);jiko.setFullYear(jiko.getFullYear()+5);
+    h+='<p>支払期日から今日まで'+days+'日。年'+v('rate')+'%で日割りした遅延損害金の目安は<strong>'+yen(chien)+'</strong>です（訴額には含めず、判決で元本と一緒に請求できます）。</p>';
+    if(d>=new Date('2020-04-01T00:00:00'))h+='<p>消滅時効の目安：支払期日の翌日から5年で、<strong>'+fmtD(jiko)+'</strong>ごろが期限です（権利を行使できると知った時から5年。催告すると6か月延び、訴えの提起や支払督促で時効の完成が猶予されます）。</p>';
+    else w.push('2020年3月31日以前に生じた債権には、改正前の民法（職業別の短期消滅時効や商事時効）が適用されることがあります。専門家に確認してください。');
+    if(now>jiko)w.push('5年を過ぎている可能性があります。相手が時効を主張すると請求できなくなるので、すぐに専門家に相談してください。');
+    else if((jiko-now)/86400000<183)w.push('時効の期限まで6か月を切っています。内容証明での催告や申立てを早めに検討してください。');
+  }
+  if(w.length)h+='<ul>'+w.map(t=>'<li class="warn">'+t+'</li>').join('')+'</ul>';
+  h+='</div>';out.innerHTML=h;
+}
+(function(){const d=new Date();d.setMonth(d.getMonth()-3);document.getElementById('kijitsu').value=d.toISOString().slice(0,10)})();
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));calc();
+</script>
+</body>
+</html>
