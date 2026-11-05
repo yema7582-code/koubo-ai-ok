@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知表 所見チェッカー（クラス全員分を一括：字数・NG表現・他の子の名前の混入・似すぎた所見・学期名・文末の連続）｜無料・送信なし</title>
+<meta name="description" content="通知表の所見をクラス全員分まとめて貼ると、字数オーバー、保護者が傷つきやすいNG表現、ほかの子の名前の混入、ほかの子とほとんど同じ文、2学期制なのに「3学期」などの学期名のまちがい、である調の混在、同じ文末の連続、点数や診断名など所見に書かない情報をまとめてチェックします。ブラウザの中だけで動き、どこにも送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/shoken-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}label{display:inline-block;margin:4px 14px 4px 0}
+textarea{width:100%;font-family:inherit;font-size:14px}#src{height:240px}#roster{height:90px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3}.ng{color:#b00;font-weight:bold}.warn{color:#a60}.ok{color:#080}code{background:#f3f3f3;padding:0 4px}
+mark{background:#ffd6d6}
+</style>
+</head>
+<body>
+<h1>通知表 所見チェッカー（クラス全員分を一括）</h1>
+<p>所見を1人1行で貼ると、字数、保護者が読んでつらくなりやすい表現、<b>ほかの子の名前の混入</b>、<b>ほかの子とほとんど同じ文</b>、学期名のまちがい、文体の混在などをまとめて確認できます。このページはブラウザの中だけで動き、入力した文はどこにも送信・保存されません（校内ルールで名前を入れられない場合は、出席番号や記号のままで使えます）。</p>
+<p class="note">書き方：<code>出席番号や記号 ｜ 所見文</code>（区切りは「｜」「|」タブ、カンマのどれでも。Excel・校務システムからコピーした2列もそのまま貼れます）。<code>#</code>で始まる行と空行は無視します。</p>
+<textarea id="src"># 例（架空の所見です）
+01｜算数の「わり算」では、図をかいて考え方を友達に説明する姿が見られました。係活動では黒板係として毎日ていねいに仕事をしていました。3学期もこの調子で頑張ってほしいものです。
+02｜落ち着きがありません。忘れ物が多いので、ご家庭でのサポートが必要です。
+03｜算数の「わり算」では、図をかいて考え方を友達に説明する姿が見られました。係活動では生き物係として毎日ていねいに仕事をしていました。
+04｜国語の音読発表会では、場面の様子が伝わるように声の大きさを工夫していました。さとうさんと協力して台本を作り、本番では堂々と読むことができた。
+05｜テストでは毎回90点以上を取っています。ADHDの傾向がありますが、よく頑張っています。</textarea>
+<div>
+<label>1人あたりの字数の上限 <input id="max" type="number" value="150" min="20" style="width:5em">字</label>
+<label>少なすぎの目安 <input id="min" type="number" value="60" min="0" style="width:5em">字未満</label>
+<label>学期の区切り <select id="sys"><option value="3">3学期制</option><option value="2">2学期制（前期・後期）</option></select></label>
+<label>今回の所見 <select id="term"><option value="1">1学期／前期</option><option value="2" selected>2学期／後期</option><option value="3">3学期（学年末）</option></select></label>
+<label><input type="checkbox" id="spc" checked> 空白・改行は字数に数えない</label>
+<label>似すぎの判定 <select id="sim"><option value="0.5">ゆるめ（50%）</option><option value="0.6" selected>ふつう（60%）</option><option value="0.75">きびしめ（75%）</option></select></label>
+</div>
+<h2>名簿（任意：ほかの子の名前の混入チェック用）</h2>
+<p>1行に <code>出席番号や記号 ｜ 名前（呼び名も ／ で区切って追加可）</code>。ここに書いた名前が<b>別の子の所見</b>に出てきたら知らせます。名前はページの外に出ません。</p>
+<textarea id="roster">01｜たなか ゆうと／ゆうと
+03｜さとう はな／さとう／はな
+04｜すずき れん</textarea>
+<div><button id="run">チェックする</button><button id="csv">結果をCSVで保存</button></div>
+<p id="sum"></p>
+<div id="out"></div>
+<h2>クラス全体で似ている所見</h2>
+<div id="dup"></div>
+<h2>このチェッカーについて</h2>
+<p>表現のチェックは「欠点の断定」「説教調」「不安だけ伝える曖昧な表現」「点数・診断名・家庭の事情など所見に書かない情報」を中心にしています。課題を書くときは「実際の場面（過去形）＋先生がした手立て＋その後の伸び」の3つがそろっているかも目安として表示します。最終的な判断は先生と学校の方針に従ってください。生成AIで下書きを作る場合も、文部科学省のガイドラインや教育委員会のルールに沿って、個人を特定できる情報を入れないようにしてください。</p>
+<p>学校・塾・学童向けに、所見や学級通信・保護者向け文書の文例集づくり、校内ツールの作成も承ります：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）。<a href="index.html">ほかの無料ツール</a></p>
+<script>
+const NG=[
+[/落ち着き(が|の)(ない|ありません|なく)/,'欠点の断定','座って聞く場面で集中が続いた時間など、伸びた場面を具体的に'],
+[/ぼーっと|ぼんやりしている/,'否定的な断定','興味が向いて集中していた場面を書く'],
+[/字が汚い|字が雑/,'欠点の指摘だけ','ゆっくり書くと形が整ってきた、など変化を書く'],
+[/忘れ物が多/,'欠点の列挙','持ち物を自分で確かめる習慣づくりの手立てと変化を書く'],
+[/やる気が(ない|ありません|見られません)/,'保護者へのショックが大きい','得意なことから取り組めた場面を書く'],
+[/人見知り|内気|暗い性格|性格が/,'性格の断定','「慎重に見通しをもって取り組む」など行動で書く'],
+[/問題行動|トラブルが(多|絶え)/,'曖昧で不安を与える','所見には書かず面談・電話で伝える'],
+[/(気になる(面|点|ところ)|心配されます|心配です)/,'何が心配か分からず不安だけ残る','具体的に書けない内容は面談で伝える'],
+[/(頑張って|がんばって)ほしい(もの|です)|努力が必要|もっと努力|すべき/,'説教調','「次学期も〜で力を発揮してくれることを楽しみにしています」など'],
+[/(家庭|ご家庭)(で|での)(の)?(サポート|指導|しつけ)が必要/,'保護者への押しつけに聞こえる','「ご家庭でも〜と声をかけていただけると」など'],
+[/(でき|わから|守れ|覚えられ)(ません|ない)(。|$)/,'今もずっとそうだと読める現在形の否定','「〜する場面が見られました」と過去の場面にして、手立てと伸びを添える'],
+[/飽きっぽい|わがまま|自分勝手|乱暴|うるさい|しつこい|反抗|生意気/,'否定的なレッテル','行動の場面と、そこからの変化で書く'],
+[/(テスト|小テスト|単元テスト)[^。]{0,12}\d+点|\d+点(以上|満点)|評定|通知表の成績|順位|偏差値/,'点数・順位は所見に書かない','学習の過程や考え方のよさで書く'],
+[/ADHD|ASD|LD|自閉|発達障害|障害|診断|病気|服薬|薬を/,'診断名・健康情報は所見に書かない','必要な配慮は面談・個別の支援計画で扱う'],
+[/離婚|ひとり親|母子家庭|父子家庭|生活保護|経済的|兄弟げんか|両親/,'家庭の事情は所見に書かない','学校での姿だけで書く'],
+[/いじめ|けんか|暴力|叩い|たたい|殴/,'トラブルの詳細は所見に書かない','面談・電話で伝える']];
+const GENERIC=[/毎日元気に登校/,/笑顔が素敵/,/これからの成長が楽しみ/,/友達と仲良く過ごし/,/何事にも一生懸命/];
+const TEDATE=/そこで|一緒に|約束|声をかけ|声かけ|手立て|工夫して|確認する(よう|こと)|見通し|励まし|ほめ/;
+const NOBI=/ように(なり|なって|なりました)|増えて|増え(まし|てき)|伸び|見られるように|できる日|上達|変わって|身につ/;
+const KADAI=/苦手|時間がかか|難しかった|うまくいかない|課題|忘れ|遅れ|集中が/;
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function parse(t){return t.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')).map((l,i)=>{const m=l.match(/^([^｜|\t,，]{1,20})[｜|\t,，](.+)$/);return m?{id:m[1].trim(),txt:m[2].trim()}:{id:String(i+1),txt:l}})}
+function len(s,sp){s=s.replace(/^"|"$/g,'');return [...(sp?s.replace(/\s/g,''):s)].length}
+function sents(s){return s.split(/(?<=[。！？!?])/).map(x=>x.trim()).filter(x=>x.length>4)}
+function grams(s){s=s.replace(/[\s、。「」『』（）()・]/g,'');const g=new Set();for(let i=0;i<s.length-2;i++)g.add(s.slice(i,i+3));return g}
+function jac(a,b){let n=0;for(const x of a)if(b.has(x))n++;return n/((a.size+b.size-n)||1)}
+function check(){
+const rows=parse(document.getElementById('src').value);const max=+document.getElementById('max').value||150,min=+document.getElementById('min').value||0;
+const sys=document.getElementById('sys').value,term=document.getElementById('term').value,sp=document.getElementById('spc').checked,th=+document.getElementById('sim').value;
+const ros=parse(document.getElementById('roster').value).map(r=>({id:r.id,names:r.txt.split(/[／\/]/).map(x=>x.trim()).filter(x=>x.length>=2)}));
+const res=rows.map(r=>{const is=[];const t=r.txt;const n=len(t,sp);
+if(n>max)is.push(['ng','字数オーバー：'+n+'字（上限'+max+'字、'+(n-max)+'字多い）']);else if(n<min)is.push(['warn','少なめ：'+n+'字']);
+NG.forEach(([re,why,fix])=>{const m=t.match(re);if(m)is.push(['ng','「'+m[0]+'」…'+why+'。→ '+fix])});
+GENERIC.forEach(re=>{const m=t.match(re);if(m)is.push(['warn','「'+m[0]+'」…誰にでも当てはまる表現。具体的な学習の場面を1つ入れると伝わります'])});
+if(sys==='2'&&/[123１２３一二三]学期/.test(t))is.push(['ng','2学期制なのに「'+t.match(/[123１２３一二三]学期/)[0]+'」→ 前期／後期／次の学年 に']);
+if(sys==='3'&&/前期|後期/.test(t))is.push(['warn','3学期制なのに「'+t.match(/前期|後期/)[0]+'」']);
+if(term==='3'&&/(3|３|三)学期も|次の学期も|来学期も/.test(t))is.push(['ng','学年末なのに「'+t.match(/(3|３|三)学期も|次の学期も|来学期も/)[0]+'」→「次の学年でも」に']);
+if(term==='2'&&sys==='2'&&/後期も|来学期も/.test(t))is.push(['ng','後期（学年末）なのに「'+t.match(/後期も|来学期も/)[0]+'」→「次の学年でも」に']);
+if(sys==='3'&&term==='2'&&/(2|２|二)学期も/.test(t))is.push(['warn','2学期の所見で「2学期も」→「3学期も」では？']);
+if(sys==='3'&&term==='1'&&/(1|１|一)学期も/.test(t))is.push(['warn','1学期の所見で「1学期も」→「2学期も」では？']);
+const ss=sents(t);const da=ss.filter(s=>/(た|だ|である|る|い)。$/.test(s)&&!/(ます|ました|です|でした|ません)。$/.test(s));
+if(da.length&&ss.some(s=>/(ます|ました|です|でした)。$/.test(s)))is.push(['warn','です・ます調の中に常体の文：「'+da[0].slice(-14)+'」']);
+let run=1,mx=1,end='';for(let i=1;i<ss.length;i++){const a=ss[i-1].slice(-5),b=ss[i].slice(-5);if(a===b){run++;if(run>mx){mx=run;end=b}}else run=1}
+if(mx>=3)is.push(['warn','同じ文末「'+end+'」が'+mx+'回続いています']);
+if(KADAI.test(t)&&!(TEDATE.test(t)&&NOBI.test(t)))is.push(['warn','課題を書いた所見です。'+(TEDATE.test(t)?'':'先生の手立て')+(TEDATE.test(t)||NOBI.test(t)?'':'と')+(NOBI.test(t)?'':'その後の伸び')+'が見当たりません']);
+ros.forEach(o=>{if(o.id===r.id)return;o.names.forEach(nm=>{if(t.includes(nm))is.push(['ng','ほかの子（'+o.id+'）の名前「'+nm+'」が入っています。コピーの貼りまちがいか、名前を出してよいか確認'])})});
+return {id:r.id,txt:t,n,is,g:grams(t),ss}});
+const pairs=[];const sentMap=new Map();
+res.forEach(r=>r.ss.forEach(s=>{const k=s.replace(/\s/g,'');if(!sentMap.has(k))sentMap.set(k,new Set());sentMap.get(k).add(r.id)}));
+for(let i=0;i<res.length;i++)for(let j=i+1;j<res.length;j++){const s=jac(res[i].g,res[j].g);if(s>=th)pairs.push([res[i].id,res[j].id,s])}
+pairs.forEach(([a,b,s])=>res.filter(r=>r.id===a||r.id===b).forEach(r=>r.is.push(['ng','「'+(r.id===a?b:a)+'」の所見と'+Math.round(s*100)+'%同じ文字列です（使い回しに見えます）'])));
+const sameS=[...sentMap].filter(([k,v])=>v.size>=2&&k.length>=15);
+res.forEach(r=>sameS.forEach(([k,v])=>{if(v.has(r.id)&&!pairs.some(p=>p.includes(r.id)))r.is.push(['warn','「'+k.slice(0,20)+'…」と同じ文が '+[...v].filter(x=>x!==r.id).join('、')+' にもあります'])}));
+return {res,pairs,sameS};}
+let last=null;
+function show(){last=check();const {res,pairs,sameS}=last;
+const ng=res.filter(r=>r.is.some(x=>x[0]==='ng')).length,wn=res.filter(r=>!r.is.some(x=>x[0]==='ng')&&r.is.length).length;
+document.getElementById('sum').innerHTML=res.length+'人分をチェック：<span class="ng">要修正 '+ng+'人</span>／<span class="warn">確認 '+wn+'人</span>／<span class="ok">問題なし '+(res.length-ng-wn)+'人</span>';
+document.getElementById('out').innerHTML='<table><tr><th>番号</th><th>字数</th><th>所見</th><th>指摘</th></tr>'+res.map(r=>'<tr><td>'+e(r.id)+'</td><td>'+r.n+'</td><td>'+e(r.txt)+'</td><td>'+(r.is.length?r.is.map(x=>'<div class="'+x[0]+'">'+(x[0]==='ng'?'要修正：':'確認：')+e(x[1])+'</div>').join(''):'<span class="ok">OK</span>')+'</td></tr>').join('')+'</table>';
+document.getElementById('dup').innerHTML=(pairs.length||sameS.length)?'<ul>'+pairs.map(p=>'<li>'+e(p[0])+' と '+e(p[1])+'：'+Math.round(p[2]*100)+'% 一致</li>').join('')+sameS.map(([k,v])=>'<li>同じ文（'+[...v].map(e).join('、')+'）：「'+e(k)+'」</li>').join('')+'</ul>':'<p class="ok">似すぎた所見は見つかりませんでした。</p>'}
+document.getElementById('run').onclick=show;
+document.getElementById('csv').onclick=()=>{if(!last)show();const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+const t='\ufeff番号,字数,所見,判定,指摘\r\n'+last.res.map(r=>[r.id,r.n,r.txt,r.is.some(x=>x[0]==='ng')?'要修正':r.is.length?'確認':'OK',r.is.map(x=>x[1]).join(' / ')].map(q).join(',')).join('\r\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='shoken-check.csv';a.click()};
+show();
+</script>
+</body>
+</html>
