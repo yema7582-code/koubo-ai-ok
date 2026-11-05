@@ -39,6 +39,17 @@ mark{background:#ffe0e0}.k{background:#e8f0ff}
 </p>
 <button id="run">点検する</button> <button id="sample">例文を入れる</button> <button id="dl" disabled>結果をCSVで保存</button>
 <div id="out"></div>
+<div class="note" style="margin-top:18px;background:#f4fff0">
+<h2>③ 自治体のオープンデータ（CSV）をまとめて点検</h2>
+<p>市区町村が公開しているイベント一覧・検診のお知らせ・予防接種・ごみ分別などのCSVを読み込み、文章の列を1行ずつ点検して「やさしい日本語に書き換える優先順位」を出します。ファイルはブラウザの中だけで処理し、どこにも送りません（UTF-8 と Shift_JIS に対応）。上の「一文の上限」「ふりがななしでよい漢字」の設定を使います。</p>
+<p><input type="file" id="csvFile" accept=".csv,text/csv"> または 実データで試す：
+<button class="ney" data-f="data/neyagawa_event_202610.csv" data-c="内容">寝屋川市 イベント一覧</button>
+<button class="ney" data-f="data/neyagawa_kenshin_20260801.csv" data-c="対象者">寝屋川市 各種検診のお知らせ</button>
+<button class="ney" data-f="data/neyagawa_child_vaccination_20260801.csv" data-c="接種間隔">寝屋川市 子どもの定期予防接種</button></p>
+<p><label>点検する列 <select id="csvCol" disabled></select></label> <label>見出しにする列 <select id="csvTitle" disabled></select></label> <button id="csvRun" disabled>まとめて点検</button> <button id="csvDl" disabled>行ごとの結果をCSVで保存</button></p>
+<div id="csvOut"></div>
+<p style="font-size:.85em">サンプルの出典：寝屋川市オープンデータ（<a href="https://www.city.neyagawa.osaka.jp/organization_list/keieikikaku/johosuisinka/open_data/opendata/index.html">寝屋川市</a>、CC BY 4.0）。文字コードをUTF-8に変換したほかは手を加えていません。点数は機械的な目安で、市の文章の良し悪しを評価するものではありません。</p>
+</div>
 <div class="note" style="margin-top:18px">
 <p><b>点検していること</b></p>
 <ul>
@@ -108,6 +119,22 @@ function extract(t){
   return items;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function checkSent(s,maxLen,grade){
+  const {plain,rub}=stripRuby(s);
+  const len=[...plain.replace(/[\s　]/g,'')].length;
+  const iss=[];
+  if(len>maxLen)iss.push(['長い',len+'字（上限'+maxLen+'字）。2つ以上の文に分けます']);
+  for(const [name,re,tip] of RULES){re.lastIndex=0;const hits=[...plain.matchAll(re)].map(x=>x[0]);if(hits.length)iss.push([name,'「'+[...new Set(hits)].join('」「')+'」 '+tip])}
+  const dre=new RegExp('(\\d{1,2}|[０-９]{1,2})\\s*月\\s*(\\d{1,2}|[０-９]{1,2})\\s*日(?!'+DOW+')','g');
+  const nd=nfkc(plain).replace(/[（(][\u3041-\u309F\u30A0-\u30FFー]+[）)]/g,'');
+  const dd=[...nd.matchAll(dre)].map(x=>x[0]);
+  if(dd.length)iss.push(['曜日なし','「'+dd.join('」「')+'」 日付には曜日も書きます。例：12月25日（金曜日）']);
+  const bad=[];
+  [...plain].forEach((c,j)=>{if(isK(c)&&!rub[j]){const g=KG[c]||9;if(g>grade)bad.push(c)}});
+  if(bad.length)iss.push(['ふりがな','「'+[...new Set(bad)].join('')+'」にふりがなを付けるか、言い換えます']);
+  const kata=plain.match(/[\u30A1-\u30FA][\u30A1-\u30FAー]{2,}/g)||[];
+  return {plain,len,iss,bad,kata};
+}
 let lastRows=[];
 function run(){
   const maxLen=+$('maxLen').value||40,grade=+$('grade').value;
@@ -117,21 +144,10 @@ function run(){
   let nOver=0,nIssue=0;const needRuby=new Map();const kata=new Map();
   let tb='<table><tr><th>#</th><th>文</th><th>字数</th><th>指摘</th></tr>';
   sents.forEach((s,i)=>{
-    const {plain,rub}=stripRuby(s);
-    const len=[...plain.replace(/[\s　]/g,'')].length;
-    const iss=[];
-    if(len>maxLen){iss.push(['長い',len+'字（上限'+maxLen+'字）。2つ以上の文に分けます']);nOver++}
-    for(const [name,re,tip] of RULES){re.lastIndex=0;const hits=[...plain.matchAll(re)].map(x=>x[0]);if(hits.length)iss.push([name,'「'+[...new Set(hits)].join('」「')+'」 '+tip])}
-    // dates without weekday
-    const dre=new RegExp('(\\d{1,2}|[０-９]{1,2})\\s*月\\s*(\\d{1,2}|[０-９]{1,2})\\s*日(?!'+DOW+')','g');
-    const nd=nfkc(plain).replace(/[（(][\u3041-\u309F\u30A0-\u30FFー]+[）)]/g,'');
-    const dd=[...nd.matchAll(dre)].map(x=>x[0]);
-    if(dd.length)iss.push(['曜日なし','「'+dd.join('」「')+'」 日付には曜日も書きます。例：12月25日（金曜日）']);
-    // kanji needing ruby
-    const chars=[...plain];const bad=[];
-    chars.forEach((c,j)=>{if(isK(c)&&!rub[j]){const g=KG[c]||9;if(g>grade){bad.push(c);needRuby.set(c,(needRuby.get(c)||0)+1)}}});
-    if(bad.length)iss.push(['ふりがな','「'+[...new Set(bad)].join('')+'」にふりがなを付けるか、言い換えます']);
-    if($('chkKata').checked){for(const k of plain.match(/[\u30A1-\u30FA][\u30A1-\u30FAー]{2,}/g)||[])kata.set(k,(kata.get(k)||0)+1)}
+    const r=checkSent(s,maxLen,grade);const {plain,len,iss}=r;
+    if(len>maxLen)nOver++;
+    for(const c of r.bad)needRuby.set(c,(needRuby.get(c)||0)+1);
+    if($('chkKata').checked){for(const k of r.kata)kata.set(k,(kata.get(k)||0)+1)}
     if(iss.length)nIssue++;
     let shown=esc(plain);
     tb+='<tr><td>'+(i+1)+'</td><td>'+shown+'</td><td class="'+(len>maxLen?'ng':'ok')+'">'+len+'</td><td>'+(iss.length?iss.map(x=>'<b class="warn">'+x[0]+'</b>：'+esc(x[1])).join('<br>'):'<span class="ok">なし</span>')+'</td></tr>';
@@ -168,6 +184,52 @@ $('sample').onclick=()=>{
 $('dl').onclick=()=>{
  const csv='\ufeff番号,文,字数,指摘\n'+lastRows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yasashii-check.csv';a.click();
+};
+// ---- ③ CSV batch ----
+function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x!==''))rows.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x!==''))rows.push(row);return rows}
+function decodeBuf(buf){try{return new TextDecoder('utf-8',{fatal:true}).decode(buf).replace(/^\ufeff/,'')}catch(e){return new TextDecoder('shift_jis').decode(buf)}}
+let csvData=null,csvRows=[];
+function loadCSV(text,prefer){
+  const rows=parseCSV(text);if(rows.length<2){$('csvOut').innerHTML='<p class="ng">CSVの行が読み取れませんでした。</p>';return}
+  const head=rows[0].map((x,i)=>x.trim()||('列'+(i+1)));csvData={head,body:rows.slice(1)};
+  const avg=head.map((_,i)=>csvData.body.reduce((s,r)=>s+((r[i]||'').length),0)/csvData.body.length);
+  let best=avg.indexOf(Math.max(...avg));const pi=head.indexOf(prefer);if(pi>=0)best=pi;
+  const tIdx=head.findIndex(x=>/タイトル|名称|ごみの名称|検診項目|件名|見出し/.test(x));
+  $('csvCol').innerHTML=head.map((x,i)=>'<option value="'+i+'"'+(i===best?' selected':'')+'>'+esc(x)+'（平均'+Math.round(avg[i])+'字）</option>').join('');
+  $('csvTitle').innerHTML='<option value="-1">（行番号）</option>'+head.map((x,i)=>'<option value="'+i+'"'+(i===tIdx?' selected':'')+'>'+esc(x)+'</option>').join('');
+  ['csvCol','csvTitle','csvRun'].forEach(id=>$(id).disabled=false);
+  $('csvOut').innerHTML='<p>'+csvData.body.length+' 行・'+head.length+' 列を読み込みました。</p>';
+  runCSV();
+}
+const CATS=['長い','敬語','二重否定','あいまい','ましょう','である体','受け身・尊敬','時間があいまい','漢字が続く','曜日なし','ふりがな'];
+function runCSV(){
+  if(!csvData)return;const maxLen=+$('maxLen').value||40,grade=+$('grade').value;
+  const col=+$('csvCol').value,tc=+$('csvTitle').value;const tot={};CATS.forEach(c=>tot[c]=0);
+  const kanji=new Map();let nS=0;
+  csvRows=csvData.body.map((r,i)=>{
+    const text=(r[col]||'').trim();const sents=splitSent(text);const cnt={};CATS.forEach(c=>cnt[c]=0);let nb=0,maxL=0,chars=0;
+    for(const s of sents){const x=checkSent(s,maxLen,grade);chars+=x.len;maxL=Math.max(maxL,x.len);for(const [n] of x.iss)cnt[n]++;nb+=x.bad.length;for(const c of x.bad)kanji.set(c,(kanji.get(c)||0)+1)}
+    CATS.forEach(c=>tot[c]+=cnt[c]>0?1:0);nS+=sents.length;
+    const pts=cnt['長い']*3+cnt['敬語']*2+cnt['二重否定']*3+cnt['あいまい']+cnt['ましょう']+cnt['である体']+cnt['受け身・尊敬']+cnt['時間があいまい']+cnt['漢字が続く']*2+cnt['曜日なし']+Math.min(nb,30)*0.2;
+    const score=sents.length?Math.round(pts/sents.length*10)/10:0;
+    return {no:i+2,title:tc>=0?(r[tc]||''):'',text,ns:sents.length,chars,maxL,cnt,nb,score};
+  }).filter(x=>x.text);
+  const rank=[...csvRows].sort((a,b)=>b.score-a.score||b.chars-a.chars);
+  const share=c=>csvRows.length?Math.round(tot[c]/csvRows.length*100):0;
+  let html='<h3>まとめ（'+csvRows.length+' 行・'+nS+' 文）</h3><table><tr><th>指摘</th><th>該当する行</th><th>割合</th></tr>'+CATS.filter(c=>tot[c]).sort((a,b)=>tot[b]-tot[a]).map(c=>'<tr><td>'+c+'</td><td>'+tot[c]+'</td><td>'+share(c)+'%</td></tr>').join('')+'</table>';
+  if(kanji.size)html+='<p>ふりがなが必要な漢字（多い順）：'+[...kanji].sort((a,b)=>b[1]-a[1]).slice(0,40).map(([c,n])=>c+n).join(' ')+'</p>';
+  html+='<h3>書き換えの優先順位（上位20行）</h3><p>点数＝1文あたりの指摘の重み（長い文・二重否定×3、敬語・漢字の連続×2、ほか×1、ふりがな対象の漢字×0.2）。高いほど先に書き換えると効果が大きい目安です。</p><table><tr><th>CSVの行</th><th>見出し</th><th>文</th><th>最長</th><th>点数</th><th>おもな指摘</th></tr>';
+  for(const x of rank.slice(0,20))html+='<tr><td>'+x.no+'</td><td>'+esc(x.title.slice(0,30))+'</td><td>'+x.ns+'</td><td class="'+(x.maxL>maxLen?'ng':'ok')+'">'+x.maxL+'字</td><td><b>'+x.score+'</b></td><td>'+[...CATS.filter(c=>c!=='ふりがな'&&x.cnt[c]).map(c=>c+x.cnt[c]),...(x.nb?['ふりがなが要る漢字'+x.nb+'字']:[])].join('、')+'</td></tr>';
+  html+='</table><p>行を選んで上の②に貼れば、文ごとの指摘が見られます。</p>';
+  $('csvOut').innerHTML=html;$('csvDl').disabled=!csvRows.length;
+}
+$('csvFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.arrayBuffer().then(b=>loadCSV(decodeBuf(b),''))};
+document.querySelectorAll('.ney').forEach(b=>b.onclick=()=>fetch(b.dataset.f).then(r=>r.arrayBuffer()).then(buf=>loadCSV(decodeBuf(buf),b.dataset.c)));
+$('csvRun').onclick=runCSV;$('csvCol').onchange=runCSV;$('csvTitle').onchange=runCSV;
+$('csvDl').onclick=()=>{
+ const hd=['CSVの行','見出し','文の数','文字数','最長の文','点数',...CATS,'ふりがな対象の漢字数','本文'];
+ const csv='\ufeff'+hd.join(',')+'\n'+csvRows.map(x=>[x.no,x.title,x.ns,x.chars,x.maxL,x.score,...CATS.map(c=>x.cnt[c]),x.nb,x.text].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yasashii-batch.csv';a.click();
 };
 </script>
 </body>
