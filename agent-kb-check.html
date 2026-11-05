@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIエージェント向けショップ情報 公開前チェック＆ナレッジ文作成｜無料</title>
+<meta name="description" content="ShopifyのSales channels &gt; Agentic ナレッジベース（2026年10月〜管理画面内蔵、旧アプリは2027年1月15日終了）や、BASE・STORES・独自サイトのFAQに載せる「お店の事実」を一度入力すると、欠けている項目の確認・公開用ナレッジ文・ChatGPT/Geminiへのテスト質問を一括作成。返品・配送・ギフト・支払い・年末年始の特別ルールをAIに正しく答えさせる準備用。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/agent-kb-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:.95em}input,select,textarea{font-size:1em;max-width:100%;width:100%;box-sizing:border-box}
+textarea{min-height:3.2em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+li{margin:4px 0}button{font-size:.95em;padding:4px 12px;margin:2px}
+pre{white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px;font-size:.9em}
+.full{grid-column:1/-1}
+</style>
+</head>
+<body>
+<h1>AIエージェント向けショップ情報 公開前チェック＆ナレッジ文作成</h1>
+<p>買い物客が ChatGPT・Gemini・Copilot・Perplexity などに「この店は海外発送する？」「返品は何日以内？」と聞いたとき、AIが正しい答えを返すには、<b>お店側が事実を公開しておく</b>必要があります。Shopify では <code>Sales channels → Agentic → Knowledge base</code> に下書きされた事実は、<b>公開するまで</b>AIに渡りません（旧 Knowledge Base アプリは <b>2027年1月15日</b>に終了）。BASE・STORES・独自カートでも、FAQ・特商法・配送ページに同じ事実を書いておくと、AI検索と問い合わせ対応の両方に効きます。このツールは、必要な項目の抜けを確認し、公開用のナレッジ文とテスト質問をまとめて作ります。</p>
+<div class="box">
+<div class="grid">
+<label>ショップ名：<input id="shop" placeholder="例：〇〇ストア"></label>
+<label>ショップURL：<input id="url" placeholder="https://..."></label>
+<label>プラットフォーム：<select id="plat"><option value="shopify">Shopify</option><option value="base">BASE</option><option value="stores">STORES</option><option value="rakuten">楽天市場</option><option value="other">その他・独自</option></select></label>
+<label>主な販売国・地域：<input id="markets" value="日本"></label>
+<label>ストア説明（1〜2文）：<textarea id="about" placeholder="何を誰に売っているか"></textarea></label>
+<label>ブランドの価値観・こだわり：<textarea id="values" placeholder="例：国内製造・プラスチックフリー"></textarea></label>
+<label>お問い合わせメール：<input id="email" type="email" placeholder="support@example.com"></label>
+<label>電話（任意）：<input id="phone" placeholder="平日のみなど条件も可"></label>
+<label>発送元の国・地域：<input id="origin" value="日本"></label>
+<label>国内の発送までの目安（営業日）：<input id="shipdays" type="number" min="0" value="2"></label>
+<label>国内のお届け目安（発送後・日）：<input id="transit" type="number" min="0" value="2"></label>
+<label>配送業者：<input id="carrier" value="ヤマト運輸・日本郵便"></label>
+<label>海外発送：<select id="intl"><option value="no">しない</option><option value="yes">する</option><option value="partial">一部の国のみ</option></select></label>
+<label>海外発送できる国（任意）：<input id="intlto" placeholder="例：米国・カナダ・台湾"></label>
+<label>店舗受取・クリック＆コレクト：<select id="pickup"><option value="no">なし</option><option value="yes">あり</option></select></label>
+<label>速達・お急ぎ便：<select id="express"><option value="no">なし</option><option value="yes">あり</option></select></label>
+<label>お客様都合の返品：<select id="ret"><option value="ok">受け付ける</option><option value="ng">受け付けない</option><option value="none">未定・未表示</option></select></label>
+<label>返品期限（到着後・日）：<input id="retdays" type="number" min="0" value="7"></label>
+<label>返品送料（お客様都合）：<select id="retfee"><option value="buyer">お客様負担</option><option value="shop">当店負担</option></select></label>
+<label>返金のタイミング：<input id="refund" value="返品商品の到着・検品後、7営業日以内"></label>
+<label>保証・修理：<select id="warranty"><option value="none">なし・商品説明に記載</option><option value="yes">あり（下記に記入）</option></select></label>
+<label>保証の内容：<input id="warrtxt" placeholder="例：購入後1年・初期不良のみ"></label>
+<label>ギフトカード：<select id="gcard"><option value="no">なし</option><option value="yes">あり</option></select></label>
+<label>ギフトラッピング：<select id="gwrap"><option value="no">なし</option><option value="yes">あり</option></select></label>
+<label>ギフトメッセージ／領収書：<select id="gmsg"><option value="no">なし</option><option value="msg">メッセージ可</option><option value="receipt">ギフト用領収書可</option><option value="both">両方可</option></select></label>
+<label>支払い方法：<input id="pay" value="クレジットカード・コンビニ払い・銀行振込"></label>
+<label class="full">年末年始・セール期の特別ルール（任意）：<textarea id="peak" placeholder="例：12/28〜1/4は発送休み／ホリデー返品は1/15まで延長"></textarea></label>
+<label class="full">サイズ・ケア・その他（任意・追加ファクト）：<textarea id="extra" placeholder="例：サイズ表は各商品ページ／洗濯表示に従う／カスタム品は返品不可"></textarea></label>
+<label>特商法・配送ポリシー・返品ポリシーのページ：<select id="pol"><option value="all">3つとも公開済み</option><option value="some">一部だけ</option><option value="none">まだない・わからない</option></select></label>
+<label>Shopifyでナレッジを公開済み？：<select id="published"><option value="na">Shopify以外／未確認</option><option value="no">下書きのまま（未公開）</option><option value="yes">必要な項目は公開済み</option></select></label>
+</div>
+<button id="go">チェックして作成する</button>
+</div>
+<div id="out"></div>
+<h2>Shopifyでの公開手順（目安）</h2>
+<ol>
+<li>管理画面で <b>Sales channels → Agentic → Knowledge base</b> を開く。</li>
+<li>Shopifyがストアから下書きした事実を確認し、違うところを直す。下書きは公開するまでAIに渡りません。</li>
+<li>Returns &amp; warranty・Fulfillment（配送）・Gift services・Payment・Contact・Company policies を優先して公開する。</li>
+<li>下の「テスト質問」を ChatGPT / Gemini などに投げ、答えがナレッジと一致するか確認する。違えばストアページかナレッジを直す。</li>
+<li>旧 Knowledge Base アプリ利用者：追加ファクトが1,000件超の場合は、残したい事実を <b>2027年1月15日</b>までに新画面へ移す。</li>
+</ol>
+<div class="note">公開したナレッジはストアフロントMCP経由で第三者のAIにも読まれ得ます。お客様向けの一般情報だけを載せ、取引先ごとの特別単価や社内メモは書かないでください。このツールは作業の補助であり、Shopifyや各モールの仕様変更・法的助言を保証するものではありません。最新の操作は <a href="https://help.shopify.com/en/manual/online-sales-channels/agentic-storefronts/knowledge-base" rel="noopener">Shopifyヘルプ（Knowledge base）</a> で確認してください。</div>
+<p>AIエージェント向けショップ情報の整備、Shopify Agentic ナレッジの公開サポート、問い合わせFAQの代行は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。</p>
+<p><a href="./">← 無料ツール一覧へ</a> ／ 関連：<a href="ec-toiawase.html">問い合わせ返信テンプレ＆FAQ</a> ・ <a href="catalog-check.html">商品データ AIショッピング対応</a> ・ <a href="ai-robots-check.html">robots.txt AIクローラー</a> ・ <a href="tokusho-check.html">特商法表記</a></p>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function cfg(){
+  const n=id=>Math.max(0,parseInt($(id).value||'0',10)||0);
+  return {
+    shop:$('shop').value.trim()||'［ショップ名］',
+    url:$('url').value.trim(),
+    plat:$('plat').value,
+    markets:$('markets').value.trim()||'日本',
+    about:$('about').value.trim(),
+    values:$('values').value.trim(),
+    email:$('email').value.trim(),
+    phone:$('phone').value.trim(),
+    origin:$('origin').value.trim()||'日本',
+    shipdays:n('shipdays'), transit:n('transit'),
+    carrier:$('carrier').value.trim()||'配送業者',
+    intl:$('intl').value, intlto:$('intlto').value.trim(),
+    pickup:$('pickup').value, express:$('express').value,
+    ret:$('ret').value, retdays:n('retdays'), retfee:$('retfee').value,
+    refund:$('refund').value.trim(),
+    warranty:$('warranty').value, warrtxt:$('warrtxt').value.trim(),
+    gcard:$('gcard').value, gwrap:$('gwrap').value, gmsg:$('gmsg').value,
+    pay:$('pay').value.trim(),
+    peak:$('peak').value.trim(), extra:$('extra').value.trim(),
+    pol:$('pol').value, published:$('published').value
+  };
+}
+function facts(c){
+  const f={};
+  f.about = c.about || '［ストアの説明を1〜2文で書いてください］';
+  f.values = c.values || '［ブランドのこだわりがあれば記入］';
+  f.contact = c.email
+    ? `お問い合わせは ${c.email}${c.phone?'／電話 '+c.phone:''} まで。`
+    : '［お問い合わせ用メールアドレスを公開してください］';
+  f.ship = `${c.origin}から発送します。ご注文（お支払い確認）から${c.shipdays}営業日以内に${c.carrier}で発送し、発送後はおおむね${c.transit}日でお届けします（地域・天候により前後）。主な販売地域：${c.markets}。`;
+  if(c.intl==='no') f.intl='海外への発送は行っていません。';
+  else if(c.intl==='yes') f.intl='海外発送に対応しています。'+(c.intlto?`発送先の例：${c.intlto}。`:'対応国・送料は配送ページでご確認ください。');
+  else f.intl=`一部の国・地域のみ海外発送します。${c.intlto?`対象：${c.intlto}。`:'対象国は配送ページをご確認ください。'}`;
+  f.pickup = c.pickup==='yes' ? '店舗受取（クリック＆コレクト）に対応しています。' : '店舗受取には対応していません。';
+  f.express = c.express==='yes' ? 'お急ぎ便・速達オプションがあります（対象地域・追加料金はチェックアウトで表示）。' : 'お急ぎ便のオプションはありません。';
+  if(c.ret==='ok') f.ret=`お客様のご都合による返品は、商品到着後${c.retdays}日以内・未使用の場合に承ります。返品送料は${c.retfee==='buyer'?'お客様負担':'当店負担'}です。返品前に注文番号を添えてご連絡ください。`;
+  else if(c.ret==='ng') f.ret='お客様のご都合による返品・交換はお受けしていません（商品ページおよび特定商取引法に基づく表記に記載）。不良品・誤配送は別途対応します。';
+  else f.ret='［返品の可否・期限・送料を決め、特商法表記と最終確認画面に表示してください］';
+  f.refund = c.refund || '［返金のタイミングを記入］';
+  f.warranty = c.warranty==='yes'
+    ? (c.warrtxt || '［保証内容を記入］')
+    : '個別の保証は商品説明に記載がある場合に限ります。初期不良は到着後すぐにご連絡ください。';
+  const gifts=[];
+  if(c.gcard==='yes') gifts.push('ギフトカード');
+  if(c.gwrap==='yes') gifts.push('ギフトラッピング');
+  if(c.gmsg==='msg'||c.gmsg==='both') gifts.push('ギフトメッセージ');
+  if(c.gmsg==='receipt'||c.gmsg==='both') gifts.push('ギフト用の宛名なし領収書');
+  f.gift = gifts.length ? `ギフト関連：${gifts.join('・')}に対応しています。` : 'ギフトカード・ラッピング・ギフトメッセージには対応していません。';
+  f.pay = c.pay ? `お支払い方法：${c.pay}。` : '［受け付ける支払い方法を記入］';
+  f.peak = c.peak || '';
+  f.extra = c.extra || '';
+  return f;
+}
+function checks(c,f){
+  const a=[]; const add=(l,m)=>a.push({l,m});
+  if(c.shop==='［ショップ名］') add('mid','ショップ名が空です。');
+  if(!c.about) add('ng','ストア説明が空です。About the Store に載せる1〜2文を書いてください。');
+  if(!c.email) add('ng','お問い合わせメールが空です。Contact カテゴリで公開できないと、AIも案内できません。');
+  if(c.pol==='none') add('ng','特商法・配送・返品のポリシーページが未整備です。Company policies とストアフロントの両方に必要です。');
+  else if(c.pol==='some') add('mid','ポリシーが一部だけです。欠けているページを先に公開してからナレッジを公開してください。');
+  if(c.ret==='none') add('ng','返品ルール未定のままでは、AIが推測で答えるか「分からない」になります。特商法の返品特約表示も確認してください。');
+  if(c.ret==='ok'&&c.retdays<8) add('mid',`返品期限が到着後${c.retdays}日です。特約として商品ページと最終確認画面に書いていないと、法定の8日ルールが優先されます。`);
+  if(c.intl!=='no'&&!c.intlto) add('mid','海外発送ありなのに対象国が空です。「どこに送れる？」と聞かれたときに答えられません。');
+  if(c.plat==='shopify'&&c.published==='no') add('ng','Shopifyのナレッジが未公開です。下書きのままでは AI エージェントに渡りません。Sales channels → Agentic → Knowledge base で Publish してください。');
+  if(c.plat==='shopify'&&c.published==='na') add('mid','Shopify利用中なら、ナレッジが公開済みか管理画面で確認してください。');
+  if(!c.peak) add('mid','年末年始・セール期の発送休みや返品延長が空です。ピーク前に Additional facts として追記するのがおすすめです。');
+  if(c.warranty==='yes'&&!c.warrtxt) add('mid','保証ありを選んでいますが内容が空です。');
+  if(!c.url) add('mid','ショップURLが空です。テスト質問にURLを入れると答え合わせしやすいです。');
+  if(c.gcard==='no'&&c.gwrap==='no'&&c.gmsg==='no') add('ok','ギフト非対応と明記されます（これ自体は問題ありません）。');
+  if(!a.some(x=>x.l==='ng')&&!a.some(x=>x.l==='mid')) add('ok','必須項目の大きな抜けは見つかりませんでした。公開前に下の文面を目で確認してください。');
+  else if(!a.some(x=>x.l==='ng')&&!a.some(x=>x.l==='ok')) add('ok','致命的な欠けはありません。mid の項目を直すと公開品質が上がります。');
+  return a;
+}
+function kbMarkdown(c,f){
+  let md=`# ${c.shop} — AIエージェント向けナレッジ（公開用下書き）\n\n`;
+  if(c.url) md+=`ストアURL: ${c.url}\n`;
+  md+=`プラットフォーム: ${c.plat}\n`;
+  md+=`作成日: ${new Date().toISOString().slice(0,10)}\n\n`;
+  md+=`> Shopify: Sales channels → Agentic → Knowledge base で該当カテゴリを確認・編集し、**Publish** する。\n`;
+  md+=`> BASE / STORES / 独自: FAQ・特商法・配送ページに同じ内容を掲載する。\n\n`;
+  md+=`## About the Store\n${f.about}\n\n`;
+  md+=`## Brand and Identity\n${f.values}\n\n`;
+  md+=`## Contact\n${f.contact}\n\n`;
+  md+=`## Fulfillment（配送）\n${f.ship}\n${f.intl}\n${f.pickup}\n${f.express}\n\n`;
+  md+=`## Returns & warranty\n${f.ret}\n返金: ${f.refund}\n保証: ${f.warranty}\n\n`;
+  md+=`## Gift services\n${f.gift}\n\n`;
+  md+=`## Payment\n${f.pay}\n\n`;
+  if(f.peak) md+=`## Additional facts（ピーク・季節）\n${f.peak}\n\n`;
+  if(f.extra) md+=`## Additional facts（サイズ・ケア等）\n${f.extra}\n\n`;
+  md+=`## 公開時の注意\n- お客様向けの一般情報だけを載せる（取引先別の単価・社内メモは不可）。\n- ポリシーページと矛盾させない。変えたらナレッジも更新する。\n- ピークが終わったら季節ファクトを外すか書き換える。\n`;
+  return md;
+}
+function testQs(c){
+  const name=c.shop==='［ショップ名］'?'この店':c.shop;
+  const u=c.url?`（${c.url}）`:'';
+  return [
+    `${name}${u}は海外に発送しますか？どの国まで送れますか？`,
+    `${name}の返品は何日以内までできますか？送料は誰負担ですか？`,
+    `${name}に注文してから、通常何日で届きますか？`,
+    `${name}でギフトラッピングやギフトカードは使えますか？`,
+    `${name}で使える支払い方法を教えてください。`,
+    `${name}への問い合わせ先（メールや電話）は？`,
+    c.peak?`${name}の年末年始（またはセール期間）の発送・返品ルールは？`:`${name}は店舗受取やお急ぎ便に対応していますか？`,
+    `${name}はどんな店ですか？何を売っていますか？`
+  ];
+}
+function faqMd(c,f){
+  const qs=testQs(c);
+  const ans=[
+    f.intl,
+    f.ret+(c.ret==='ok'?` 返品送料は${c.retfee==='buyer'?'お客様負担':'当店負担'}。`:''),
+    f.ship,
+    f.gift,
+    f.pay,
+    f.contact,
+    f.peak||(f.pickup+' '+f.express),
+    f.about
+  ];
+  return `# ${c.shop} FAQ（サイト掲載用・AIテスト用）\n\n`+qs.map((q,i)=>`## ${q}\n${ans[i]}\n`).join('\n');
+}
+$('go').onclick=()=>{
+  const c=cfg(), f=facts(c), ch=checks(c,f), md=kbMarkdown(c,f), faq=faqMd(c,f), qs=testQs(c);
+  let h='<div class="box"><b>公開前チェック</b><ul>'+ch.map(x=>`<li class="${x.l}">${esc(x.m)}</li>`).join('')+'</ul></div>';
+  h+='<h2>カテゴリ別ファクト（要約）</h2><ul>';
+  [['About',f.about],['Brand',f.values],['Contact',f.contact],['Fulfillment',f.ship+' '+f.intl],['Returns',f.ret],['Gift',f.gift],['Payment',f.pay]].forEach(([k,v])=>{h+=`<li><b>${esc(k)}</b>：${esc(v)}</li>`;});
+  if(f.peak) h+=`<li><b>Peak</b>：${esc(f.peak)}</li>`;
+  if(f.extra) h+=`<li><b>Extra</b>：${esc(f.extra)}</li>`;
+  h+='</ul>';
+  h+=`<h2>ナレッジ文（Markdown）</h2><pre id="kb">${esc(md)}</pre><button id="cpkb">コピー</button><button id="dlkb">.mdで保存</button>`;
+  h+=`<h2>FAQ掲載用（同じ内容）</h2><pre id="faq">${esc(faq)}</pre><button id="cpfaq">コピー</button>`;
+  h+=`<h2>AIへのテスト質問（コピペ用）</h2><ol id="qs">${qs.map(q=>`<li>${esc(q)}</li>`).join('')}</ol><button id="cpqs">質問を全部コピー</button>`;
+  h+='<p class="note">答えがナレッジと違うときは、①ストアのポリシーページ ②Agentic ナレッジ ③商品ページの古い記載、の順に直してください。</p>';
+  $('out').innerHTML=h;
+  const cp=t=>navigator.clipboard&&navigator.clipboard.writeText(t);
+  $('cpkb').onclick=()=>cp(md); $('cpfaq').onclick=()=>cp(faq);
+  $('cpqs').onclick=()=>cp(qs.map((q,i)=>`${i+1}. ${q}`).join('\n'));
+  $('dlkb').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='agent-knowledge.md';a.click();};
+};
+// Expose for jsdom tests
+window.__agentKb={cfg,facts,checks,kbMarkdown,testQs,faqMd};
+</script>
+</body>
+</html>
