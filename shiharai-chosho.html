@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>支払調書（報酬・料金）提出要否 一括判定＆令和9年1月 e-Tax義務（30枚以上）チェッカー｜無料</title>
+<meta name="description" content="外注先・講師・士業への1年分の支払一覧を貼り付けると、「報酬、料金、契約金及び賞金の支払調書」を出す相手かどうか（5万円・50万円の基準、税込/税抜の判定）をまとめて判定。令和9年1月以後は前々年30枚以上の法定調書がe-Tax等での提出義務になるため、種類ごとの枚数から義務の有無も表示。入力は送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/shiharai-chosho.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:.9em}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.92em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+td.n{text-align:right;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}
+small{color:#555}button{font-size:1em;padding:4px 10px;margin-right:6px}input[type=number]{width:7em}
+</style>
+</head>
+<body>
+<h1>支払調書（報酬・料金）提出要否 一括判定＆e-Tax義務チェッカー</h1>
+<p>1年分の外注費・講師料・士業報酬などの支払を、<b>1回の支払ごとに1行</b>で貼り付けると、相手ごとに合計して「<b>報酬、料金、契約金及び賞金の支払調書</b>」を税務署に出す必要があるかを判定します。あわせて、<b>令和9年（2027年）1月以後に出す法定調書は、種類ごとに前々年の枚数が30枚以上ならe-Tax等での提出が義務</b>（令和8年12月31日までは100枚以上）になるため、その判定もします。計算はこのブラウザの中だけで行い、どこにも送信しません。</p>
+
+<div class="box">
+<b>入力（CSV・タブ区切りどちらでも）</b> 列：<code>相手先, 区分, 支払金額, うち消費税額</code><br>
+<small>区分は次のどれか（番号でも可）：<br>
+1 = 弁護士・税理士・司法書士等の報酬、原稿料・デザイン料・翻訳料・講演料など（同一人に年5万円超で提出）<br>
+2 = 外交員・集金人・検針人・プロボクサー等、ホステス等、広告宣伝のための賞金（年50万円超）<br>
+3 = プロ野球選手などへの報酬・契約金（年5万円超）<br>
+4 = 非居住者への国内の人的役務の報酬（別の「非居住者に支払われる給与、報酬、年金及び賞金の支払調書」、年50万円超）<br>
+消費税額は請求書で区分されている場合だけ入れてください（入れると税抜で判定します）。相手が法人でも、提出範囲に入れば提出が必要です。</small>
+<textarea id="src" rows="9"></textarea>
+<button id="sample">サンプルを入れる</button><button id="run">判定する</button><button id="csv">結果をCSVで保存</button>
+</div>
+
+<div class="box">
+<b>e-Tax義務の判定（令和9年1月に出す分）</b><br>
+<small>判定に使うのは<b>前々年＝令和7年（2025年）中に提出すべきだった枚数</b>（ふつうは令和7年1月に出した令和6年分の枚数）で、法定調書の<b>種類ごと</b>に見ます（従業員数や全種類の合計ではありません）。</small><br>
+令和7年に提出すべきだった報酬・料金等の支払調書の枚数 <input type="number" id="c_hoshu" min="0"> 枚<br>
+令和7年に提出すべきだった給与所得の源泉徴収票の枚数 <input type="number" id="c_gensen" min="0"> 枚<br>
+令和7年に提出すべきだった不動産の使用料等の支払調書の枚数 <input type="number" id="c_fudo" min="0"> 枚<br>
+令和7年に提出すべきだった非居住者への支払調書の枚数 <input type="number" id="c_hikyo" min="0"> 枚
+</div>
+
+<div id="out"></div>
+
+<div class="note">
+<b>使い方の注意</b><br>
+・判定基準は国税庁タックスアンサー <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/hotei/7431.htm">No.7431</a>・<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/hotei/7455.htm">No.7455</a>（令和8年4月1日現在法令等）によります。競馬の賞金など本ツールで扱わない区分があります。<br>
+・提出期限は支払の確定した年の翌年1月31日（令和8年分は令和9年2月1日（月）※1月31日が日曜のため）。法定調書合計表とともに所轄税務署へ。<br>
+・税務署に出す支払調書には相手のマイナンバーまたは法人番号が必要です。相手に写しを渡すときはマイナンバーを書けません。<br>
+・最終判断は所轄税務署・税理士にご確認ください。本ツールは計算の補助で、税務相談ではありません。
+</div>
+
+<script>
+const KUBUN={1:{name:'士業報酬・原稿料・デザイン料・講演料等',lim:50000,doc:'報酬'},2:{name:'外交員・ホステス等・広告宣伝の賞金',lim:500000,doc:'報酬'},3:{name:'プロ野球選手等の報酬・契約金',lim:50000,doc:'報酬'},4:{name:'非居住者への人的役務の報酬',lim:500000,doc:'非居住者'}};
+function kubunOf(s){s=String(s||'').trim();if(/^[1-4]$/.test(s))return +s;
+ if(/非居住/.test(s))return 4;if(/外交|集金|検針|ボクサ|ホステス|キャバ|広告|賞金/.test(s))return 2;if(/野球|契約金/.test(s))return 3;return 1;}
+function num(s){s=String(s==null?'':s).replace(/[,，円¥\s]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248));return s===''?0:Number(s);}
+function parse(t){const rows=[];t.split(/\r?\n/).forEach((l,i)=>{if(!l.trim())return;const c=l.split(/\t|,/).map(x=>x.trim());if(i===0&&/相手|名/.test(c[0])&&isNaN(num(c[2])))return;rows.push({name:c[0],k:kubunOf(c[1]),amt:num(c[2]),tax:num(c[3])});});return rows;}
+function judge(rows){const m=new Map();const bad=[];
+ rows.forEach((r,i)=>{if(!r.name||isNaN(r.amt)||isNaN(r.tax)){bad.push(i+1);return;}const key=r.name.replace(/\s|　|株式会社|（株）|\(株\)/g,'')+'|'+r.k;
+  if(!m.has(key))m.set(key,{name:r.name,k:r.k,amt:0,tax:0,n:0,taxMissing:false});const o=m.get(key);o.amt+=r.amt;o.tax+=r.tax;o.n++;if(!r.tax)o.taxMissing=true;});
+ const res=[...m.values()].map(o=>{const K=KUBUN[o.k];const base=o.taxMissing?o.amt:o.amt-o.tax;const need=base>K.lim;const notes=[];
+  if(o.taxMissing&&o.tax>0)notes.push('消費税額が一部の行だけ入力→税込で判定');
+  if(!need&&o.amt>K.lim)notes.push('税込なら基準超え（消費税が区分されていなければ提出対象）');
+  if(need&&base-K.lim<=K.lim*0.1)notes.push('基準すれすれ：12月払い分の計上漏れ・二重計上を確認');
+  return {...o,base,lim:K.lim,kname:K.name,doc:K.doc,need,notes};});
+ return {res,bad};}
+function yen(n){return Math.round(n).toLocaleString('ja-JP');}
+function etax(label,n){if(n===''||n==null||isNaN(n))return '';n=+n;return `<tr><td>${label}</td><td class="n">${n}枚</td><td>${n>=30?'<span class="warn">e-Tax・光ディスク等・認定クラウド等での提出が義務（書面不可）</span>':'<span class="ok">書面提出も可（e-Taxも可）</span>'}</td></tr>`;}
+function run(){const {res,bad}=judge(parse(document.getElementById('src').value));window._res=res;
+ let h='<h2>相手先ごとの判定</h2><table><tr><th>相手先</th><th>区分</th><th>支払合計(税込)</th><th>判定に使う額</th><th>基準</th><th>提出</th><th>注意</th></tr>';
+ res.forEach(o=>{h+=`<tr><td>${esc(o.name)}</td><td>${o.kname}</td><td class="n">${yen(o.amt)}</td><td class="n">${yen(o.base)}${o.taxMissing?'':'（税抜）'}</td><td class="n">${yen(o.lim)}超</td><td>${o.need?'<span class="warn">要提出</span>':'<span class="ok">不要</span>'}</td><td>${o.notes.join('<br>')}</td></tr>`;});
+ h+='</table>';if(bad.length)h+=`<p class="warn">読めなかった行：${bad.join(', ')}</p>`;
+ const nH=res.filter(o=>o.need&&o.doc==='報酬').length,nN=res.filter(o=>o.need&&o.doc==='非居住者').length;
+ h+=`<p>今回の入力で出す枚数：報酬・料金等の支払調書 <b>${nH}</b>枚、非居住者の支払調書 <b>${nN}</b>枚（※非居住者分は租税条約で情報交換する国の相手なら2枚ずつ）。令和8年分として令和9年1月に出す場合、この枚数は<b>令和11年（2029年）1月</b>に出す分のe-Tax義務の判定に使われます${nH>=30?'（<span class="warn">30枚以上→令和11年1月は報酬・料金等の支払調書がe-Tax等義務</span>）':''}。</p>`;
+ const v=id=>{const x=document.getElementById(id).value;return x===''?null:x;};
+ const rows=etax('報酬、料金、契約金及び賞金の支払調書',v('c_hoshu'))+etax('給与所得の源泉徴収票',v('c_gensen'))+etax('不動産の使用料等の支払調書',v('c_fudo'))+etax('非居住者に支払われる給与、報酬、年金及び賞金の支払調書',v('c_hikyo'));
+ h+='<h2>令和9年1月に出す法定調書のe-Tax義務</h2>'+(rows?'<table><tr><th>種類</th><th>令和7年に提出すべきだった枚数</th><th>令和9年1月の提出方法</th></tr>'+rows+'</table>':'<p><small>上の欄に令和7年分の枚数を入れると判定します。</small></p>');
+ h+='<p><small>義務になった種類は、事前にe-Tax開始届出・利用者識別番号の取得（または認定クラウド等の利用届出）が必要です。基準に満たない種類は書面でも出せます。</small></p>';
+ document.getElementById('out').innerHTML=h;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toCSV(res){const q=s=>'"'+String(s).replace(/"/g,'""')+'"';return '\ufeff'+[['相手先','区分','支払回数','支払合計(税込)','判定額','基準(超)','提出','注意'].map(q).join(',')].concat(res.map(o=>[o.name,o.kname,o.n,o.amt,o.base,o.lim,o.need?'要':'不要',o.notes.join(' / ')].map(q).join(','))).join('\r\n');}
+const SAMPLE=`相手先,区分,支払金額,うち消費税額
+山本法律事務所,1,33000,3000
+山本法律事務所,1,22000,2000
+デザイン工房 青,デザイン料,52800,4800
+翻訳 佐々木,1,48000,
+株式会社テック講師,講演料,110000,10000
+外交員 木村,2,480000,
+外交員 木村,2,40000,
+John Smith,非居住者,600000,`;
+document.getElementById('sample').onclick=()=>{document.getElementById('src').value=SAMPLE;};
+document.getElementById('run').onclick=run;
+document.getElementById('csv').onclick=()=>{const b=new Blob([toCSV(window._res||[])],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='shiharai_chosho_hantei.csv';a.click();};
+</script>
+<p><small>作成：中崎 慎二（フリーランス翻訳者）。書類チェックのご依頼は shinji-work@mail.grokbot.com へ。</small></p>
+</body>
+</html>
