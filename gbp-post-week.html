@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Googleビジネスプロフィール 週次投稿カレンダー作成｜無料</title>
+<meta name="description" content="業種・季節・催事からGoogleビジネスプロフィール向けの週次投稿（お知らせ・商品・イベント）案を4週間分作成。文字数目安・写真のヒント・CTA付き。ブラウザ内処理・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/gbp-post-week.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.3em}h2{font-size:1.08em;margin-top:1.5em}
+label{display:block;margin:8px 0 2px}input,select,textarea{font-size:1em;padding:4px;box-sizing:border-box;width:100%}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;width:100%;font-size:.9em}th,td{border:1px solid #ddd;padding:6px 8px;vertical-align:top;text-align:left}
+th{background:#f5f7fa}button{font-size:1em;padding:6px 14px;margin:4px 4px 4px 0}
+.tag{display:inline-block;background:#eef;padding:1px 7px;border-radius:6px;font-size:.8em;margin-right:4px}
+.warn{color:#b00020}.ok{color:#1b5e20}.muted{color:#666;font-size:.88em}
+</style>
+</head>
+<body>
+<h1>Googleビジネスプロフィール 週次投稿カレンダー</h1>
+<p>Yahoo!プレイス終了後も残る<strong>Googleマップ／ビジネスプロフィール</strong>向けに、週1〜2本の投稿案を4週間分つくります。順位を約束するものではなく、<strong>電話・ルート・サイトクリック</strong>につながる「お知らせ・商品・イベント」を続けるための下書きです。</p>
+
+<div class="box">
+<label>店名・施設名 <input type="text" id="name" value="さくら歯科クリニック"></label>
+<label>業種
+<select id="gyoshu">
+<option value="clinic">クリニック・歯科・整体</option>
+<option value="beauty">美容室・ネイル・エステ</option>
+<option value="food">飲食店</option>
+<option value="retail">小売・雑貨</option>
+<option value="hotel">宿泊</option>
+<option value="other">その他サービス</option>
+</select></label>
+<label>地域（市区町村・駅） <input type="text" id="area" value="吉祥寺"></label>
+<label>今月の催事・季節（カンマ区切り） <input type="text" id="season" value="インフルエンザ予防, 年末年始休診案内, 定期検診キャンペーン"></label>
+<label>強み・伝えたいこと（カンマ区切り） <input type="text" id="usp" value="土日診療, 英語対応, 痛くない治療, 駐車場あり"></label>
+<label>開始週の月曜日（任意・空欄なら今週） <input type="date" id="start"></label>
+<label>週あたり本数
+<select id="freq"><option value="1">週1本</option><option value="2" selected>週2本</option></select></label>
+<button id="gen">4週間分をつくる</button>
+<button id="csv" disabled>CSV保存</button>
+</div>
+
+<div id="out"></div>
+
+<div class="note">
+<p><strong>運用の目安（公式の順位保証はありません）</strong></p>
+<ul>
+<li>写真付き投稿を<strong>週1回以上</strong>続け、品質と承認フローが回る範囲で週2〜3回へ。</li>
+<li>効果は順位より、<strong>電話・ルート検索・ウェブサイトクリック</strong>を月次で見る。</li>
+<li>投稿本文は長すぎると切り詰められます。要点を先に、具体的な日時・予約方法を後に。</li>
+<li>口コミ返信の下書きは<a href="kuchikomi-henshin.html">口コミ返信チェッカー</a>、店名・説明文のポリシーは<a href="gbp-check.html">GBPポリシーチェッカー</a>を併用してください。</li>
+</ul>
+<p>入力はこのブラウザ内だけで処理し、送信しません。週次投稿・口コミ返信・月次レポートの代行は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。</p>
+</div>
+<p><a href="./">← 無料ツール一覧へ</a></p>
+
+<script>
+const $=id=>document.getElementById(id);
+const split=s=>String(s||'').split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+function mondayOf(d){const x=new Date(d);const day=x.getDay();const diff=day===0?-6:1-day;x.setDate(x.getDate()+diff);x.setHours(0,0,0,0);return x;}
+function fmt(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+const TEMPLATES={
+clinic:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}よりお知らせ｜${s}\n${a}で通いやすい環境づくりを続けています。${u}もご相談ください。ご予約・お問い合わせはプロフィールのボタンからどうぞ。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`【ご案内】${s}\n${n}（${a}）では、初めての方にも分かりやすくご説明します。こだわり：${u}。詳細は「詳しくはこちら」から。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}のご案内\n日程に空きがある週はプロフィールでお知らせします。${n}／${a}。${u}対応。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`院内のひとコマ｜${n}\n清潔と分かりやすさを大切にしています。${a}エリアの皆さま、${u}についてもお気軽にどうぞ。`}
+],
+beauty:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}からのお知らせ｜${s}\n${a}でご来店をお待ちしています。こだわり：${u}。予約はプロフィールから。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`メニューのご案内｜${s}\n${n}おすすめ。仕上がりのイメージ写真も更新中です。${u}。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}\n空き状況は投稿でお知らせします。${a}／${n}。${u}。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`サロンの日常｜${n}\n道具と空間の手入れを欠かさず。${a}の皆さま、${u}もご相談を。`}
+],
+food:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}より｜${s}\n${a}でお待ちしています。こだわり：${u}。座席・予約はプロフィールからご確認を。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`おすすめ｜${s}\n本日の写真を更新しました。${n}（${a}）。${u}。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}\n開催日・予約枠は投稿とプロフィールをご覧ください。${n}。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`仕込みのひとコマ｜${n}\n素材と衛生にこだわっています。${a}／${u}。`}
+],
+retail:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}からのお知らせ｜${s}\n${a}店頭・オンラインの情報はプロフィールでも更新中。${u}。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`入荷・おすすめ｜${s}\n${n}より。写真つきでご紹介。${u}。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}\n日時は投稿をご確認ください。${a}／${n}。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`お店の裏側｜${n}\n品揃えの工夫を少しご紹介。${u}。`}
+],
+hotel:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}より｜${s}\n${a}でのご滞在をお待ちしています。${u}。空室・プランはプロフィールから。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`プランのご案内｜${s}\n${n}おすすめ。${u}。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}\n周辺の楽しみ方もあわせてご案内します。${a}／${n}。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`館内のひとコマ｜${n}\n清掃とおもてなしの準備の様子です。${u}。`}
+],
+other:[
+{type:'お知らせ',t:(n,a,s,u)=>`${n}からのお知らせ｜${s}\n${a}の皆さまへ。${u}。詳細はプロフィールから。`},
+{type:'商品・サービス',t:(n,a,s,u)=>`サービス案内｜${s}\n${n}より。${u}。`},
+{type:'イベント',t:(n,a,s,u)=>`${s}\n日程は投稿で告知します。${a}／${n}。`},
+{type:'Behind the scenes',t:(n,a,s,u)=>`日々の取り組み｜${n}\n${u}を大切にしています。`}
+]
+};
+const PHOTO={
+clinic:['受付・待合の明るい写真','スタッフ（許可済み）の笑顔','機材や院内の清潔感が分かるカット'],
+beauty:['仕上がりビフォーアフター（許可）','店内の雰囲気','季節のディスプレイ'],
+food:['料理の寄りの写真（自然光）','外観・入口','スタッフや厨房（許可）'],
+retail:['商品の寄りの写真','店頭ディスプレイ','パッケージや使い方'],
+hotel:['客室・共用部','周辺の景色','食事やアメニティ'],
+other:['サービス提供の様子（許可）','外観・入口','成果物や資料の見本']
+};
+let rows=[];
+function build(){
+  const name=$('name').value.trim()||'当店';
+  const area=$('area').value.trim()||'この地域';
+  const g=$('gyoshu').value;
+  const seasons=split($('season').value); const usps=split($('usp').value);
+  const freq=+($('freq').value)||1;
+  let start=$('start').value?new Date($('start').value+'T00:00:00'):new Date();
+  start=mondayOf(start);
+  const tmps=TEMPLATES[g]||TEMPLATES.other;
+  const photos=PHOTO[g]||PHOTO.other;
+  rows=[];
+  let ti=0;
+  for(let w=0;w<4;w++){
+    for(let i=0;i<freq;i++){
+      const day=addDays(start,w*7+(i===0?1:4)); // Tue / Fri
+      const season=seasons[(w+i)%Math.max(seasons.length,1)]||'季節のご案内';
+      const usp=(usps.slice(0,2).join('・'))||'丁寧な対応';
+      const tmpl=tmps[ti%tmps.length]; ti++;
+      const body=tmpl.t(name,area,season,usp);
+      const len=[...body].length;
+      const flags=[];
+      if(len>1500) flags.push('長すぎ（目安1500字以内に短縮）');
+      if(!/予約|お問い合わせ|プロフィール|ボタン|詳しくは/.test(body)) flags.push('CTA（予約・問い合わせ）を明示');
+      if(/今すぐ|限定|無料|割引|%|円/.test(body)) flags.push('価格・割引表現はGBPポリシーに注意→gbp-checkへ');
+      rows.push({week:w+1,date:fmt(day),type:tmpl.type,title:season,body,len,photo:photos[i%photos.length],flags:flags.join('／')||'OK'});
+    }
+  }
+  let html=`<p class="ok">作成：${rows.length}本（${fmt(start)}週〜）</p><table><thead><tr><th>週</th><th>投稿日案</th><th>種別</th><th>本文案</th><th>字数</th><th>写真ヒント</th><th>注意</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html+=`<tr><td>${r.week}</td><td>${r.date}</td><td><span class="tag">${r.type}</span></td><td><pre style="white-space:pre-wrap;margin:0;font-family:inherit">${r.body.replace(/</g,'&lt;')}</pre></td><td class="${r.len>1500?'warn':''}">${r.len}</td><td>${r.photo}</td><td class="${r.flags==='OK'?'ok':'warn'}">${r.flags}</td></tr>`;
+  });
+  html+='</tbody></table><p class="muted">投稿前に事実（日時・料金・休診）を必ず確認し、店舗オーナー承認後に公開してください。</p>';
+  $('out').innerHTML=html;
+  $('csv').disabled=false;
+}
+function downloadCsv(){
+  const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const lines=[['week','date','type','title','body','chars','photo_hint','flags'].join(',')];
+  rows.forEach(r=>lines.push([r.week,r.date,r.type,r.title,r.body,r.len,r.photo,r.flags].map(esc).join(',')));
+  const blob=new Blob([['\ufeff'+lines.join('\n')]],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gbp-post-week.csv';a.click();
+}
+$('gen').onclick=build;
+$('csv').onclick=downloadCsv;
+</script>
+</body>
+</html>

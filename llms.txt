@@ -58,3 +58,4 @@
 
 - [SNS投稿サイズ一括チェッカー（IG / X / TikTok / YouTube / LINE / Facebook）](https://yema7582-code.github.io/koubo-ai-ok/sns-size-check.html): 推奨ピクセル一致・アスペクト比ずれ・小さすぎ・容量目安・ストーリーズ/TikTokセーフゾーン注意。画像アップロードまたは幅×高さ手入力。CSV保存。送信なし。
 - [アプリ翻訳ファイル チェッカー（Android strings.xml / iOS .strings / .xcstrings / XLIFF）](https://yema7582-code.github.io/koubo-ai-ok/mobile-strings-check.html): キー過不足・プレースホルダ崩れ・アポストロフィ・needs_review・plural抜けを点検
+- [GBP週次投稿カレンダー](https://yema7582-code.github.io/koubo-ai-ok/gbp-post-week.html): 業種×季節で4週間分のGBP投稿案
