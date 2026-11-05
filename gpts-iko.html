@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カスタムGPT 提供終了（2026年12月11日）移行チェッカー＆アクション→MCPサーバー変換｜無料</title>
+<meta name="description" content="ChatGPTのカスタムGPTは2026年12月11日に提供終了。プラグインへの移行で引き継がれるもの・引き継がれないもの（カスタムアクション・モデル選択・下書き）を確認し、アクションのOpenAPIスキーマ（JSON/YAML）から置き換え用のMCPサーバー（Node.js）のひな形を作ります。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/gpts-iko.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:28px;border-bottom:1px solid #ddd}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:14px;vertical-align:top;text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{width:100%;height:220px;font-family:ui-monospace,monospace;font-size:13px;box-sizing:border-box}
+pre{background:#f5f5f5;padding:8px;overflow:auto;font-size:12px;max-height:480px}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:4px 14px 4px 0}
+.ng{color:#a00;font-weight:bold}.warn{color:#8a5a00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+:focus-visible{outline:3px solid #1a5fb4;outline-offset:2px}
+</style>
+</head>
+<body>
+<h1>カスタムGPT 提供終了の移行チェッカー＆アクション→MCPサーバー変換</h1>
+<p>ChatGPTのカスタムGPT（GPTs）は <b>2026年12月11日</b> に提供終了の予定で、移行先は「プラグイン」です（OpenAIヘルプ「Custom GPT retirement and migration FAQ」）。指示文・ナレッジファイル・接続済みアプリは移行ボタンで引き継げますが、<b>カスタムアクション（外部APIの呼び出し）は引き継がれません</b>。このページでは、①残り日数と準備のチェック、②アクションのOpenAPIスキーマから置き換え用MCPサーバーのひな形づくり、③移行前後の答えくらべ表づくりができます。入力はブラウザの中だけで処理します。</p>
+
+<h2>① 残り日数と、移行で変わること</h2>
+<div id="days"></div>
+<table>
+<tr><th>項目</th><th>移行ボタンで</th><th>やること</th></tr>
+<tr><td>指示文（Instructions）</td><td class="ok">プラグインの「スキル」になる</td><td>移行は<b>最後に公開した版</b>が使われます。下書き・未公開の編集は移りません。直したい所は先に公開（一般公開でなくてよい）</td></tr>
+<tr><td>ナレッジファイル</td><td class="ok">参照ファイルにコピー</td><td>古い料金表・終わったキャンペーンが残っていないか、移行前に入れ替え</td></tr>
+<tr><td>接続済みアプリ</td><td class="ok">アプリとして追加</td><td>使う人ごとにアプリの認可が要ります</td></tr>
+<tr><td>カスタムアクション</td><td class="ng">引き継がれない</td><td>使えるアプリがあるか確認。なければ<b>MCPサーバーを作って</b>つなぎ直す（下の②）</td></tr>
+<tr><td>選んでいたモデル</td><td class="warn">引き継がれない</td><td>答え方が変わることがあります。③の表で比べてください</td></tr>
+<tr><td>共有範囲</td><td class="warn">プラグインは非公開で始まる</td><td>今の利用者は自動では使えません。共有し直し、1人に試してもらう</td></tr>
+<tr><td>元のGPT</td><td class="warn">移行後は読み取り専用</td><td>終了日までは使えますが、編集はプラグイン側で。削除もできなくなります</td></tr>
+</table>
+<p>移行ボタンの場所：My GPTs → 対象のGPT → 「Migrate to plugin」（アカウントによって表示時期が違います）。作った本人（またはワークスペース管理者）しか移行できません。人のGPTを使っているだけなら、作者の案内を待ちます。</p>
+
+<h2>② アクション（OpenAPIスキーマ）→ MCPサーバーのひな形</h2>
+<p>GPTの編集画面の「アクション」にあるスキーマ（JSON か YAML）をそのまま貼ってください。操作（operation）ごとにMCPのツールを1つ作り、同じAPIを呼ぶ Node.js のサーバー（Streamable HTTP、ステートレス）を出力します。APIキーは環境変数で渡します。</p>
+<textarea id="spec" placeholder="openapi: 3.1.0&#10;info:&#10;  title: ...&#10;servers:&#10;  - url: https://api.example.com&#10;paths:&#10;  ..."></textarea>
+<button id="go">変換する</button> <button id="sample">例を入れる</button> <button id="dl" disabled>server.js を保存</button> <button id="dlp" disabled>package.json を保存</button>
+<div id="out"></div>
+
+<h2>③ 移行前後の答えくらべ表</h2>
+<p>よく使う質問を1行に1つ書くと、元のGPTと新しいプラグインの答えを並べて確認する表（CSV）を作ります。OpenAIのFAQのとおり、いつもの質問に加えて<b>難しめの質問を1つ以上</b>入れてください。</p>
+<textarea id="qs" style="height:120px" placeholder="例：来週の予約状況を教えて&#10;例：この見積書をいつもの形式で作って&#10;例（難しめ）：2つの店舗の売上を比べて表にして"></textarea>
+<button id="mk">CSVを作る</button>
+
+<div class="note" style="margin-top:18px">
+<p>カスタムGPTの<b>移行代行</b>（指示文・ナレッジの見直し、アクションのMCPサーバー化と動作確認、利用者への共有手順書）を個人で請け負っています。日本語・英語・中国語に対応。GPTの数とアクションの数で事前にお見積りします。ご相談は <a href="mailto:shinji-work@mail.grokbot.com?subject=%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0GPT%E7%A7%BB%E8%A1%8C%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> まで。</p>
+</div>
+<p style="font-size:.85em">日付と移行の内容は OpenAI ヘルプセンター「Custom GPT retirement and migration FAQ」（2026年11月に確認）によります。FedRAMP や延期が認められた Enterprise ワークスペースは 2027年2月11日です。必ずご自分のアカウントに出ている案内を優先してください。このページは OpenAI の公式ツールではありません。</p>
+<p><a href="index.html">ほかの無料ツール一覧</a></p>
+<script>
+const $=id=>document.getElementById(id);
+(function(){const end=new Date('2026-12-11T00:00:00+09:00');const d=Math.ceil((end-Date.now())/864e5);
+$('days').innerHTML=d>0?'<p>提供終了（2026年12月11日）まで <b class="'+(d<=14?'ng':'warn')+'">あと '+d+' 日</b>。アクションを使っているGPTは作り直しとテストに時間がかかるので、早めに始めてください。</p>':'<p class="ng">標準の提供終了日（2026年12月11日）を過ぎています。延期対象のワークスペース以外では、GPTのページは開けません。</p>'})();
+// --- minimal YAML (subset) ---
+function yamlParse(src){
+  const lines=src.replace(/\t/g,'  ').split(/\r?\n/).map(l=>l.replace(/\s+#.*$/,'')).map(l=>/^\s*#/.test(l)?'':l);
+  let i=0;
+  const ind=l=>l.match(/^ */)[0].length;
+  const scalar=v=>{v=v.trim();if(v==='')return null;if(/^".*"$/.test(v))return JSON.parse(v);if(/^'.*'$/.test(v))return v.slice(1,-1).replace(/''/g,"'");if(/^[\[{]/.test(v)){try{return JSON.parse(v)}catch(e){return flow(v)}}if(v==='true')return true;if(v==='false')return false;if(v==='null'||v==='~')return null;if(/^-?\d+(\.\d+)?$/.test(v))return +v;return v};
+  const flow=v=>{ // [a, b] simple
+    if(/^\[.*\]$/.test(v))return v.slice(1,-1).split(',').map(s=>scalar(s)).filter(x=>x!==null);return v};
+  function skip(){while(i<lines.length&&!lines[i].trim())i++}
+  function block(n,style){const out=[];while(i<lines.length&&(!lines[i].trim()||ind(lines[i])>=n)){out.push(lines[i].slice(n));i++}while(out.length&&!out[out.length-1].trim())out.pop();return style==='|'?out.join('\n'):out.join(' ').replace(/\s+/g,' ').trim()}
+  function parse(n){
+    skip();if(i>=lines.length)return null;
+    const l=lines[i];
+    if(/^\s*- /.test(l)||/^\s*-$/.test(l)){
+      const arr=[];const base=ind(l);
+      while(i<lines.length){skip();if(i>=lines.length)break;const L=lines[i];if(ind(L)!==base||!/^\s*-( |$)/.test(L))break;
+        const rest=L.slice(base+1).replace(/^ /,'');
+        if(!rest.trim()){i++;arr.push(parse(base+1));continue}
+        if(/^[^"'\s][^:]*:( |$)/.test(rest)||/^["'][^"']+["']\s*:( |$)/.test(rest)){lines[i]=' '.repeat(base+2)+rest;arr.push(parse(base+2))}
+        else{i++;arr.push(scalar(rest))}
+      }
+      return arr;
+    }
+    const obj={};const base=ind(l);
+    while(i<lines.length){skip();if(i>=lines.length)break;const L=lines[i];if(ind(L)!==base)break;
+      const m=L.slice(base).match(/^("[^"]*"|'[^']*'|[^:]+?)\s*:(?: (.*))?$/);if(!m){i++;continue}
+      const k=m[1].replace(/^["']|["']$/g,'');const v=m[2]===undefined?'':m[2];i++;
+      if(/^[|>][-+]?$/.test(v.trim())){obj[k]=block(base+1>0?(()=>{skip();return i<lines.length?ind(lines[i]):0})():0,v.trim()[0])}
+      else if(v.trim()===''){skip();obj[k]=(i<lines.length&&(ind(lines[i])>base||(ind(lines[i])===base&&/^\s*- /.test(lines[i]))))?parse(ind(lines[i])):null}
+      else obj[k]=scalar(v);
+    }
+    return obj;
+  }
+  return parse(0);
+}
+function loadSpec(t){t=t.trim();if(!t)throw new Error('スキーマが空です');if(t[0]==='{')return JSON.parse(t);return yamlParse(t)}
+function resolve(spec,s,depth){
+  if(!s||typeof s!=='object'||depth>6)return s||{};
+  if(s.$ref){const p=s.$ref.replace(/^#\//,'').split('/');let x=spec;for(const k of p)x=x&&x[k];return resolve(spec,x,depth+1)}
+  if(Array.isArray(s))return s.map(v=>resolve(spec,v,depth+1));
+  const o={};for(const k in s)o[k]=(typeof s[k]==='object')?resolve(spec,s[k],depth+1):s[k];return o;
+}
+const safe=s=>String(s).replace(/[^A-Za-z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64)||'tool';
+let gen='',pkg='';
+function convert(){
+  let spec;try{spec=loadSpec($('spec').value)}catch(e){$('out').innerHTML='<p class="ng">スキーマを読めませんでした：'+e.message+'</p>';return}
+  const issues=[];const base=((spec.servers||[])[0]||{}).url||'';
+  if(!base)issues.push(['ng','servers の url がありません。API の住所を server.js の BASE_URL に書いてください']);
+  if(!spec.openapi)issues.push(['warn','openapi のバージョン行がありません（3.0/3.1 を想定）']);
+  const schemes=(spec.components||{}).securitySchemes||{};const auth=[];
+  for(const [k,s0] of Object.entries(schemes)){const s=s0||{};
+    if(s.type==='apiKey')auth.push({kind:'apiKey',in:s.in||'header',name:s.name||'X-API-Key',env:'API_KEY'});
+    else if(s.type==='http'&&/bearer/i.test(s.scheme||''))auth.push({kind:'bearer',env:'API_TOKEN'});
+    else if(s.type==='http'&&/basic/i.test(s.scheme||''))auth.push({kind:'basic',env:'API_BASIC'});
+    else if(s.type==='oauth2')issues.push(['ng','OAuth 2.0 の認証（'+k+'）は自動では作れません。MCP の認可（OAuth）を別に組む必要があります']);
+  }
+  if(!Object.keys(schemes).length)issues.push(['warn','securitySchemes がありません。GPT の画面で「認証：APIキー」にしていた場合、キーの渡し方を server.js の AUTH に書いてください']);
+  const tools=[];const seen=new Set();
+  for(const [path,item0] of Object.entries(spec.paths||{})){const item=item0||{};
+    for(const method of ['get','post','put','patch','delete']){const op0=item[method];if(!op0)continue;const op=resolve(spec,op0,0);
+      let name=safe(op.operationId||method+'_'+path);while(seen.has(name))name+='_2';seen.add(name);
+      const props={},req=[],params=[];
+      for(const p0 of [...(item.parameters||[]),...(op.parameters||[])]){const p=resolve(spec,p0,0);if(!p.name)continue;
+        props[p.name]=Object.assign({},p.schema||{type:'string'},p.description?{description:p.description}:{});
+        if(p.required||p.in==='path')req.push(p.name);params.push({name:p.name,in:p.in||'query'})}
+      let body=false;const rb=op.requestBody&&op.requestBody.content&&(op.requestBody.content['application/json']||Object.values(op.requestBody.content)[0]);
+      if(rb){body=true;props.body=Object.assign({},rb.schema||{type:'object'});if(op.requestBody.required)req.push('body')}
+      let desc=(op.summary||'')+(op.description&&op.description!==op.summary?' '+op.description:'');
+      if(!desc.trim())issues.push(['warn',name+'：summary/description がありません。プラグインがいつ使うか判断する手がかりになるので書き足してください']);
+      if(desc.length>300)issues.push(['warn',name+'：説明が300字を超えています（GPTアクションでは長い説明は切られていました）']);
+      tools.push({name,description:desc.trim()||(method.toUpperCase()+' '+path),method:method.toUpperCase(),path,params,body,inputSchema:{type:'object',properties:props,required:[...new Set(req)]}});
+    }
+  }
+  if(!tools.length){$('out').innerHTML='<p class="ng">paths に操作（get/post など）が見つかりませんでした。</p>';return}
+  gen=`// ${(spec.info||{}).title||'GPT action'} → MCP server (generated by koubo-ai-ok/gpts-iko.html)
+// 使い方: npm install && API_KEY=... node server.js  → https://あなたのホスト/mcp をプラグインのMCPサーバーに登録
+import http from "node:http";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+
+const BASE_URL = process.env.BASE_URL || ${JSON.stringify(base)};
+const AUTH = ${JSON.stringify(auth)};
+const TOOLS = ${JSON.stringify(tools,null,2)};
+
+function authHeaders(url) {
+  const h = {};
+  for (const a of AUTH) {
+    const v = process.env[a.env];
+    if (!v) continue;
+    if (a.kind === "apiKey" && a.in === "header") h[a.name] = v;
+    if (a.kind === "apiKey" && a.in === "query") url.searchParams.set(a.name, v);
+    if (a.kind === "bearer") h["Authorization"] = "Bearer " + v;
+    if (a.kind === "basic") h["Authorization"] = "Basic " + Buffer.from(v).toString("base64");
+  }
+  return h;
+}
+
+async function callApi(tool, args = {}) {
+  let p = tool.path;
+  for (const prm of tool.params.filter(x => x.in === "path")) p = p.replace("{" + prm.name + "}", encodeURIComponent(args[prm.name] ?? ""));
+  const url = new URL(BASE_URL.replace(/\\/$/, "") + p);
+  const headers = { Accept: "application/json" };
+  for (const prm of tool.params) {
+    const v = args[prm.name];
+    if (v === undefined || v === null) continue;
+    if (prm.in === "query") url.searchParams.set(prm.name, Array.isArray(v) ? v.join(",") : String(v));
+    if (prm.in === "header") headers[prm.name] = String(v);
+  }
+  Object.assign(headers, authHeaders(url));
+  const init = { method: tool.method, headers };
+  if (tool.body && args.body !== undefined) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(args.body); }
+  const r = await fetch(url, init);
+  const text = await r.text();
+  return { isError: !r.ok, content: [{ type: "text", text: (r.ok ? "" : "HTTP " + r.status + "\\n") + text.slice(0, 100000) }] };
+}
+
+function makeServer() {
+  const s = new Server({ name: ${JSON.stringify(safe((spec.info||{}).title||'gpt-action'))}, version: "1.0.0" }, { capabilities: { tools: {} } });
+  s.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) }));
+  s.setRequestHandler(CallToolRequestSchema, async (req) => {
+    const tool = TOOLS.find(t => t.name === req.params.name);
+    if (!tool) return { isError: true, content: [{ type: "text", text: "unknown tool " + req.params.name }] };
+    try { return await callApi(tool, req.params.arguments); }
+    catch (e) { return { isError: true, content: [{ type: "text", text: String(e) }] }; }
+  });
+  return s;
+}
+
+http.createServer(async (req, res) => {
+  if (!req.url.startsWith("/mcp")) { res.writeHead(404).end(); return; }
+  if (req.method !== "POST") { res.writeHead(405, { Allow: "POST" }).end(); return; }
+  let raw = ""; for await (const c of req) raw += c;
+  const server = makeServer();
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+  res.on("close", () => { transport.close(); server.close(); });
+  await server.connect(transport);
+  await transport.handleRequest(req, res, raw ? JSON.parse(raw) : undefined);
+}).listen(process.env.PORT || 3000, () => console.log("MCP server on :" + (process.env.PORT || 3000) + "/mcp"));
+`;
+  pkg=JSON.stringify({name:safe((spec.info||{}).title||'gpt-action').toLowerCase()+'-mcp',version:'1.0.0',type:'module',private:true,scripts:{start:'node server.js'},engines:{node:'>=18'},dependencies:{'@modelcontextprotocol/sdk':'^1.20.0'}},null,2);
+  let h='<h3>ツール '+tools.length+' 個</h3><table><tr><th>ツール名</th><th>呼び出し</th><th>引数</th></tr>'+tools.map(t=>'<tr><td>'+t.name+'</td><td>'+t.method+' '+esc(t.path)+'</td><td>'+esc(Object.keys(t.inputSchema.properties).map(k=>k+(t.inputSchema.required.includes(k)?'*':'')).join(', ')||'なし')+'</td></tr>').join('')+'</table><p>* は必須。認証：'+(auth.length?auth.map(a=>a.kind+'（環境変数 '+a.env+'）').join('、'):'なし')+'</p>';
+  if(issues.length)h+='<h3>確認が必要なこと</h3><ul>'+issues.map(([c,t])=>'<li class="'+c+'">'+esc(t)+'</li>').join('')+'</ul>';
+  h+='<h3>server.js</h3><pre>'+esc(gen)+'</pre><p>公開するには HTTPS のホスト（無料枠のある Render・Fly.io・Cloud Run など）に置き、<code>/mcp</code> の URL をプラグインのMCPサーバーとして登録します。APIキーはコードに書かず、ホストの環境変数に入れてください。登録できるかどうかはアカウント・ワークスペースの設定によります。</p>';
+  $('out').innerHTML=h;$('dl').disabled=false;$('dlp').disabled=false;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function save(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+$('go').onclick=convert;
+$('dl').onclick=()=>save('server.js',gen,'text/javascript');
+$('dlp').onclick=()=>save('package.json',pkg,'application/json');
+$('sample').onclick=()=>{$('spec').value=`openapi: 3.1.0
+info:
+  title: Salon Booking
+  version: 1.0.0
+servers:
+  - url: https://api.example-salon.jp/v1
+paths:
+  /availability:
+    get:
+      operationId: getAvailability
+      summary: 指定日の空き枠を返す
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: YYYY-MM-DD
+          schema:
+            type: string
+        - name: staff
+          in: query
+          schema:
+            type: string
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      summary: 予約を1件取得する
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+  /bookings:
+    post:
+      operationId: createBooking
+      summary: 予約を作る
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+components:
+  schemas:
+    Booking:
+      type: object
+      required: [date, time, name]
+      properties:
+        date:
+          type: string
+        time:
+          type: string
+        name:
+          type: string
+        menu:
+          type: string
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key`;convert()};
+$('mk').onclick=()=>{const q=$('qs').value.split('\n').map(s=>s.trim()).filter(Boolean);if(!q.length)return;
+ const hd=['番号','質問','元のGPTの答え','プラグインの答え','指示どおりか','参照ファイルを使ったか','形式・ファイルは正しいか','ツール/連携は動いたか','メモ'];
+ save('gpt-iko-kurabe.csv','\ufeff'+hd.join(',')+'\n'+q.map((s,i)=>[i+1,'"'+s.replace(/"/g,'""')+'"','','','','','','',''].join(',')).join('\n'),'text/csv')};
+</script>
+</body>
+</html>
