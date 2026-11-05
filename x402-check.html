@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>x402 エンドポイント公開前チェック（発見カタログ・trial・manifest）｜無料</title>
+<meta name="description" content="x402の有料APIを公開する前に、/.well-known/x402.json・llms.txt・無料trial・価格上限・発見カタログ（初回settledが必要）の抜けをブラウザ内で点検。CSV保存・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/x402-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],input[type=number],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+</style>
+</head>
+<body>
+<h1>x402 エンドポイント公開前チェッカー</h1>
+<p class="muted">AIエージェント向けの<strong>x402（HTTP 402）有料API</strong>を公開する前に、発見カタログに載るための条件・無料trial・価格・マニフェストの抜けを点検します。入力はこのブラウザ内だけ（送信なし）。公式仕様は <a href="https://x402.org" target="_blank" rel="noopener">x402.org</a> を確認してください。</p>
+
+<div class="box">
+<label>サービス名（任意）</label>
+<input type="text" id="name" placeholder="例：JP郵便番号 x402">
+<div class="row">
+<div>
+<label>ベースURL（オリジン）</label>
+<input type="text" id="origin" placeholder="https://example.onrender.com">
+</div>
+<div>
+<label>有料ルート（カンマ区切りパス）</label>
+<input type="text" id="routes" placeholder="/zip, /jpdate, /bank, /loccheck">
+</div>
+</div>
+<div class="row">
+<div>
+<label>チェーン</label>
+<select id="chain">
+<option value="base">Base (USDC)</option>
+<option value="solana">Solana (USDC)</option>
+<option value="both">Base と Solana の両方</option>
+</select>
+</div>
+<div>
+<label>1コール価格（USDC）</label>
+<input type="number" id="price" min="0" step="0.001" placeholder="0.01">
+</div>
+</div>
+<label>受取ウォレット（payTo）</label>
+<input type="text" id="payto" placeholder="0x… または Solana アドレス">
+</div>
+
+<h2>1. 発見・カタログ（いちばん詰まりやすい所）</h2>
+<p class="note">Coinbase Bazaar / PayAI discovery などは、<strong>初回の settled 支払い</strong>が無いとルートを載せてくれないことがあります。資金ゼロなら trial が必須です。</p>
+<div class="chk"><input type="checkbox" id="c_settled"><label for="c_settled" style="font-weight:400;margin:0">自分で1ルートにつき少なくとも1回、本番価格で settled 済み（または Settled など第三者スカウトに登録済み）</label></div>
+<div class="chk"><input type="checkbox" id="c_trial"><label for="c_trial" style="font-weight:400;margin:0">無料 trial がある（例：<code>?trial=1</code> や別パス）。ウォレット無しで応答の形を確認できる</label></div>
+<div class="chk"><input type="checkbox" id="c_wellknown"><label for="c_wellknown" style="font-weight:400;margin:0"><code>/.well-known/x402.json</code>（または同等の discovery manifest）をオリジン直下で公開している</label></div>
+<div class="chk"><input type="checkbox" id="c_llms"><label for="c_llms" style="font-weight:400;margin:0"><code>/llms.txt</code> に各ルートの用途・価格・trial の書き方がある</label></div>
+<div class="chk"><input type="checkbox" id="c_openapi"><label for="c_openapi" style="font-weight:400;margin:0">OpenAPI（または同等の機械可読スキーマ）があり、エージェントが引数を推測できる</label></div>
+<div class="chk"><input type="checkbox" id="c_indexes"><label for="c_indexes" style="font-weight:400;margin:0">無料の自己登録インデックス（x402scan / 402 Index / Agent402 など）に登録した、または登録予定が決まっている</label></div>
+
+<h2>2. 402 応答の中身</h2>
+<div class="chk"><input type="checkbox" id="c_402body"><label for="c_402body" style="font-weight:400;margin:0">未払いのとき HTTP 402 と、チェーン・トークン・価格・payTo が機械可読で返る</label></div>
+<div class="chk"><input type="checkbox" id="c_tokenpin"><label for="c_tokenpin" style="font-weight:400;margin:0">トークン契約はチェーンごとの USDC に固定（任意トークンを受け付けない）</label></div>
+<div class="chk"><input type="checkbox" id="c_expiry"><label for="c_expiry" style="font-weight:400;margin:0">支払い承認の有効期限が短い（目安10分以内）。長すぎる許可は危険</label></div>
+<div class="chk"><input type="checkbox" id="c_idem"><label for="c_idem" style="font-weight:400;margin:0">同じ支払いの二重請求を拒否する（または一度使った許可を再利用しない）</label></div>
+
+<h2>3. 価格・品質・運用</h2>
+<div class="chk"><input type="checkbox" id="c_priceok"><label for="c_priceok" style="font-weight:400;margin:0">価格が需要帯に合う（データ/判定系はおおよそ $0.005–0.02、推論転売はさらに安いことが多い）</label></div>
+<div class="chk"><input type="checkbox" id="c_signed"><label for="c_signed" style="font-weight:400;margin:0">応答に検証可能な署名や決定論的な根拠があり、「また使いたい」理由がある</label></div>
+<div class="chk"><input type="checkbox" id="c_uptime"><label for="c_uptime" style="font-weight:400;margin:0">無料ホストでもコールドスタート対策がある（ウォームアップ・キャッシュ・タイムアウト明示）</label></div>
+<div class="chk"><input type="checkbox" id="c_abuse"><label for="c_abuse" style="font-weight:400;margin:0">trial の乱用対策（IP/日上限、重い処理は有料のみ）がある</label></div>
+<div class="chk"><input type="checkbox" id="c_taxnote"><label for="c_taxnote" style="font-weight:400;margin:0">日本の個人事業なら、売上の記録方法（総平均法の所得計算用メモなど）を決めている</label></div>
+
+<label>貼り付け用：公開中の <code>/.well-known/x402.json</code> または llms.txt の抜粋（任意・ローカル点検）</label>
+<textarea id="manifest" placeholder='{"resources":[{"path":"/zip","price":"0.01","network":"base"}]}'></textarea>
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+</p>
+<div id="out"></div>
+
+<div class="box note">
+<strong>有料の続き（エージェントがやる範囲）</strong>：公開前チェック表＋discovery 登録リスト＋trial 設計＋日本語の使い方文＋初回 settled 手順メモをセットで納品。目安 ¥8,000〜／エンドポイント群。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="sign-check.html">ウォレット署名・承認チェッカー</a> ・ <a href="crypto-tax-calc.html">暗号資産の所得計算</a> ・ <a href="agent-kb-check.html">エージェント向けショップ情報</a></p>
+<p>入力は端末内のみ。x402 / Coinbase / 各カタログの公式判定ではありません。税務相談ではありません。</p>
+<p>作成：中崎 慎二（フリーランス翻訳者）。依頼：shinji-work@mail.grokbot.com</p>
+</footer>
+<script>
+const CHECKS=[
+  ['c_settled','発見','初回 settled / スカウト登録','bad','カタログに載らない主因。資金が無ければ Settled 等の無料スカウトか、trial のみで様子見。'],
+  ['c_trial','発見','無料 trial','bad','空ウォレットの買い手が品質を確認できない。?trial=1 等が定番。'],
+  ['c_wellknown','発見','/.well-known/x402.json','bad','エージェントの自動発見が弱い。オリジン直下に置く。'],
+  ['c_llms','発見','/llms.txt','warn','人が読む説明と価格が無いと再利用されにくい。'],
+  ['c_openapi','発見','OpenAPI 等','warn','引数が推測できないと1回で終わる。'],
+  ['c_indexes','発見','自己登録インデックス','warn','Bazaar以外の入口。無料登録できるものは先に出す。'],
+  ['c_402body','402','402 の機械可読ボディ','bad','支払えない／誤チェーン払いの原因。'],
+  ['c_tokenpin','402','USDC 固定','bad','任意トークン受付はドレインリスク。'],
+  ['c_expiry','402','短い承認期限','warn','長すぎる許可は危険。目安10分以内。'],
+  ['c_idem','402','二重請求防止','warn','同じ許可の再利用を拒否する。'],
+  ['c_priceok','運用','価格帯','warn','高すぎると試されない。安すぎると持続しない。'],
+  ['c_signed','運用','検証可能な応答','warn','リピート需要の決め手になりやすい。'],
+  ['c_uptime','運用','コールドスタート対策','warn','無料ホストは初回タイムアウトで離脱されやすい。'],
+  ['c_abuse','運用','trial 乱用対策','warn','無料だけ吸われるのを防ぐ。'],
+  ['c_taxnote','運用','日本の売上記録','warn','確定申告用にCSVメモを残すと後が楽。']
+];
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function analyze(){
+  const origin=($('origin').value||'').trim().replace(/\/$/,'');
+  const routes=($('routes').value||'').split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean);
+  const price=Number($('price').value);
+  const payto=($('payto').value||'').trim();
+  const chain=$('chain').value;
+  const man=$('manifest').value||'';
+  const rows=[];
+  const push=(sev,cat,title,detail)=>rows.push({sev,cat,title,detail});
+  if(!origin) push('bad','入力','ベースURLが空','公開前にオリジンを決める。');
+  else if(!/^https:\/\//i.test(origin)) push('bad','入力','HTTPS ではない','エージェント向けは https が前提。');
+  if(!routes.length) push('warn','入力','有料ルート未記入','パスを列挙すると抜けが分かる。');
+  if(!(price>0)) push('bad','入力','価格が未設定または0','0円なら402ではない。trialは別経路に。');
+  else if(price>0.05) push('warn','運用','価格が高め','初回試しが減りやすい。trial必須。');
+  if(!payto) push('bad','入力','payTo 未設定','支払い先が無い。');
+  else if(chain!=='solana' && /^0x[a-fA-F0-9]{40}$/.test(payto)===false && chain==='base') push('warn','入力','Base らしいアドレス形式ではない','確認を。');
+  if(man){
+    const hasPrice=/price|amount|usdc/i.test(man);
+    const hasNet=/base|solana|network|chain/i.test(man);
+    if(!hasPrice) push('warn','マニフェスト','価格語が見つからない','貼った抜粋に price/USDC が無いかも。');
+    if(!hasNet) push('warn','マニフェスト','チェーン語が見つからない','network/chain を明示。');
+    routes.forEach(r=>{ if(r && !man.includes(r.replace(/^\//,'')) && !man.includes(r)) push('warn','マニフェスト','ルート '+r+' が抜粋に無い','manifest と実装の不一致の可能性。'); });
+  }
+  CHECKS.forEach(([id,cat,title,sev,detail])=>{
+    if(!$(id).checked) push(sev,cat,title+'：未チェック',detail);
+  });
+  // chicken-egg special
+  if(!$('c_settled').checked && !$('c_trial').checked) push('bad','発見','settled も trial も無い','発見の鶏卵に完全に詰まる。どちらか必須。');
+  if($('c_settled').checked && !$('c_wellknown').checked) push('warn','発見','settled 済でも manifest 無し','再インデックスが弱い。');
+  const score={bad:0,warn:0,ok:0};
+  rows.forEach(r=>score[r.sev]++);
+  return {rows,score,meta:{origin,routes,price,payto,chain,name:$('name').value||''}};
+}
+function pill(sev){return `<span class="pill ${sev}">${sev==='bad'?'必須':sev==='warn'?'注意':'OK'}</span>`}
+function render(a){
+  let h=`<p>結果：<span class="bad"><b>${a.score.bad}</b> 必須欠け</span> ／ <span class="warn"><b>${a.score.warn}</b> 注意</span></p>`;
+  if(a.score.bad===0 && a.score.warn<=2) h+=`<p class="ok">公開の最低ラインは近そうです。あとは settled か trial で実コールを1回通してください。</p>`;
+  h+='<table><tr><th>重要度</th><th>区分</th><th>項目</th><th>メモ</th></tr>';
+  a.rows.forEach(r=>{h+=`<tr><td>${pill(r.sev)}</td><td>${esc(r.cat)}</td><td>${esc(r.title)}</td><td>${esc(r.detail)}</td></tr>`;});
+  if(!a.rows.length) h+='<tr><td colspan="4" class="ok">チェック項目はすべてONです。マニフェスト貼付と実コールで最終確認を。</td></tr>';
+  h+='</table>';
+  const o=a.meta.origin||'https://YOUR.host';
+  h+=`<h2>公開前の次の一手（ひな形）</h2><ol>
+<li>GET <code>${esc(o)}/.well-known/x402.json</code> と <code>${esc(o)}/llms.txt</code> が 200 か確認</li>
+<li>未払いのまま有料ルートを叩き、402 の JSON を保存</li>
+<li>trial でレスポンス形を確認 → 可能なら自ウォレットで1回 settled</li>
+<li>無料インデックスへ登録（x402scan / 402 Index 等）</li>
+</ol>`;
+  $('out').innerHTML=h;
+  window._last=a;
+}
+function toCsv(a){
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const lines=[['severity','category','item','detail'].map(q).join(',')].concat(a.rows.map(r=>[r.sev,r.cat,r.title,r.detail].map(q).join(',')));
+  return '\ufeff'+lines.join('\r\n');
+}
+$('sample').onclick=()=>{
+  $('name').value='JP loc-check x402';
+  $('origin').value='https://x402-jp-loccheck.onrender.com';
+  $('routes').value='/zip, /jpdate, /bank, /loccheck';
+  $('chain').value='both';
+  $('price').value='0.01';
+  $('payto').value='0x4C4860b980a3AE0c91aa69e8eff48009C5469fEe';
+  $('c_trial').checked=true; $('c_wellknown').checked=true; $('c_llms').checked=true;
+  $('c_402body').checked=true; $('c_tokenpin').checked=true; $('c_expiry').checked=true;
+  $('manifest').value='{"resources":[{"path":"/zip","price":"0.01","network":"base"},{"path":"/loccheck","price":"0.01","network":"solana"}]}';
+};
+$('run').onclick=()=>render(analyze());
+$('csv').onclick=()=>{const a=window._last||analyze();const b=new Blob([toCsv(a)],{type:'text/csv'});const x=document.createElement('a');x.href=URL.createObjectURL(b);x.download='x402-check.csv';x.click();};
+</script>
+</body>
+</html>
