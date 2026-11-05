@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI検索に引用されやすい文章か チェッカー（指示語で始まる文・あいまい語・結論が後回し・数字や固有名詞の不足）｜日本語・英語｜無料</title>
+<meta name="description" content="記事やサービス紹介文を貼るだけで、ChatGPT・Perplexity・GoogleのAI概要などに一文だけ抜き出されても意味が通るかを見出しごとに点検。「これ」「同社」で始まる文、「様々な」「と言われています」などのあいまい語、質問見出しの結論が後回し、数字・日付・会社名の不足、比較なのに表や箇条書きがない、を一覧にします。日本語と英語に対応。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-inyou-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:28px;border-bottom:1px solid #ddd}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:14px;vertical-align:top;text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{width:100%;height:240px;font-size:14px;box-sizing:border-box}
+input[type=text]{width:24em;max-width:100%}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:4px 14px 4px 0}
+.ng{color:#a00;font-weight:bold}.warn{color:#8a5a00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+.score{font-size:1.6em;font-weight:bold}
+:focus-visible{outline:3px solid #1a5fb4;outline-offset:2px}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>AI検索に引用されやすい文章か チェッカー</h1>
+<p>ChatGPTやPerplexity、GoogleのAI概要・AIモードは、ページ全体ではなく<b>一文や一段落だけを抜き出して</b>答えに使います。抜き出された一文が「これは」「同社の」で始まっていたり、「様々なメリットがあります」のように中身がなかったりすると、引用されにくく、引用されても誤解されます。記事やサービス紹介文を貼ると、そうした書き方を見出しごとに一覧にします。日本語と英語に対応しています。貼った文章はどこにも送信されず、このページの中だけで処理します。</p>
+<p class="note">AIがどの文を引用するかの仕組みは公開されていません。ここでの点検項目は、AI検索向けの書き方ガイドや実務者の報告でよく挙げられる「抜き出しても意味が通る」「具体的な数字や固有名詞がある」「質問の答えが最初にある」といった目安を機械的に当てはめたものです。点数が高くても引用を約束するものではありません。</p>
+
+<h2>1. 文章を貼る</h2>
+<p>Markdown（<code>## 見出し</code>）、ふつうのテキスト（「■」「【】」で始まる行や「？」で終わる短い行を見出しとして扱います）、HTML（ページのソース）のどれでも貼れます。</p>
+<label>会社名・店名・商品名（カンマ区切りで複数可）<br><input type="text" id="ent" placeholder="例：山田税理士事務所, 山田"></label>
+<label>言語 <select id="lang"><option value="auto">自動判定</option><option value="ja">日本語</option><option value="en">英語</option></select></label>
+<textarea id="src" aria-label="点検する文章"></textarea>
+<button id="run">点検する</button><button id="sample">サンプルを入れる</button><button id="csv">結果をCSVで保存</button>
+
+<h2>2. 結果</h2>
+<div id="sum" aria-live="polite"></div>
+<div id="out"></div>
+
+<h2>点検している項目</h2>
+<table>
+<tr><th>項目</th><th>理由と直し方</th></tr>
+<tr><td>指示語・代名詞で始まる文</td><td>「これは」「その結果」「同社は」「上記の」「This」「It」などで始まる文は、一文だけ抜き出すと何の話かわかりません。主語を名詞で書き直します（例：「これは」→「確定申告の青色申告特別控除は」）。</td></tr>
+<tr><td>あいまい語</td><td>「様々な」「多くの」「非常に」「〜と言われています」「〜かもしれません」「豊富な」「various」「significantly」など。数字・条件・例に置き換えます（例：「多くのお客様」→「2025年の利用者1,240人のうち」）。</td></tr>
+<tr><td>長すぎる文</td><td>日本語80字超、英語35語超。抜き出したときに途中で切られやすく、主張が2つ以上混ざりがちです。一文一主張に分けます。</td></tr>
+<tr><td>結論が後回し（質問の見出し）</td><td>「〜とは？」「いくら？」「How much…?」のような見出しの直後が「この記事では〜を解説します」「まずは〜」で始まると、答えの一文が見つかりません。見出し直後の一文で答えを言い切ります。</td></tr>
+<tr><td>数字・日付がない見出し</td><td>料金・期間・件数・年などの数字がひとつもない段落は、AIが「事実」として引用しにくくなります。</td></tr>
+<tr><td>会社名・商品名が出てこない見出し</td><td>その見出しだけ引用されたとき、誰のサービスの話かわからなくなります（会社名を入れた場合のみ確認）。</td></tr>
+<tr><td>比較・ランキングなのに表や箇条書きがない</td><td>「比較」「違い」「おすすめ」「vs」の見出しは、表か箇条書きのほうが項目ごとに抜き出されやすくなります。</td></tr>
+<tr><td>更新日・出典</td><td>本文に年月日や「更新」がない、根拠のリンクや「出典」がない場合に知らせます。</td></tr>
+</table>
+<p>よくある使い方：記事を公開する前の最終確認、ホームページの「料金」「よくある質問」ページの書き直し、ライターへの修正依頼の根拠づくり。</p>
+<p>書き直しの代行（AI検索を意識したサービス紹介文・FAQのリライト）のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。</p>
+<p><a href="index.html">ほかの無料ツール一覧</a> ／ 関連：<a href="ai-suisen-check.html">AI検索の「おすすめ」に出ているか チェックシート作成</a> ／ <a href="ai-robots-check.html">robots.txt AIクローラー許可チェッカー</a> ／ <a href="kousei-check.html">日本語 校正チェッカー</a> ／ <a href="hyoki-yure.html">表記ゆれチェッカー</a></p>
+</main>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const JA_DEM=/^(?!この記事|この記事|このページ)(これ|それ|あれ|この|その|あの|こちら|そちら|ここ|そこ|上記|前述|後述|以下|同社|同店|同院|当該|彼ら|彼|彼女|そのため|その結果|それにより|そして|また、そ)/;
+const EN_DEM=/^(this|that|these|those|it|its|they|their|them|here|above|the former|the latter|such)\b/i;
+const JA_VAGUE=["様々な","さまざまな","色々な","いろいろな","多くの","数多くの","非常に","とても","かなり","大幅に","一般的に","と言われています","といわれています","と言われる","かもしれません","と思います","でしょう","など多数","豊富な","最適な","高品質な","充実した","業界最安","圧倒的","幅広い","安心の"];
+const EN_VAGUE=["various","many","very","significantly","arguably","might","could be","a lot of","lots of","numerous","best-in-class","world-class","cutting-edge","high-quality","seamless","robust","it is said","generally"];
+const PREAMBLE_JA=/(について(解説|説明|紹介|見て)|ご紹介します|解説します|見ていきましょう|まずは|はじめに|さて、|皆さん|気になりますよね|悩んでいませんか|この記事では|本記事では)/;
+const PREAMBLE_EN=/^(in this (article|post|guide)|let's|let us|have you ever|are you|first,? let|before we|if you('re| are) wondering)/i;
+const Q_JA=/(？|\?|とは|いくら|どれくらい|どのくらい|方法|やり方|なぜ|違い|選び方|できる|必要|期間|費用|料金)/;
+const Q_EN=/(\?|^(how|what|why|when|which|who|can|is|are|do|does|should)\b)/i;
+const CMP=/(比較|違い|おすすめ|ランキング|一覧|選び方|\bvs\.?\b|versus|compar|best|top \d|alternatives)/i;
+const SAMPLE=`# 確定申告の代行サービス
+
+## 確定申告の代行料金はいくら？
+この記事では、確定申告の代行料金について解説します。料金は事務所によって様々ですが、一般的にはかなり幅があると言われています。
+
+## 当事務所の特徴
+これは多くのお客様に選ばれている理由です。豊富な経験を持つスタッフが、高品質なサービスを提供しています。
+
+## 青色申告と白色申告の違い
+青色申告は事前に「青色申告承認申請書」を提出した個人事業主が使える申告方法で、最大65万円の青色申告特別控除を受けられますが、白色申告は申請が不要な代わりに特別控除がなく、帳簿の付け方も簡易でよいという違いがあり、どちらを選ぶかは事業規模によって変わります。
+
+## 申告期限はいつ？
+2027年分の確定申告の期限は2028年3月15日です。山田税理士事務所では2月末までに資料をいただいた方の申告を期限内に提出します。`;
+function detectLang(t){const ja=(t.match(/[\u3040-\u30ff\u4e00-\u9fff]/g)||[]).length;const en=(t.match(/[A-Za-z]/g)||[]).length;return ja*3>=en?"ja":"en";}
+function parse(raw){
+ let blocks=[];// {head, lines[], hasList, hasTable}
+ let cur={head:"(冒頭)",lines:[],hasList:false,hasTable:false};blocks.push(cur);
+ const isHTML=/<\s*(h[1-6]|p|div|li|html|body)\b/i.test(raw);
+ if(isHTML&&typeof DOMParser!=="undefined"){
+  const doc=new DOMParser().parseFromString(raw,"text/html");
+  doc.querySelectorAll("script,style,nav,footer,header,noscript").forEach(e=>e.remove());
+  const walk=n=>{for(const c of n.children){const tg=c.tagName.toLowerCase();
+   if(/^h[1-6]$/.test(tg)){cur={head:c.textContent.trim(),lines:[],hasList:false,hasTable:false};blocks.push(cur);}
+   else if(tg==="ul"||tg==="ol"){cur.hasList=true;c.querySelectorAll("li").forEach(li=>cur.lines.push(li.textContent.trim()));}
+   else if(tg==="table"){cur.hasTable=true;cur.lines.push(c.textContent.replace(/\s+/g," ").trim());}
+   else if(tg==="p"||tg==="dd"||tg==="dt"||tg==="blockquote"){const t=c.textContent.trim();if(t)cur.lines.push(t);}
+   else walk(c);}};
+  walk(doc.body||doc.documentElement);
+ }else{
+  for(let l of raw.split(/\r?\n/)){const t=l.trim();if(!t)continue;
+   let m=t.match(/^#{1,6}\s+(.+)$/)||t.match(/^[■◆●□▼【](.+?)】?$/);
+   if(!m&&t.length<=40&&/[？?]$/.test(t))m=[t,t];
+   if(m){cur={head:m[1].replace(/】$/,"").trim(),lines:[],hasList:false,hasTable:false};blocks.push(cur);continue;}
+   if(/^([-*+・]|\d+[.)．])\s*/.test(t)){cur.hasList=true;cur.lines.push(t.replace(/^([-*+・]|\d+[.)．])\s*/,""));continue;}
+   if(/^\|.*\|$/.test(t)){cur.hasTable=true;if(!/^\|[\s:|-]+\|$/.test(t))cur.lines.push(t);continue;}
+   cur.lines.push(t);}
+ }
+ return blocks.filter(b=>b.lines.length||b.head!=="(冒頭)");
+}
+function sentences(text,lang){
+ if(lang==="ja")return text.split(/(?<=[。！？!?])/).map(s=>s.trim()).filter(Boolean);
+ return text.split(/(?<=[.!?])\s+(?=[A-Z0-9"“(])/).map(s=>s.trim()).filter(Boolean);
+}
+function check(raw,entStr,langSel){
+ const lang=langSel&&langSel!=="auto"?langSel:detectLang(raw);
+ const ents=(entStr||"").split(/[,、，]/).map(s=>s.trim()).filter(Boolean);
+ const blocks=parse(raw);const issues=[];let nS=0,bad=new Set();
+ const add=(sec,type,lv,text,hint,sid)=>{issues.push({sec,type,lv,text,hint});if(sid!=null)bad.add(sid);};
+ blocks.forEach((b,bi)=>{
+  const body=b.lines.join(lang==="ja"?"":" ");
+  const ss=[];b.lines.forEach(l=>sentences(l,lang).forEach(s=>ss.push(s)));
+  ss.forEach((s,i)=>{const sid=bi+":"+i;nS++;
+   const st=s.replace(/^[「『"“(（\s]+/,"");
+   if(lang==="ja"?JA_DEM.test(st):EN_DEM.test(st))add(b.head,"指示語で始まる","ng",s,"一文だけ抜き出すと何の話かわかりません。主語を名詞で書いてください。",sid);
+   const vs=(lang==="ja"?JA_VAGUE:EN_VAGUE).filter(w=>lang==="ja"?s.includes(w):new RegExp("\\b"+w+"\\b","i").test(s));
+   if(vs.length)add(b.head,"あいまい語","warn",s,"「"+vs.join("」「")+"」を数字・条件・具体例に置き換えてください。",sid);
+   const len=lang==="ja"?s.replace(/\s/g,"").length:s.split(/\s+/).length;
+   if(lang==="ja"?len>80:len>35)add(b.head,"長すぎる文","warn",s,(lang==="ja"?len+"字":len+"語")+"あります。一文一主張に分けてください。",sid);
+  });
+  if(b.head==="(冒頭)")return;
+  const isQ=lang==="ja"?Q_JA.test(b.head):Q_EN.test(b.head);
+  if(isQ&&ss.length){const f=ss[0];
+   const pre=lang==="ja"?PREAMBLE_JA.test(f):PREAMBLE_EN.test(f);
+   const dem=lang==="ja"?JA_DEM.test(f):EN_DEM.test(f);
+   if(pre||dem)add(b.head,"結論が後回し","ng",f,"質問の見出しの直後の一文で答えを言い切ってください（例：「代行料金は1件3万〜8万円が目安です。」）。",bi+":0");}
+  if(isQ&&!ss.length)add(b.head,"本文がない","ng","","見出しの下に答えの文がありません。");
+  if(ss.length&&!/[0-9０-９]|[一二三四五六七八九十百千万億]+(円|年|か月|ヶ月|日|件|人|%|％)/.test(body))add(b.head,"数字・日付がない","warn","","料金・期間・件数・年など、確かめられる数字を1つ以上入れてください。");
+  if(ents.length&&ss.length&&!ents.some(e=>body.includes(e)||b.head.includes(e)))add(b.head,"会社名・商品名がない","warn","","この見出しだけ引用されると誰の話かわかりません。「"+ents[0]+"」を一度入れてください。");
+  if(CMP.test(b.head)&&!b.hasList&&!b.hasTable)add(b.head,"比較なのに表・箇条書きがない","warn","","項目ごとの表か箇条書きにすると、項目単位で引用されやすくなります。");
+ });
+ const all=raw;
+ if(!/(20\d\d|令和\d+)\s*年|\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|更新|updated|published/i.test(all))add("(全体)","更新日がない","warn","","「2026年11月5日更新」のような日付を本文の最初か最後に入れてください。");
+ if(!/(https?:\/\/|出典|参考|引用元|source|according to|による)/i.test(all))add("(全体)","出典がない","warn","","数字や制度の説明には根拠（公的機関のページなど）を書いてください。");
+ const ngN=issues.filter(x=>x.lv==="ng").length,wN=issues.length-ngN;
+ const clean=nS?Math.round(100*(nS-bad.size)/nS):0;
+ const score=Math.max(0,Math.min(100,Math.round(clean-ngN*4-wN*1.5)));
+ return {lang,blocks:blocks.length,sentences:nS,clean,issues,score,ng:ngN,warn:wN};
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+let last=null;
+function run(){const r=check($("src").value,$("ent").value,$("lang").value);last=r;
+ $("sum").innerHTML=r.sentences?'<p>目安の点数：<span class="score">'+r.score+'</span> / 100（'+(r.lang==="ja"?"日本語":"英語")+'として点検・見出し'+r.blocks+'・文'+r.sentences+'・そのまま抜き出しても問題のない文 '+r.clean+'%）</p><p><span class="ng">要修正 '+r.ng+'件</span>　<span class="warn">確認 '+r.warn+'件</span></p>':'<p>文章を貼ってください。</p>';
+ if(!r.issues.length){$("out").innerHTML=r.sentences?'<p class="ok">機械的に見つかる問題はありませんでした。</p>':"";return r;}
+ let h='<table><tr><th>見出し</th><th>種類</th><th>該当する文</th><th>直し方</th></tr>';
+ r.issues.forEach(x=>{h+='<tr><td>'+esc(x.sec)+'</td><td class="'+x.lv+'">'+esc(x.type)+'</td><td>'+esc(x.text)+'</td><td>'+esc(x.hint)+'</td></tr>';});
+ $("out").innerHTML=h+'</table>';return r;}
+function toCSV(r){const q=s=>'"'+String(s).replace(/"/g,'""')+'"';return "\ufeff見出し,種類,重要度,該当する文,直し方\n"+r.issues.map(x=>[x.sec,x.type,x.lv==="ng"?"要修正":"確認",x.text,x.hint].map(q).join(",")).join("\n");}
+$("run").onclick=run;
+$("sample").onclick=()=>{$("src").value=SAMPLE;$("ent").value="山田税理士事務所";run();};
+$("csv").onclick=()=>{const r=last||run();const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([toCSV(r)],{type:"text/csv"}));a.download="ai-inyou-check.csv";a.click();};
+window.__inyou={check,parse,sentences,toCSV,SAMPLE};
+})();
+</script>
+</body>
+</html>
