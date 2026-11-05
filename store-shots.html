@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アプリストア用スクリーンショット 多言語キャプション一括作成｜App Store・Google Play（無料）</title>
+<meta name="description" content="アプリのスクリーンショットに、日本語・英語・中国語・韓国語・ドイツ語・アラビア語などのキャプションをまとめて入れ、App Store（iPhone 6.3インチ/6.9インチ/iPad 13インチ/iPhone Duo）とGoogle Playのサイズで一括書き出し。文字のはみ出し・未翻訳・プレースホルダ残り・右から左の言語をチェックします。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/store-shots.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:28px;border-bottom:1px solid #ddd}h3{font-size:1em}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:14px;vertical-align:top;text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{width:100%;height:200px;font-family:ui-monospace,monospace;font-size:13px;box-sizing:border-box}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:2px 14px 2px 0}
+.ng{color:#a00;font-weight:bold}.warn{color:#8a5a00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+figure{margin:0}figure img{width:100%;border:1px solid #ccc}figcaption{font-size:12px;line-height:1.5}
+:focus-visible{outline:3px solid #1a5fb4;outline-offset:2px}
+</style>
+</head>
+<body>
+<h1>アプリストア用スクリーンショット 多言語キャプション一括作成</h1>
+<p>アプリの画面のスクリーンショットに、言語ごとのキャプション（見出し）を入れて、App Store と Google Play のサイズでまとめて書き出します。翻訳した文が長すぎて切れていないか、訳し忘れや <code>{name}</code> のようなプレースホルダが残っていないかも、1枚ずつ確認します。画像も文もブラウザの中だけで処理し、どこにも送りません。</p>
+<p class="note">ストアのページでは、説明文より先にスクリーンショットが目に入ります。アプリの中は日本語化したのに、ストアの画像が英語のままだと「日本向けではない」と思われがちです。逆に海外へ出すときも同じです。</p>
+
+<h2>① キャプションの表</h2>
+<p>1行目に言語コード（<code>ja</code>・<code>en</code>・<code>zh-Hans</code>・<code>zh-Hant</code>・<code>ko</code>・<code>de</code>・<code>ar</code> など）、2行目から1画面につき1行です。Excelやスプレッドシートからそのまま貼り付けられます（タブ区切り・CSVどちらも可）。改行したい位置には <code>|</code> か <code>\n</code> を入れてください。いちばん左の言語を「元の言語」として、長さと訳し忘れを比べます。</p>
+<textarea id="caps" aria-label="キャプションの表"></textarea>
+<button id="sample">見本を入れる</button>
+
+<h2>② スクリーンショット</h2>
+<p>ファイル名の順（01, 02…）に、表の1行目、2行目…へ割り当てます。言語ごとに画面が違う場合は <code>ja_01.png</code>・<code>en_01.png</code> のように言語コードを頭に付けてください。選ばない場合は仮の画面で見た目だけ確かめられます。</p>
+<input type="file" id="shots" accept="image/png,image/jpeg,image/webp" multiple aria-label="スクリーンショット画像"> <span id="fileinfo"></span>
+
+<h2>③ サイズと見た目</h2>
+<div id="sizes"></div>
+<p>
+<label>背景（上）<input type="color" id="bg1" value="#1f6feb"></label>
+<label>背景（下）<input type="color" id="bg2" value="#0b3d91"></label>
+<label>文字<input type="color" id="fg" value="#ffffff"></label>
+<label>最大行数 <select id="ml"><option>1</option><option selected>2</option><option>3</option></select></label>
+<label>文字の大きさ（画像幅の%）<input type="number" id="fs" value="7.5" min="4" max="12" step="0.5" style="width:5em"></label>
+<label><input type="checkbox" id="uni" checked> 同じ言語の中では文字の大きさをそろえる</label>
+<label>書き出し <select id="fmt"><option value="jpg" selected>JPEG（おすすめ）</option><option value="png">PNG</option></select></label>
+</p>
+<button id="go">作成してチェック</button>
+<div id="out" aria-live="polite"></div>
+
+<h2>チェックする内容</h2>
+<table>
+<tr><th>判定</th><th>内容</th></tr>
+<tr><td class="ng">NG</td><td>最大行数に収まらず文が切れる／キャプションが空／<code>{name}</code>・<code>%@</code>・<code>{{x}}</code> などのプレースホルダが残っている</td></tr>
+<tr><td class="warn">注意</td><td>文字が基準の75%未満まで小さくなった（ドイツ語などは英語より2〜3割長くなりがち）／ほかの言語と同じ文のまま（訳し忘れ）</td></tr>
+<tr><td>確認</td><td>アラビア語・ヘブライ語など右から左に書く言語、タイ語の改行位置は、目で確かめてください</td></tr>
+<tr><td>参考</td><td>元の言語より4割以上長い文／日本語見出しの文末「。」／日本語・中国語・韓国語の中の半角「!」「?」</td></tr>
+</table>
+<p>日本語は「、」「。」「」」などが行頭に来ないように改行し、中国語（簡体字・繁体字）と韓国語にはそれぞれの言語のフォントを指定します。日本語のフォントで中国語を表示すると、同じ漢字でも形が日本式になるためです。パソコンにその言語のフォントが入っていないと文字が「□」になるので、プレビューで確かめてください。</p>
+
+<h2>サイズについて（2026年11月時点）</h2>
+<ul>
+<li>App Store は、iPhone の「Dynamic Island 搭載・中サイズ」（1206×2622 など）が少なくとも1枚必須で、iPad対応アプリは iPad 13インチ（2064×2752 など）も必須です。1サイズにつき最大10枚まで。ほかのサイズは自動で縮小されて使われます。</li>
+<li>新しく iPhone Duo（外側 1398×2034、内側 2007×2853）の項目ができ、<b>2027年4月から iOS 27.1 SDK 以降でビルドするアプリでは必要</b>になります。</li>
+<li>App Store の画像は透明度（アルファチャンネル）を含められません。ブラウザでPNGを書き出すと透明度つきになることがあるため、JPEGでの書き出しをおすすめします。</li>
+<li>出典：Apple「<a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/">Screenshot specifications</a>」。Google Play のサイズは公式ヘルプで最新の条件を確かめてください。</li>
+</ul>
+
+<h2>ストア画像の多言語化を手伝います</h2>
+<p>アプリやゲームのストア掲載文とスクリーンショットのキャプションを、日本語・英語・中国語で書き直し・翻訳し、各サイズの画像まで作ってお渡しします（1言語・5画面から）。日本向けに出すときの言い回しの確認だけでも承ります。ご相談は <a href="mailto:shinji-work@mail.grokbot.com?subject=%E3%82%B9%E3%83%88%E3%82%A2%E7%94%BB%E5%83%8F%E3%81%AE%E5%A4%9A%E8%A8%80%E8%AA%9E%E5%8C%96%E3%81%AE%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> まで。</p>
+<p><a href="./">ほかの無料ツール一覧へ</a></p>
+<script>
+/* core: no DOM. */
+var SIZES=[
+ {id:'iphone-6.3',name:'iPhone 6.3インチ（Dynamic Island 中）',note:'提出に必須のサイズ',w:1206,h:2622,def:true},
+ {id:'iphone-6.9',name:'iPhone 6.9インチ（Dynamic Island 大）',note:'',w:1320,h:2868,def:true},
+ {id:'iphone-6.5',name:'iPhone 6.5インチ（Face ID 大）',note:'6.9インチがなければ必要',w:1284,h:2778},
+ {id:'ipad-13',name:'iPad 13インチ',note:'iPad対応アプリなら必須',w:2064,h:2752},
+ {id:'duo-outer',name:'iPhone Duo 外側ディスプレイ',note:'2027年4月からiOS 27.1 SDK以降のアプリで必要',w:1398,h:2034},
+ {id:'duo-inner',name:'iPhone Duo 内側ディスプレイ',note:'同上',w:2007,h:2853},
+ {id:'play-phone',name:'Google Play スマホ（9:16）',note:'',w:1080,h:1920,def:true}
+];
+var RTL=/^(ar|he|fa|ur)(-|$)/i;
+var FONTS={
+ ja:'"Hiragino Sans","Hiragino Kaku Gothic ProN","BIZ UDPGothic","Noto Sans JP","Noto Sans CJK JP","Yu Gothic",Meiryo,sans-serif',
+ 'zh-hans':'"PingFang SC","Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif',
+ 'zh-hant':'"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif',
+ ko:'"Apple SD Gothic Neo","Noto Sans KR","Noto Sans CJK KR","Malgun Gothic",sans-serif',
+ th:'"Thonburi","Noto Sans Thai",Tahoma,sans-serif',
+ ar:'"Geeza Pro","Noto Sans Arabic",Tahoma,sans-serif',
+ def:'"Helvetica Neue",Helvetica,Arial,"Noto Sans",sans-serif'
+};
+function fontFor(lang){lang=(lang||'').toLowerCase();
+ if(lang.startsWith('ja'))return FONTS.ja;
+ if(/^zh-(hant|tw|hk)/.test(lang))return FONTS['zh-hant'];
+ if(lang.startsWith('zh'))return FONTS['zh-hans'];
+ if(lang.startsWith('ko'))return FONTS.ko; if(lang.startsWith('th'))return FONTS.th;
+ if(RTL.test(lang))return FONTS.ar; return FONTS.def}
+var NOSTART='–—、。，．・：；？！ー－〜～」』）］｝〕〉》】ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々ゝゞ,.!?:;)]}%…';
+var NOEND='「『（［｛〔〈《【([{¥$＄￥';
+var CJK=/[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af\uff00-\uffef]/;
+function segment(text,lang){
+ var toks=[];
+ if(typeof Intl!=='undefined'&&Intl.Segmenter){
+  try{var sg=new Intl.Segmenter(lang||undefined,{granularity:'word'});
+   for(var s of sg.segment(text))toks.push(s.segment)}catch(e){toks=null}
+ }
+ if(!toks||!toks.length){toks=text.match(/[^\s\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]+\s*|\s+|./gsu)||[]}
+ // attach spaces to previous, split long CJK words? keep; kinsoku merge
+ var out=[];
+ for(var i=0;i<toks.length;i++){var t=toks[i];
+  if(out.length&&(/^\s+$/.test(t)||NOSTART.indexOf(t[0])>=0))out[out.length-1]+=t;
+  else if(out.length&&NOEND.indexOf(out[out.length-1].slice(-1))>=0)out[out.length-1]+=t;
+  else out.push(t)}
+ return out}
+function wrapPara(ctx,text,maxW,lang){
+ var toks=segment(text,lang),lines=[],cur='';
+ function w(s){return ctx.measureText(s.replace(/\s+$/,'')).width}
+ for(var i=0;i<toks.length;i++){var t=toks[i];
+  if(cur===''&&/^\s+$/.test(t))continue;
+  if(w(cur+t)<=maxW){cur+=t;continue}
+  if(cur){lines.push(cur.replace(/\s+$/,''));cur=''}
+  t=t.replace(/^\s+/,'');
+  if(w(t)<=maxW){cur=t;continue}
+  // token wider than line: break by character
+  var chars=Array.from(t);for(var j=0;j<chars.length;j++){
+   if(w(cur+chars[j])>maxW&&cur){lines.push(cur.replace(/\s+$/,''));cur=''}
+   cur+=chars[j]}
+ }
+ if(cur.replace(/\s+$/,''))lines.push(cur.replace(/\s+$/,''));
+ return lines}
+function splitBreaks(text){return String(text||'').replace(/\\n/g,'\n').replace(/\s*[|｜]\s*/g,'\n').split('\n').map(function(s){return s.trim()}).filter(Boolean)}
+function wrapText(ctx,text,maxW,lang){var out=[];splitBreaks(text).forEach(function(p){out=out.concat(wrapPara(ctx,p,maxW,lang))});return out}
+function fitCaption(ctx,text,lang,o){ // o:{maxW,maxH,base,maxLines,weight,minRatio}
+ var font=fontFor(lang),size=o.base,min=Math.round(o.base*(o.minRatio||0.5)),lines,lh;
+ for(;size>=min;size=Math.floor(size*0.96)){
+  ctx.font=(o.weight||700)+' '+size+'px '+font;
+  lines=wrapText(ctx,text,o.maxW,lang);lh=size*1.25;
+  if(lines.length<=o.maxLines&&lines.length*lh<=o.maxH&&lines.every(function(l){return ctx.measureText(l).width<=o.maxW+0.5}))
+   return {size:size,lines:lines,ratio:size/o.base,overflow:false,font:font}
+  if(size===min)break;
+  if(Math.floor(size*0.96)<min){size=min+1/0.96} // ensure min tried
+ }
+ ctx.font=(o.weight||700)+' '+min+'px '+font;lines=wrapText(ctx,text,o.maxW,lang);
+ return {size:min,lines:lines.slice(0,o.maxLines),ratio:min/o.base,overflow:true,font:font,dropped:lines.length-o.maxLines}
+}
+function layout(W,H,st){var pad=Math.round(W*0.07);
+ var capTop=Math.round(H*(st.capTop||0.045)),capH=Math.round(H*(st.capH||0.17));
+ var shotTop=capTop+capH+Math.round(H*0.02),shotBottom=H-Math.round(H*0.035);
+ return {pad:pad,capX:pad,capW:W-2*pad,capTop:capTop,capH:capH,shotTop:shotTop,shotH:shotBottom-shotTop,shotMaxW:Math.round(W*(st.shotW||0.8))}}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
+function drawSlide(ctx,W,H,cap,lang,img,st,fixedSize){
+ var L=layout(W,H,st);
+ var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,st.bg1||'#1f6feb');g.addColorStop(1,st.bg2||st.bg1||'#0b3d91');
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ var base=Math.round(W*(st.size||0.075));
+ var f=fitCaption(ctx,cap,lang,{maxW:L.capW,maxH:L.capH,base:fixedSize||base,maxLines:st.maxLines||2,weight:st.weight||700,minRatio:fixedSize?1:(st.minRatio||0.5)});
+ if(fixedSize&&f.overflow){f=fitCaption(ctx,cap,lang,{maxW:L.capW,maxH:L.capH,base:base,maxLines:st.maxLines||2,weight:st.weight||700,minRatio:st.minRatio||0.5})}
+ ctx.font=(st.weight||700)+' '+f.size+'px '+f.font;ctx.fillStyle=st.fg||'#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';
+ try{ctx.direction=RTL.test(lang)?'rtl':'ltr'}catch(e){}
+ var lh=f.size*1.25,y0=L.capTop+L.capH/2-(f.lines.length*lh)/2+lh/2;
+ f.lines.forEach(function(l,i){ctx.fillText(l,W/2,y0+i*lh)});
+ // screenshot
+ var iw=img?img.width:9,ih=img?img.height:19.5;var s=Math.min(L.shotMaxW/iw,L.shotH/ih);
+ var dw=Math.round(iw*s),dh=Math.round(ih*s),dx=Math.round((W-dw)/2),dy=L.shotTop;
+ var r=Math.round(dw*(st.radius!=null?st.radius:0.06));
+ ctx.save();ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=Math.round(W*0.03);ctx.shadowOffsetY=Math.round(W*0.01);
+ rr(ctx,dx,dy,dw,dh,r);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore();
+ ctx.save();rr(ctx,dx,dy,dw,dh,r);ctx.clip();
+ if(img)ctx.drawImage(img,dx,dy,dw,dh);else{ctx.fillStyle='#e8eef7';ctx.fillRect(dx,dy,dw,dh)}
+ ctx.restore();
+ return f}
+function issues(cap,src,lang,srcLang,f,srcWidthRatio,others){var a=[];
+ if(!String(cap||'').trim()){a.push(['NG','キャプションが空です']);return a}
+ if(f.overflow)a.push(['NG',(f.dropped>0?f.dropped+'行はみ出して切れます':'枠に収まりません')+'（文を短くするか「|」で改行位置を指定）']);
+ else if(f.ratio<0.75)a.push(['注意','文字が基準の'+Math.round(f.ratio*100)+'%まで小さくなっています（他の言語と大きさがそろいません）']);
+ var same=(others||[]).slice(0,Math.max(0,(others||[]).map(function(o){return o.lang}).indexOf(lang))).filter(function(o){return String(o.text||'').trim()===String(cap).trim()}).map(function(o){return o.lang});
+ if(lang!==srcLang&&String(cap).trim()===String(src||'').trim())same.indexOf(srcLang)<0&&same.push(srcLang);
+ if(same.length)a.push(['注意',same.join('・')+' と同じ文のままです（未翻訳かも）']);
+ if(/\{[^}]*\}|%[@sd]|\$\{|\{\{/.test(cap))a.push(['NG','プレースホルダ（{name} や %@ など）が残っています']);
+ if(srcWidthRatio&&srcWidthRatio>1.4)a.push(['参考','元の言語より'+Math.round((srcWidthRatio-1)*100)+'%長い文です']);
+ if(RTL.test(lang))a.push(['確認','右から左に書く言語です。文の向きと記号の位置を目で確認してください']);
+ if(/^th/i.test(lang))a.push(['確認','タイ語は単語の区切りが見えないため、改行位置を目で確認してください']);
+ if(/^ja/i.test(lang)&&/。$/.test(String(cap).trim()))a.push(['参考','見出しなので文末の「。」は外すことが多いです']);
+ if(/^(ja|zh|ko)/i.test(lang)&&/[!?]/.test(cap))a.push(['参考','半角の「!」「?」が入っています（全角にそろえるか確認）']);
+ return a}
+function parseTable(t){t=String(t||'').replace(/^\ufeff/,'');var d=t.indexOf('\t')>=0?'\t':',';var rows=[],row=[],cur='',q=false;
+ for(var i=0;i<t.length;i++){var c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c;continue}
+  if(c==='"'&&cur===''){q=true;continue}
+  if(c===d){row.push(cur);cur='';continue}
+  if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(function(x){return x.trim()}))rows.push(row);row=[];continue}
+  cur+=c}
+ row.push(cur);if(row.some(function(x){return x.trim()}))rows.push(row);
+ if(!rows.length)return null;var hd=rows[0].map(function(s){return s.trim()});
+ var first=/^(no|#|番号|screen|id|key)$/i.test(hd[0]);var langs=first?hd.slice(1):hd;
+ var caps=rows.slice(1).map(function(r){var o={};langs.forEach(function(l,i){o[l]=(r[first?i+1:i]||'').trim()});return o});
+ return {langs:langs.filter(Boolean),caps:caps}}
+/* minimal ZIP (store) */
+var CRC=(function(){var t=new Uint32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){var c=0xffffffff;for(var i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xffffffff)>>>0}
+function makeZip(files){ // [{name, data:Uint8Array}]
+ var enc=new TextEncoder(),parts=[],cd=[],off=0;
+ function u16(v){return [v&255,(v>>8)&255]}function u32(v){return [v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255]}
+ files.forEach(function(f){var nm=enc.encode(f.name),c=crc32(f.data),sz=f.data.length;
+  var lh=new Uint8Array([].concat([0x50,0x4b,3,4],u16(20),u16(0x0800),u16(0),u16(0),u16(0x21),u32(c),u32(sz),u32(sz),u16(nm.length),u16(0)));
+  parts.push(lh,nm,f.data);
+  cd.push(new Uint8Array([].concat([0x50,0x4b,1,2],u16(20),u16(20),u16(0x0800),u16(0),u16(0),u16(0x21),u32(c),u32(sz),u32(sz),u16(nm.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(off))),nm);
+  off+=lh.length+nm.length+sz});
+ var cdl=cd.reduce(function(a,b){return a+b.length},0);
+ var end=new Uint8Array([].concat([0x50,0x4b,5,6],u16(0),u16(0),u16(files.length),u16(files.length),u32(cdl),u32(off),u16(0)));
+ return parts.concat(cd,[end])}
+if(typeof module!=='undefined'&&module.exports)module.exports={SIZES:SIZES,segment:segment,wrapText:wrapText,fitCaption:fitCaption,drawSlide:drawSlide,issues:issues,parseTable:parseTable,makeZip:makeZip,crc32:crc32,fontFor:fontFor};
+
+</script>
+<script>
+var $=function(i){return document.getElementById(i)};
+var files=[];var last=null;
+(function(){var h='';SIZES.forEach(function(s){h+='<label><input type="checkbox" class="sz" value="'+s.id+'"'+(s.def?' checked':'')+'> '+s.name+' '+s.w+'×'+s.h+(s.note?'（'+s.note+'）':'')+'</label><br>'});$('sizes').innerHTML=h})();
+function demoShot(i){var c=document.createElement('canvas');c.width=1179;c.height=2556;var x=c.getContext('2d');
+ var hue=[210,150,20,280,0][i%5];x.fillStyle='#f6f8fb';x.fillRect(0,0,1179,2556);
+ x.fillStyle='hsl('+hue+',70%,45%)';x.fillRect(0,0,1179,330);
+ x.fillStyle='rgba(255,255,255,.9)';x.fillRect(70,200,520,44);
+ for(var k=0;k<6;k++){var y=420+k*330;x.fillStyle='#fff';x.fillRect(60,y,1059,280);x.fillStyle='hsl('+hue+',60%,85%)';x.fillRect(100,y+40,200,200);x.fillStyle='#c9d1dc';x.fillRect(340,y+60,560,40);x.fillRect(340,y+140,420,30);x.fillStyle='hsl('+hue+',70%,45%)';x.fillRect(340,y+200,220,40)}
+ return c}
+var SAMPLE='no\tja\ten\tzh-Hans\tko\tde\tar\n1\t予約は3タップで完了\tBook in three taps\t三步完成预约\t세 번 탭으로 예약 완료\tIn drei Schritten gebucht – ganz ohne Anruf\tاحجز بثلاث نقرات\n2\t空き状況を｜リアルタイムで確認\tSee open slots in real time\t实时查看空位\t빈자리를 실시간으로 확인\tFreie Termine in Echtzeit sehen\tشاهد المواعيد المتاحة فورًا\n3\tリマインダーで\\n「うっかり」を防ぐ\tReminders so you never forget\tReminders so you never forget\t알림으로 깜빡 방지\tErinnerungen für {name}\tتذكيرات حتى لا تنسى';
+$('sample').onclick=function(){$('caps').value=SAMPLE;files=[];$('fileinfo').textContent='見本の画面（仮のアプリ画面）を使います';run()};
+$('shots').onchange=function(e){files=Array.from(e.target.files).sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true})});
+ $('fileinfo').textContent=files.length+'枚：'+files.map(function(f){return f.name}).join('、')};
+function loadImg(f){return new Promise(function(ok,ng){var u=URL.createObjectURL(f),im=new Image();im.onload=function(){ok(im)};im.onerror=ng;im.src=u})}
+async function images(langs,n){var common=[],per={};
+ for(var f of files){var m=f.name.match(/^([A-Za-z]{2,3}(?:-[A-Za-z]{2,4})?)[_\-]/);var im=await loadImg(f);
+  if(m&&langs.indexOf(m[1])>=0){(per[m[1]]=per[m[1]]||[]).push(im)}else common.push(im)}
+ if(!files.length)for(var i=0;i<n;i++)common.push(demoShot(i));
+ return function(lang,i){return (per[lang]&&per[lang][i])||common[i]||null}}
+function style(){return {bg1:$('bg1').value,bg2:$('bg2').value,fg:$('fg').value,maxLines:+$('ml').value,size:+$('fs').value/100,minRatio:0.5,weight:700}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+async function run(){var t=parseTable($('caps').value);if(!t||!t.langs.length||!t.caps.length){$('out').innerHTML='<p class="ng">表の1行目に言語コード（ja, en など）、2行目から各画面のキャプションを入れてください。</p>';return}
+ var sel=Array.from(document.querySelectorAll('.sz:checked')).map(function(c){return SIZES.find(function(s){return s.id===c.value})});
+ if(!sel.length){$('out').innerHTML='<p class="ng">サイズを1つ以上選んでください。</p>';return}
+ $('out').textContent='作成中…';var get=await images(t.langs,t.caps.length);var st=style(),src=t.langs[0],uni=$('uni').checked;
+ var cv=document.createElement('canvas'),ctx=cv.getContext('2d');var rows=[],prev=[];
+ // measure source widths at a fixed font for the length comparison
+ var mc=document.createElement('canvas').getContext('2d');function wid(s,l){mc.font='700 40px '+fontFor(l);return mc.measureText(splitBreaks(s).join('')).width}
+ for(var d of sel){cv.width=d.w;cv.height=d.h;
+  for(var lang of t.langs){var fixed=0;
+   if(uni){var mins=t.caps.map(function(c){var f=fitCaption(ctx,c[lang]||'',lang,{maxW:d.w*0.86,maxH:d.h*0.17,base:Math.round(d.w*st.size),maxLines:st.maxLines,minRatio:0.5});return f.overflow?Infinity:f.size});fixed=Math.min.apply(null,mins.concat([Infinity]));if(!isFinite(fixed))fixed=0}
+   for(var i=0;i<t.caps.length;i++){var cap=t.caps[i][lang]||'';var f=drawSlide(ctx,d.w,d.h,cap,lang,get(lang,i),st,fixed||0);
+    var others=t.langs.map(function(l){return {lang:l,text:t.caps[i][l]}});
+    var iss=issues(cap,t.caps[i][src],lang,src,f,lang===src?0:wid(cap,lang)/Math.max(1,wid(t.caps[i][src]||'',src)),others);
+    var blob=await new Promise(function(ok){cv.toBlob(ok,$('fmt').value==='png'?'image/png':'image/jpeg',0.92)});
+    var nm=lang+'/'+d.id+'_'+d.w+'x'+d.h+'/'+String(i+1).padStart(2,'0')+($('fmt').value==='png'?'.png':'.jpg');
+    rows.push({name:nm,blob:blob,lang:lang,dev:d,no:i+1,cap:cap,f:f,iss:iss});
+    if(d===sel[0])prev.push({lang:lang,no:i+1,url:cv.toDataURL('image/jpeg',0.5),iss:iss})}}}
+ last=rows;var ng=rows.filter(function(r){return r.iss.some(function(x){return x[0]==='NG'})}).length;
+ var h='<p>'+rows.length+'枚を作りました（'+t.langs.length+'言語×'+t.caps.length+'画面×'+sel.length+'サイズ）。<span class="'+(ng?'ng':'ok')+'">要修正 '+ng+'枚</span></p><button id="zip">ZIPで保存</button><button id="rep">点検結果CSV</button>';
+ h+='<h3>プレビュー（'+esc(sel[0].name)+'）</h3><div class="grid">'+prev.map(function(p){return '<figure><img src="'+p.url+'" alt="'+esc(p.lang)+' '+p.no+'枚目"><figcaption>'+esc(p.lang)+' #'+p.no+(p.iss.length?'<br>'+p.iss.map(function(x){return '<span class="'+(x[0]==='NG'?'ng':x[0]==='注意'?'warn':'')+'">'+x[0]+'</span> '+esc(x[1])}).join('<br>'):'<br><span class="ok">OK</span>')+'</figcaption></figure>'}).join('')+'</div>';
+ $('out').innerHTML=h;$('zip').onclick=saveZip;$('rep').onclick=saveRep}
+function dl(name,blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+async function saveZip(){var fs=[];for(var r of last)fs.push({name:r.name,data:new Uint8Array(await r.blob.arrayBuffer())});dl('store-screenshots.zip',new Blob(makeZip(fs),{type:'application/zip'}))}
+function saveRep(){var q=function(s){return '"'+String(s).replace(/"/g,'""')+'"'};var l=['ファイル,言語,サイズ,画面,キャプション,文字サイズpx,行数,判定'];
+ last.forEach(function(r){l.push([q(r.name),r.lang,r.dev.w+'x'+r.dev.h,r.no,q(r.cap),r.f.size,r.f.lines.length,q(r.iss.map(function(x){return x[0]+':'+x[1]}).join(' / ')||'OK')].join(','))});
+ dl('store-screenshots-check.csv',new Blob(['\ufeff'+l.join('\n')],{type:'text/csv'}))}
+$('go').onclick=run;
+
+</script>
+</body>
+</html>
