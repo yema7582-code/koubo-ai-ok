@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>令和8年分 年末調整 年税額・過不足 一括計算（基礎控除104万円・給与所得控除74万円対応／小さな会社・個人事業主向け）｜無料</title>
+<meta name="description" content="令和8年12月の年末調整で、従業員ごとの年調年税額と還付・追加徴収額をまとめて計算する無料ツール。令和8年12月1日施行の改正（基礎控除104万円・67万円・62万円、給与所得控除の最低保障74万円、扶養親族の所得要件62万円）に対応。改正前の計算との差額の目安、11月30日以前に最後の給与を払った人の注意、住宅ローン控除の控除しきれない額も表示。CSV貼り付け・CSV保存、入力は送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/nencho-zeigaku.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1000px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:.9em}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.92em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+td.n{text-align:right;white-space:nowrap}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.warn{color:#b00020}.ok{color:#1b5e20}.tot{font-weight:bold;background:#eef6ee}
+small{color:#555}button{font-size:1em;padding:4px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<h1>令和8年分 年末調整 年税額・過不足 一括計算</h1>
+<p>従業員ひとり1行で、<b>1年分の給与・すでに引いた源泉所得税・各種控除額</b>を貼り付けると、源泉徴収簿と同じ順番で<b>年調年税額</b>と<b>還付する額／追加で徴収する額</b>を計算します。<b>令和8年12月1日施行の改正</b>（基礎控除が合計所得489万円以下なら104万円、給与所得控除の最低保障74万円、扶養親族の所得要件62万円）に対応し、改正前のルールで計算した場合との差（減税額の目安）も出します。計算はこのブラウザの中だけで行い、どこにも送信しません。</p>
+
+<div class="box">
+<h2>1. 従業員データ（CSV・タブ区切りどちらでも）</h2>
+<p><small>列の順番：氏名, 給与等の収入金額（賞与こみ・年額）, 徴収済み源泉所得税, 社会保険料等の控除額（小規模共済等を含む）, 生命保険料控除額, 地震保険料控除額, 配偶者（特別）控除額, 扶養控除額及び障害者等の控除額の合計, 特定親族特別控除額, 住宅借入金等特別控除額, 所得金額調整控除（子・障害者がいれば1）, 給与以外の所得（見積・なければ0）, 最後の給与の支給日（例 2026-12-25）。1行目が見出しなら自動で読み飛ばします。金額の「,」「円」は入れても大丈夫です（その場合はタブ区切りにしてください）。</small></p>
+<textarea id="src" rows="9"></textarea>
+<p><button id="sample">サンプルを入れる</button><button id="run">計算する</button><button id="csv" disabled>結果をCSVで保存</button></p>
+</div>
+
+<div class="box" id="out"><small>「計算する」を押すと結果がここに出ます。</small></div>
+
+<div class="box">
+<h2>2. 12月の年末調整の前に確認すること（令和8年分だけの注意）</h2>
+<ul>
+<li><b>扶養の範囲が広がった人に「扶養控除等（異動）申告書」を出してもらう。</b>今年の給与収入が<b>123万円超〜136万円以下</b>の家族（合計所得58万円超〜62万円以下）は、改正で新しく扶養親族・同一生計配偶者になります。12月1日以後に支払う給与から適用なので、申告書の出し直しがないと控除が漏れます。</li>
+<li><b>配偶者の給与所得は新しい給与所得控除（最低74万円）で計算する。</b>配偶者特別控除は配偶者の合計所得133万円以下（給与だけなら207万円以下）まで。</li>
+<li><b>最後の給与を11月30日以前に払った人</b>（11月までに退職・海外転勤・死亡退職、休職で年末まで復職しない人）の年末調整には改正後の控除が使えません。源泉徴収票を渡すときに「確定申告で改正後の基礎控除が受けられる」ことを伝えてください。</li>
+<li><b>給与所得控除後の金額は「令和8年分」の表を使う。</b>年収74万1千円〜219万1千円は「収入−74万円」、219万1千円〜220万円は145万1千円／145万3千円／145万6千円の特例があります（このツールは対応済み）。</li>
+<li><b>令和9年1月支払分から源泉徴収税額表が変わります。</b>給与ソフトの税額表の更新と、公的年金の基礎的控除額の引上げも忘れずに。</li>
+<li>住宅借入金等特別控除が算出所得税額より大きい人は、控除しきれない額を源泉徴収票の「住宅借入金等特別控除可能額」に書きます（下の結果に表示）。</li>
+<li>過納額は12月分（納期の特例なら7〜12月分）として納める源泉所得税から差し引いて還付します。2か月たっても還付しきれないときは「年末調整過納額還付請求書兼残存過納額明細書」を税務署に出します。</li>
+</ul>
+</div>
+
+<div class="note">
+<b>計算のしかた（国税庁「令和8年分 年末調整のしかた」・「令和8年度税制改正（所得税の基礎控除の引上げ等関係）Q&amp;A」による）</b><br>
+・給与所得控除後の金額：74万1千円未満は0、219万1千円未満は収入−74万円、その上は上記の特例、220万円以上660万円未満は4千円単位に切り捨てた額×70%−8万円（360万円以上は×80%−44万円）、660万円以上850万円未満は×90%−110万円、850万円以上は−195万円。<br>
+・所得金額調整控除：収入850万円超で23歳未満の扶養親族・特別障害者がいる人に（収入（上限1,000万円）−850万円）×10%（1円未満切上げ）。<br>
+・基礎控除（令和8年分）：合計所得489万円以下104万円、655万円以下67万円、2,350万円以下62万円、2,400万円以下48万円、2,450万円以下32万円、2,500万円以下16万円、超は0。<br>
+・課税給与所得金額は1千円未満切捨て、速算表（5%〜40%）で算出所得税額、住宅借入金等特別控除を引いて年調所得税額、×102.1%して100円未満切捨てが年調年税額です。<br>
+・「改正前ルールとの差」は、令和7年分と同じ基礎控除（95万〜58万円）と給与所得控除（最低65万円）で計算した年税額との差です。配偶者・扶養の控除額は入力どおり同じとしているので、扶養の範囲が広がった分の差は入りません（目安）。<br>
+・給与の収入が2,000万円を超える人、課税給与所得金額が1,805万円を超える人は年末調整の対象外として表示します。<br>
+最終的な判断は国税庁の資料・税務署・顧問の税理士に確認してください。このツールは税務相談ではありません。家族ごとの控除額は<a href="fuyou-hantei.html">扶養控除・配偶者控除・特定親族特別控除 判定</a>、保険料控除は<a href="hoken-kojo.html">生命保険料控除・地震保険料控除 計算</a>で出せます。従業員数名の会社の年末調整データの整理・ダブルチェックのご相談は shinji-work@mail.grokbot.com まで。
+</div>
+
+<script>
+const fl=Math.floor;
+function kyuyoR8(x){ // 令和8年分 給与所得控除後の給与等の金額
+  if(x<741000)return 0;
+  if(x<2191000)return x-740000;
+  if(x<2193000)return 1451000;
+  if(x<2196000)return 1453000;
+  if(x<2200000)return 1456000;
+  return commonUpper(x);
+}
+function kyuyoR7(x){ // 令和7年分（改正前）
+  if(x<651000)return 0;
+  if(x<1900000)return x-650000;
+  return commonUpper(x);
+}
+function commonUpper(x){
+  if(x<6600000){const a=fl(x/4000)*4000; return x<3600000? fl(a*7/10)-80000 : fl(a*8/10)-440000;}
+  if(x<8500000)return fl(x*9/10)-1100000;
+  return x-1950000;
+}
+function kisoR8(g){if(g<=4890000)return 1040000;if(g<=6550000)return 670000;return tail(g,620000);}
+function kisoR7(g){if(g<=1320000)return 950000;if(g<=3360000)return 880000;if(g<=4890000)return 680000;if(g<=6550000)return 630000;return tail(g,580000);}
+function tail(g,base){if(g<=23500000)return base;if(g<=24000000)return 480000;if(g<=24500000)return 320000;if(g<=25000000)return 160000;return 0;}
+function sokusan(a){
+  if(a<=1950000)return fl(a*5/100);
+  if(a<=3300000)return fl(a*10/100)-97500;
+  if(a<=6950000)return fl(a*20/100)-427500;
+  if(a<=9000000)return fl(a*23/100)-636000;
+  if(a<=18000000)return fl(a*33/100)-1536000;
+  return fl(a*40/100)-2796000;
+}
+function num(s){s=String(s==null?'':s).replace(/[,，円\s]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));if(s==='')return 0;const v=Number(s);return isFinite(v)?v:NaN;}
+function calcOne(r,rule){
+  const x=r.sal, kyu=rule==='R7'?kyuyoR7(x):kyuyoR8(x);
+  const adj=(r.adjFlag&&x>8500000)?Math.ceil((Math.min(x,10000000)-8500000)/10):0;
+  const kyuyoShotoku=Math.max(0,kyu-adj);
+  const goukei=kyuyoShotoku+r.other;
+  const kiso=rule==='R7'?kisoR7(goukei):kisoR8(goukei);
+  const kojo=r.shaho+r.seiho+r.jishin+r.haigu+r.fuyo+r.tokutei+kiso;
+  const kazei=Math.max(0,fl((kyuyoShotoku-kojo)/1000)*1000);
+  const santei=kazei>0?sokusan(kazei):0;
+  const juutakuUsed=Math.min(santei,r.juutaku);
+  const nenchoShotoku=santei-juutakuUsed;
+  const nenzei=fl(nenchoShotoku*1021/100000)*100;
+  return {kyu,adj,kyuyoShotoku,goukei,kiso,kojo,kazei,santei,juutakuUsed,juutakuLeft:r.juutaku-juutakuUsed,nenchoShotoku,nenzei,diff:r.paid-nenzei};
+}
+function parse(text){
+  const rows=[],errs=[];
+  text.split(/\r?\n/).forEach((line,i)=>{
+    if(!line.trim())return;
+    const c=line.includes('\t')?line.split('\t'):line.split(',');
+    if(i===0&&isNaN(num(c[1])))return; // header
+    const f=k=>num(c[k]);
+    if(!(c[0]||'').trim()&&!num(c[1]))return;
+    const r={name:(c[0]||'').trim(),sal:f(1),paid:f(2),shaho:f(3),seiho:f(4),jishin:f(5),haigu:f(6),fuyo:f(7),tokutei:f(8),juutaku:f(9),adjFlag:String(c[10]||'').trim()==='1',other:f(11),last:(c[12]||'').trim(),line:i+1};
+    const bad=['sal','paid','shaho','seiho','jishin','haigu','fuyo','tokutei','juutaku','other'].filter(k=>isNaN(r[k])||r[k]<0);
+    if(bad.length){errs.push((i+1)+'行目（'+r.name+'）：数字でない・マイナスの欄があります');return;}
+    rows.push(r);
+  });
+  return {rows,errs};
+}
+function checks(r,a){
+  const w=[];
+  if(r.sal>20000000)w.push('給与収入2,000万円超：年末調整の対象外（本人が確定申告）');
+  if(a.kazei>18050000)w.push('課税給与所得1,805万円超：年末調整の対象外');
+  if(r.last){const d=new Date(r.last);if(!isNaN(d)&&d<new Date('2026-12-01'))w.push('最後の給与が11月30日以前：改正後の控除は年末調整では使えません（本人が確定申告すれば適用）→ 改正前の数字で精算');}
+  if(r.seiho>120000)w.push('生命保険料控除が12万円超（上限12万円・23歳未満の扶養親族がいる人の一般生命保険料の特例でも合計上限を確認）');
+  if(r.jishin>50000)w.push('地震保険料控除が5万円超（上限5万円）');
+  if(r.haigu>480000)w.push('配偶者（特別）控除が48万円超（上限48万円）');
+  if(r.tokutei>630000)w.push('特定親族特別控除が63万円超（1人あたり上限63万円・複数人なら確認）');
+  if(a.goukei>10000000&&r.haigu>0)w.push('合計所得1,000万円超の人は配偶者（特別）控除を受けられません');
+  if(r.adjFlag&&r.sal<=8500000)w.push('所得金額調整控除は給与収入850万円超の人だけ（0として計算）');
+  if(a.juutakuLeft>0)w.push('住宅ローン控除の控除しきれない額 '+a.juutakuLeft.toLocaleString()+'円 → 源泉徴収票の「住宅借入金等特別控除可能額」に記載');
+  return w;
+}
+function run(){
+  const {rows,errs}=parse(document.getElementById('src').value);
+  const out=document.getElementById('out');
+  let h='';
+  if(errs.length)h+='<p class="warn">'+errs.join('<br>')+'</p>';
+  if(!rows.length){out.innerHTML=h+'<p>データがありません。</p>';window._res=[];document.getElementById('csv').disabled=true;return [];}
+  const res=rows.map(r=>{
+    const early=r.last&&!isNaN(new Date(r.last))&&new Date(r.last)<new Date('2026-12-01');
+    const a=calcOne(r,early?'R7':'R8'), old=calcOne(r,'R7');
+    return {r,a,old,early,gen:old.nenzei-a.nenzei,w:checks(r,a)};
+  });
+  let tk=0,tc=0,tg=0;
+  h+='<table><thead><tr><th>氏名</th><th>給与所得控除後</th><th>基礎控除</th><th>課税給与所得</th><th>年調年税額</th><th>徴収済み</th><th>精算</th><th>改正による減税（目安）</th><th>注意</th></tr></thead><tbody>';
+  res.forEach(o=>{
+    const d=o.a.diff;if(d>0)tk+=d;else tc+=-d;tg+=o.gen;
+    h+='<tr><td>'+esc(o.r.name)+'</td><td class="n">'+yen(o.a.kyuyoShotoku)+(o.a.adj?'<br><small>調整控除 '+yen(o.a.adj)+'</small>':'')+'</td><td class="n">'+yen(o.a.kiso)+'</td><td class="n">'+yen(o.a.kazei)+'</td><td class="n">'+yen(o.a.nenzei)+'</td><td class="n">'+yen(o.r.paid)+'</td><td class="n '+(d>=0?'ok':'warn')+'">'+(d>0?'還付 '+yen(d):d<0?'徴収 '+yen(-d):'過不足なし')+'</td><td class="n">'+(o.early?'<small>改正前で計算</small>':yen(o.gen))+'</td><td>'+(o.w.length?'<span class="warn">'+o.w.map(esc).join('<br>')+'</span>':'<span class="ok">—</span>')+'</td></tr>';
+  });
+  h+='<tr class="tot"><td>合計 '+res.length+'人</td><td colspan="5"></td><td class="n">還付 '+yen(tk)+'<br>徴収 '+yen(tc)+'</td><td class="n">'+yen(tg)+'</td><td></td></tr></tbody></table>';
+  h+='<p><small>還付の合計は12月分（納期の特例なら7〜12月分）として納める源泉所得税から差し引けます。徴収は12月（または最後）の給与から差し引きます。</small></p>';
+  out.innerHTML=h;window._res=res;document.getElementById('csv').disabled=false;return res;
+}
+function yen(v){return Number(v).toLocaleString('ja-JP')+'円';}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toCSV(res){
+  const head=['氏名','給与等の収入金額','給与所得控除後の金額','所得金額調整控除','基礎控除','控除合計','課税給与所得金額','算出所得税額','住宅借入金等特別控除額','控除しきれない額','年調所得税額','年調年税額','徴収済み','還付(+)/徴収(-)','改正前ルールとの差','注意'];
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  return '\ufeff'+[head.map(q).join(',')].concat(res.map(o=>[o.r.name,o.r.sal,o.a.kyuyoShotoku,o.a.adj,o.a.kiso,o.a.kojo,o.a.kazei,o.a.santei,o.a.juutakuUsed,o.a.juutakuLeft,o.a.nenchoShotoku,o.a.nenzei,o.r.paid,o.a.diff,o.early?'':o.gen,o.w.join(' / ')].map(q).join(','))).join('\r\n');
+}
+const SAMPLE=`氏名,給与収入,徴収済税額,社会保険料等,生命保険料控除,地震保険料控除,配偶者控除等,扶養控除等,特定親族特別控除,住宅ローン控除,調整控除,給与以外の所得,最終支給日
+山田 一郎,5000000,120000,720000,40000,30000,380000,380000,0,0,0,0,2026-12-25
+佐藤 花子,1800000,25000,260000,0,0,0,0,0,0,0,0,2026-12-25
+鈴木 次郎,9200000,620000,1300000,120000,50000,0,630000,0,200000,1,0,2026-12-25
+田中 美咲,2100000,30000,310000,20000,0,0,0,0,0,0,0,2026-12-25
+高橋 健,3600000,70000,540000,40000,0,0,0,0,0,0,0,2026-11-20`;
+document.getElementById('sample').onclick=()=>{document.getElementById('src').value=SAMPLE;};
+document.getElementById('run').onclick=run;
+document.getElementById('csv').onclick=()=>{const b=new Blob([toCSV(window._res||[])],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='nencho2026_kekka.csv';a.click();};
+</script>
+</body>
+</html>
