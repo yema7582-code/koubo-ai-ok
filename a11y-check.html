@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webアクセシビリティ 簡易チェッカー（HTMLを貼るだけ・JIS X 8341-3/WCAG 2.2）＆コントラスト比・方針ページ作成｜無料</title>
+<meta name="description" content="ホームページのHTMLを貼るだけで、画像の代替テキスト・見出しの順番・フォームのラベル・「こちら」リンク・拡大禁止・自動再生・フォーカス枠の消し忘れなどをJIS X 8341-3（WCAG）の達成基準ごとに確認。文字色と背景色のコントラスト比計算、ウェブアクセシビリティ方針ページと合理的配慮の窓口文のひな形作成もできます。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/a11y-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:28px;border-bottom:1px solid #ddd}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:14px;vertical-align:top;text-align:left}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{width:100%;height:220px;font-family:ui-monospace,monospace;font-size:13px;box-sizing:border-box}
+input[type=text]{width:24em;max-width:100%}
+button{padding:6px 14px;margin:8px 6px 0 0}label{display:inline-block;margin:4px 14px 4px 0}
+.ng{color:#a00;font-weight:bold}.warn{color:#8a5a00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+code.s{display:block;white-space:pre-wrap;word-break:break-all;background:#f5f5f5;padding:2px 4px;font-size:12px;margin:2px 0}
+.sw{display:inline-block;padding:10px 16px;border:1px solid #999;border-radius:6px;margin:6px 0}
+:focus-visible{outline:3px solid #1a5fb4;outline-offset:2px}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>Webアクセシビリティ 簡易チェッカー（HTMLを貼るだけ）＆コントラスト比・方針ページ作成</h1>
+<p>ホームページのHTML（ブラウザで「ページのソースを表示」してすべてコピーしたもの）を貼ると、機械的に見つけられる問題を <b>JIS X 8341-3:2016（WCAG 2.0と同じ内容）とWCAG 2.2の達成基準ごと</b>に一覧にします。貼った内容はどこにも送信されず、このページの中だけで処理します。</p>
+<p class="note">知っておきたいこと：2024年4月の改正障害者差別解消法で民間事業者の<b>義務</b>になったのは、障害のある人から申し出があったときの「合理的配慮の提供」です。サイトを前もって使いやすくする「環境の整備」は<b>努力義務</b>で、JIS適合そのものが義務になったわけではありません。ただ、申し出に対応できる<b>別の連絡手段（電話・メールなど）</b>を案内しておくことは今日からできます（下の「3. 方針ページ」で文面を作れます）。また、自動ツールで見つかるのは問題の3〜4割程度です。キーボード操作と読み上げの確認は人が行ってください（「2. 人が確認する項目」）。後付けの「アクセシビリティ・オーバーレイ（ウィジェット）」だけでは解決になりません。</p>
+
+<h2>1. HTMLを貼ってチェック</h2>
+<textarea id="src" aria-label="チェックするHTML" placeholder="&lt;!doctype html&gt;&lt;html lang=&quot;ja&quot;&gt; … ページのソースをここに貼り付け"></textarea>
+<button id="run">チェックする</button><button id="sample">問題の多いサンプルを入れる</button><button id="clear">消す</button>
+<div id="sum" role="status" aria-live="polite"></div>
+<div id="res"></div>
+
+<h2>2. 人が確認する項目（ツールでは分かりません）</h2>
+<ul id="manual">
+<li><label><input type="checkbox"> マウスを使わず <kbd>Tab</kbd>・<kbd>Shift+Tab</kbd>・<kbd>Enter</kbd>・<kbd>Space</kbd> だけで、メニュー・問い合わせフォーム・予約・カートの最後まで操作できる（2.1.1）</label></li>
+<li><label><input type="checkbox"> <kbd>Tab</kbd> で移動したとき、今どこにいるか枠線などで見える（2.4.7）。固定ヘッダーやCookieバナーの下に隠れない（2.4.11 WCAG 2.2）</label></li>
+<li><label><input type="checkbox"> メニューやモーダルを開くとフォーカスが中に移り、<kbd>Esc</kbd> で閉じられ、閉じたら元の場所に戻る（2.1.2・2.4.3）</label></li>
+<li><label><input type="checkbox"> 代替テキストが「画像」ではなく、その画像で伝えたい内容になっている（キャンペーン画像の文字・料金表・地図など）（1.1.1）</label></li>
+<li><label><input type="checkbox"> ブラウザで200%に拡大しても、文字が切れたり重なったりしない。スマホ幅（320px）で横スクロールが出ない（1.4.4・1.4.10）</label></li>
+<li><label><input type="checkbox"> 色だけで伝えていない（「赤字は必須」→「必須」と文字でも書く、グラフの凡例など）（1.4.1）</label></li>
+<li><label><input type="checkbox"> フォームの入力エラーが、どの欄で、どう直せばよいか文字で表示される（3.3.1・3.3.3）</label></li>
+<li><label><input type="checkbox"> 動画に字幕がある。音声だけの情報に文字起こしがある（1.2.2・1.2.1）</label></li>
+<li><label><input type="checkbox"> 5秒以上動くスライダーやアニメーションに「停止」ボタンがある（2.2.2）</label></li>
+<li><label><input type="checkbox"> ボタンやリンクの押せる大きさが24×24px以上、または周りに十分な余白がある（2.5.8 WCAG 2.2）</label></li>
+<li><label><input type="checkbox"> スマホの読み上げ（iPhone VoiceOver／Android TalkBack）で、トップページ→問い合わせ完了まで意味が通る</label></li>
+<li><label><input type="checkbox"> PDFだけで載せている重要なお知らせ・料金・申込書が、HTMLの本文でも読める</label></li>
+</ul>
+<p id="mcount"></p>
+
+<h2>3. 文字色と背景色のコントラスト比</h2>
+<p><label>文字色 <input type="color" id="fg" value="#999999"> <input type="text" id="fgt" value="#999999" style="width:7em" aria-label="文字色（コード）"></label>
+<label>背景色 <input type="color" id="bg" value="#ffffff"> <input type="text" id="bgt" value="#ffffff" style="width:7em" aria-label="背景色（コード）"></label>
+<button id="cc">計算</button></p>
+<div id="swatch" class="sw">見本の文字 Sample 123</div>
+<div id="cres" role="status" aria-live="polite"></div>
+<p>基準：通常の文字は4.5:1以上（AA）、大きな文字（約24px以上、太字なら約19px以上）は3:1以上（AA）。ボタンの枠・アイコン・入力欄の枠線も周りと3:1以上（1.4.11）。7:1以上はAAA。</p>
+
+<h2>4. ウェブアクセシビリティ方針ページ・合理的配慮の窓口文のひな形</h2>
+<p><label>事業者名 <input type="text" id="p_name" autocomplete="organization" value="（店名・会社名）"></label><br>
+<label>対象範囲 <input type="text" id="p_scope" value="当サイト（https://example.jp/）で提供するすべてのページ"></label><br>
+<label>目標 <select id="p_level"><option value="AA" selected>適合レベルAA</option><option value="A">適合レベルA</option></select></label>
+<label>表記 <select id="p_kind"><option value="hairyo" selected>配慮（試験はしていない）</option><option value="ichibu">一部準拠（試験して結果を公開）</option><option value="junkyo">準拠（試験して結果を公開）</option></select></label>
+<label>目標時期 <input type="text" id="p_until" value="2027年3月" style="width:8em"></label><br>
+<label>対象外 <input type="text" id="p_ex" value="過去に掲載したPDF資料、外部の予約システム、埋め込み地図" style="width:30em"></label><br>
+<label>電話 <input type="text" id="p_tel" autocomplete="tel" value="00-0000-0000（平日10時〜17時）"></label>
+<label>メール <input type="text" id="p_mail" autocomplete="email" value="info@example.jp"></label><br>
+<button id="mkp">文面を作る</button><button id="copyp">コピー</button></p>
+<textarea id="pout" readonly aria-label="方針ページの文面"></textarea>
+<p>「準拠」「一部準拠」と書けるのは、JIS X 8341-3:2016の試験（対象ページの選び方・達成基準ごとの判定）を行って結果を公開した場合です（ウェブアクセシビリティ基盤委員会「JIS X 8341-3:2016 対応度表記ガイドライン」）。試験をしていなければ「配慮」と書きます。JISはWCAG 2.2に合わせた改正が予定されているので、新しく作るサイトはWCAG 2.2の追加基準（フォーカスが隠れない・押せる大きさ・同じ情報を何度も入力させない等）も設計に入れておくと安心です。</p>
+<p>関連：<a href="ogp-maker.html">OGP・メタタグ作成＆チェック</a> ／ <a href="hreflang.html">hreflangタグ作成</a> ／ <a href="tenpo-jsonld.html">店舗情報 構造化データ作成</a> ／ <a href="yasashii-check.html">やさしい日本語チェッカー</a> ／ <a href="tokusho-check.html">特定商取引法の表記チェッカー</a></p>
+<p class="note">小さなお店・事務所のホームページの「アクセシビリティ簡易診断レポート（主要5ページ・キーボード操作と読み上げ確認つき）」と、代替テキスト・見出し・フォームのラベルなどの修正をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）</p>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(el){let h=el.outerHTML||"";h=h.replace(/\s+/g," ");return h.length>160?h.slice(0,160)+"…":h;}
+function txt(el){return (el.textContent||"").replace(/\s+/g," ").trim();}
+// accessible name (simplified)
+function accName(el,doc){
+ const al=el.getAttribute("aria-label");if(al&&al.trim())return al.trim();
+ const lb=el.getAttribute("aria-labelledby");
+ if(lb){const t=lb.split(/\s+/).map(i=>{const e=doc.getElementById(i);return e?txt(e):""}).join(" ").trim();if(t)return t;}
+ let t=txt(el);
+ el.querySelectorAll("img[alt]").forEach(i=>{t+=" "+i.getAttribute("alt")});
+ el.querySelectorAll("svg title").forEach(s=>{t+=" "+txt(s)});
+ t=t.trim();if(t)return t;
+ const ti=el.getAttribute("title");if(ti&&ti.trim())return ti.trim();
+ return "";
+}
+function hasLabel(el,doc){
+ if((el.getAttribute("aria-label")||"").trim())return true;
+ const lb=el.getAttribute("aria-labelledby");if(lb&&lb.split(/\s+/).some(i=>{const e=doc.getElementById(i);return e&&txt(e)}))return true;
+ const id=el.getAttribute("id");
+ if(id){for(const l of doc.querySelectorAll("label")){if(l.getAttribute("for")===id&&txt(l))return true;}}
+ const p=el.closest("label");if(p&&txt(p))return true;
+ if((el.getAttribute("title")||"").trim())return true;
+ return false;
+}
+// colours
+const NAMED={black:"#000000",white:"#ffffff",red:"#ff0000",gray:"#808080",grey:"#808080",silver:"#c0c0c0",yellow:"#ffff00",orange:"#ffa500",blue:"#0000ff",green:"#008000",navy:"#000080",lightgray:"#d3d3d3",lightgrey:"#d3d3d3",darkgray:"#a9a9a9",pink:"#ffc0cb",lime:"#00ff00",aqua:"#00ffff",cyan:"#00ffff"};
+function parseColor(s){
+ if(!s)return null;s=s.trim().toLowerCase();if(NAMED[s])s=NAMED[s];
+ let m=s.match(/^#([0-9a-f]{3})$/);if(m)return m[1].split("").map(c=>parseInt(c+c,16));
+ m=s.match(/^#([0-9a-f]{6})$/);if(m)return [0,2,4].map(i=>parseInt(m[1].substr(i,2),16));
+ m=s.match(/^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/);if(m)return [m[1],m[2],m[3]].map(Number);
+ return null;
+}
+function lum(c){const a=c.map(v=>{v/=255;return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];}
+function ratio(a,b){const l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);}
+function styleProp(st,p){const re=new RegExp("(?:^|;)\\s*"+p+"\\s*:\\s*([^;!]+)","i");const m=(st||"").match(re);return m?m[1].trim():null;}
+const VAGUE=/^(こちら|ここ|こちらから|こちらをクリック|ここをクリック|詳しくはこちら|詳細はこちら|詳細|詳しく|もっと見る|続きを読む|続きはこちら|more|read more|click here|here|link|リンク|→|>>|＞＞|view more|learn more)$/i;
+function check(html){
+ const doc=new DOMParser().parseFromString(html,"text/html");
+ const R=[];
+ function add(lv,sc,title,els,fix){R.push({lv,sc,title,n:els.length,ex:els.slice(0,3).map(e=>typeof e==="string"?e:snip(e)),fix});}
+ const H=doc.documentElement;
+ const lang=(H.getAttribute("lang")||"").trim();
+ if(!lang)add("A","3.1.1 ページの言語","&lt;html&gt; に lang がない",["<html>"],"&lt;html lang=\"ja\"&gt; にする（読み上げソフトが日本語で読むため）。");
+ const title=doc.querySelector("title");
+ if(!title||!txt(title))add("A","2.4.2 ページタイトル","&lt;title&gt; がない・空",["<title>"],"「ページの内容｜店名」の形でページごとに違うタイトルを付ける。");
+ // images
+ const imgs=[...doc.querySelectorAll("img")];
+ const noAlt=imgs.filter(i=>!i.hasAttribute("alt")&&i.getAttribute("role")!=="presentation"&&i.getAttribute("aria-hidden")!=="true"&&!(i.getAttribute("aria-label")||"").trim());
+ if(noAlt.length)add("A","1.1.1 非テキストコンテンツ","画像に alt 属性がない",noAlt,"内容を伝える画像は alt=\"内容の説明\"、飾りの画像は alt=\"\"（空）にする。");
+ const badAlt=imgs.filter(i=>{const a=(i.getAttribute("alt")||"").trim();return a&&(/\.(jpe?g|png|gif|webp|svg|avif)$/i.test(a)||/^(img|image|dsc|pxl|photo)[_-]?\d+/i.test(a)||/^(画像|写真|イメージ|image|photo|picture|img|バナー|banner|アイコン|icon|ロゴ)$/i.test(a));});
+ if(badAlt.length)add("A","1.1.1 非テキストコンテンツ","alt がファイル名や「画像」だけ",badAlt,"「画像」ではなく伝えたい内容を書く（例：「11月限定 ランチセット1,200円」）。ロゴは店名を書く。");
+ const imgBtn=[...doc.querySelectorAll('input[type=image]')].filter(i=>!(i.getAttribute("alt")||"").trim());
+ if(imgBtn.length)add("A","1.1.1 非テキストコンテンツ","画像ボタン（input type=image）に alt がない",imgBtn,"alt=\"送信する\" のように押したときの動作を書く。");
+ const svgs=[...doc.querySelectorAll("svg")].filter(s=>!s.closest("a,button")&&s.getAttribute("aria-hidden")!=="true"&&(s.getAttribute("role")==="img")&&!accName(s,doc));
+ if(svgs.length)add("A","1.1.1 非テキストコンテンツ","role=img の SVG に名前がない",svgs,"&lt;title&gt; か aria-label を付ける。飾りなら aria-hidden=\"true\"。");
+ // links
+ const links=[...doc.querySelectorAll("a[href]")];
+ const emptyLink=links.filter(a=>!accName(a,doc));
+ if(emptyLink.length)add("A","2.4.4 リンクの目的／4.1.2 名前","名前のないリンク（画像だけで alt が空、アイコンだけ等）",emptyLink,"リンクの中の画像に alt を入れるか、aria-label=\"Instagram\" のようにリンク先が分かる名前を付ける。");
+ const vague=links.filter(a=>VAGUE.test(accName(a,doc)));
+ if(vague.length)add("A","2.4.4 リンクの目的","「こちら」「詳しくはこちら」だけのリンク",vague,"「料金表を見る」「予約フォームへ」のように、リンクの文字だけで行き先が分かるようにする。");
+ const blank=links.filter(a=>a.getAttribute("target")==="_blank"&&!/新しい(タブ|ウィンドウ)|別(タブ|ウィンドウ|窓)|外部サイト|new (tab|window)/i.test(accName(a,doc)+" "+(a.getAttribute("title")||"")));
+ if(blank.length)add("推奨","3.2.5 要求による変化（AAA）","新しいタブで開くリンクに予告がない",blank,"「（新しいタブで開きます）」と書くか、アイコンに alt を付ける。");
+ // buttons & clickable non-controls
+ const btns=[...doc.querySelectorAll('button,[role=button],input[type=submit],input[type=button],input[type=reset]')];
+ const emptyBtn=btns.filter(b=>{if(b.tagName==="INPUT"){return !(b.getAttribute("value")||"").trim()&&!(b.getAttribute("aria-label")||"").trim()&&b.getAttribute("type")==="button";}return !accName(b,doc);});
+ if(emptyBtn.length)add("A","4.1.2 名前・役割・値","名前のないボタン（×や☰のアイコンだけ等）",emptyBtn,"aria-label=\"メニューを開く\"「閉じる」のように名前を付ける。");
+ const clicky=[...doc.querySelectorAll("div[onclick],span[onclick],li[onclick],img[onclick],td[onclick],a:not([href])[onclick]")].filter(e=>!e.hasAttribute("tabindex")||e.getAttribute("role")==null);
+ if(clicky.length)add("A","2.1.1 キーボード","クリックだけで動く div/span など（Tabで届かない）",clicky,"本物の &lt;button&gt; か &lt;a href&gt; に置き換える。");
+ const tabpos=[...doc.querySelectorAll("[tabindex]")].filter(e=>parseInt(e.getAttribute("tabindex"),10)>0);
+ if(tabpos.length)add("A","2.4.3 フォーカス順序","tabindex が1以上（Tabの順番が崩れる）",tabpos,"tabindex=\"0\" か削除して、HTMLの並び順で移動させる。");
+ // forms
+ const fields=[...doc.querySelectorAll("input,select,textarea")].filter(e=>!/^(hidden|submit|button|reset|image)$/i.test(e.getAttribute("type")||""));
+ const nolab=fields.filter(e=>!hasLabel(e,doc));
+ const phOnly=nolab.filter(e=>(e.getAttribute("placeholder")||"").trim());
+ const nolab2=nolab.filter(e=>!(e.getAttribute("placeholder")||"").trim());
+ if(nolab2.length)add("A","1.3.1・3.3.2・4.1.2 ラベル","入力欄にラベルがない",nolab2,"&lt;label for=\"id\"&gt;お名前&lt;/label&gt; で入力欄と結び付ける。");
+ if(phOnly.length)add("A","3.3.2 ラベル又は説明","プレースホルダー（薄い例文）だけで、ラベルがない",phOnly,"入力すると消えてしまうので、見えるラベルを別に置く。");
+ const acFields=fields.filter(e=>{const n=((e.getAttribute("name")||"")+" "+(e.getAttribute("id")||"")).toLowerCase();return /(^|[_\-\s])(name|email|mail|tel|phone|zip|postal|address|addr)([_\-\s]|$)/.test(n)&&!e.hasAttribute("autocomplete");});
+ if(acFields.length)add("AA","1.3.5 入力目的の特定（WCAG 2.1）","名前・メール・電話・住所の欄に autocomplete がない",acFields,"autocomplete=\"name\" \"email\" \"tel\" \"postal-code\" \"address-line1\" などを付けると自動入力できる。");
+ // headings
+ const hs=[...doc.querySelectorAll("h1,h2,h3,h4,h5,h6")];
+ const h1=hs.filter(h=>h.tagName==="H1");
+ if(!h1.length)add("推奨","1.3.1・2.4.6 見出し","&lt;h1&gt; がない",["(h1なし)"],"ページの主題を &lt;h1&gt; にする（ロゴ画像だけを h1 にするなら alt を店名に）。");
+ if(h1.length>1)add("推奨","1.3.1・2.4.6 見出し","&lt;h1&gt; が"+h1.length+"個ある",h1,"主題の h1 は1つにして、ほかは h2 以下にする。");
+ const skip=[];let prev=0;hs.forEach(h=>{const l=+h.tagName[1];if(prev&&l>prev+1)skip.push(h);prev=l;});
+ if(skip.length)add("A","1.3.1 情報及び関係性","見出しのレベルが飛んでいる（h2の次がh4など）",skip,"見た目の大きさはCSSで変え、h2→h3→h4の順に使う。");
+ const emptyH=hs.filter(h=>!accName(h,doc));
+ if(emptyH.length)add("A","1.3.1・2.4.6 見出し","中身が空の見出し",emptyH,"空の見出しは削除するか、内容を入れる。");
+ // viewport / refresh
+ const vp=doc.querySelector('meta[name=viewport]');
+ if(vp){const c=(vp.getAttribute("content")||"").toLowerCase().replace(/\s/g,"");const ms=c.match(/maximum-scale=([\d.]+)/);
+  if(/user-scalable=(no|0)/.test(c)||(ms&&parseFloat(ms[1])<2))add("AA","1.4.4 テキストのサイズ変更","スマホで拡大できない設定（user-scalable=no / maximum-scale）",[snip(vp)],"user-scalable=no と maximum-scale を削除する。");}
+ const mr=doc.querySelector('meta[http-equiv="refresh" i]');
+ if(mr&&/^\s*\d+\s*;/.test(mr.getAttribute("content")||"")&&!/^\s*0\s*;/.test(mr.getAttribute("content")))add("A","2.2.1 タイミング調整可能","一定時間で自動で別ページへ移動する（meta refresh）",[snip(mr)],"自動移動をやめ、リンクを置く（移動先が決まっているならサーバー側でリダイレクト）。");
+ // media
+ const auto=[...doc.querySelectorAll("video[autoplay],audio[autoplay]")].filter(v=>!(v.tagName==="VIDEO"&&v.hasAttribute("muted")));
+ if(auto.length)add("A","1.4.2 音声の制御","音の出る自動再生",auto,"自動再生をやめるか muted にし、停止ボタンを付ける。");
+ const vids=[...doc.querySelectorAll("video")].filter(v=>!v.querySelector('track[kind=captions],track[kind=subtitles]'));
+ if(vids.length)add("A","1.2.2 キャプション","&lt;video&gt; に字幕トラックがない（音声がある動画なら必要）",vids,"&lt;track kind=\"captions\" srclang=\"ja\" src=\"…vtt\"&gt; を付けるか、動画に字幕を焼き込む。");
+ const yt=[...doc.querySelectorAll("iframe")].filter(f=>!(f.getAttribute("title")||"").trim()&&!(f.getAttribute("aria-label")||"").trim()&&f.getAttribute("aria-hidden")!=="true");
+ if(yt.length)add("A","4.1.2 名前・役割・値","iframe（地図・YouTube・予約フォーム等）に title がない",yt,"title=\"店舗の地図（Googleマップ）\" のように中身を書く。");
+ const mq=[...doc.querySelectorAll("marquee,blink")];
+ if(mq.length)add("A","2.2.2 一時停止、停止、非表示","&lt;marquee&gt;/&lt;blink&gt; で動き続ける文字",mq,"止まった文字にする。");
+ // tables
+ const tables=[...doc.querySelectorAll("table")].filter(t=>t.getAttribute("role")!=="presentation"&&!t.querySelector("th")&&t.querySelectorAll("tr").length>1&&t.querySelectorAll("tr:first-child td").length>1);
+ if(tables.length)add("A","1.3.1 情報及び関係性","データの表に見出しセル（th）がない",tables,"1行目や1列目を &lt;th&gt; にする。レイアウト目的の表なら role=\"presentation\"。");
+ // ids
+ const ids={};doc.querySelectorAll("[id]").forEach(e=>{const i=e.getAttribute("id");ids[i]=(ids[i]||0)+1;});
+ const dup=Object.keys(ids).filter(k=>ids[k]>1);
+ if(dup.length)add("A","4.1.1 構文解析（JIS 2016。WCAG 2.2では削除）","同じ id が複数ある："+esc(dup.slice(0,5).join(", ")),dup.slice(0,3).map(d=>'id="'+d+'" ×'+ids[d]),"id は1ページに1つ。ラベルの for や aria-labelledby がずれる原因になる。");
+ // focus outline
+ const css=[...doc.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+ const outlineNone=[];
+ const reRule=/([^{}]+)\{([^{}]*)\}/g;let m;
+ while((m=reRule.exec(css))){if(/outline\s*:\s*(none|0)(\s|;|$|!)/i.test(m[2]))outlineNone.push(m[1].trim()+" { "+m[2].trim().slice(0,80)+" }");}
+ doc.querySelectorAll("[style]").forEach(e=>{if(/outline\s*:\s*(none|0)(\s|;|$|!)/i.test(e.getAttribute("style")))outlineNone.push(snip(e));});
+ let hasFV=false;const reR2=/([^{}]+)\{([^{}]*)\}/g;let m2;
+ while((m2=reR2.exec(css))){if(/:focus/i.test(m2[1])&&(/outline\s*:\s*(?!none|0(\s|;|$))[^;]+/i.test(m2[2])||/box-shadow\s*:\s*(?!none)[^;]+/i.test(m2[2])||/border(-color)?\s*:/i.test(m2[2])||/text-decoration\s*:\s*underline/i.test(m2[2])))hasFV=true;}
+ if(outlineNone.length&&!hasFV)add("AA","2.4.7 フォーカスの可視化","フォーカス枠を消している（outline:none）のに代わりの表示がない",outlineNone,":focus-visible { outline: 3px solid #1a5fb4; outline-offset: 2px } を追加する。");
+ // inline contrast
+ const lowc=[];
+ doc.querySelectorAll("[style]").forEach(e=>{const st=e.getAttribute("style");const f=parseColor(styleProp(st,"color"));let b=parseColor(styleProp(st,"background-color")||styleProp(st,"background"));
+  if(f&&!b){let p=e.parentElement;while(p&&!b){b=parseColor(styleProp(p.getAttribute&&p.getAttribute("style"),"background-color")||styleProp(p.getAttribute&&p.getAttribute("style"),"background"));p=p.parentElement;} if(!b)b=[255,255,255];}
+  if(f&&b&&txt(e)){const r=ratio(f,b);const fs=parseFloat(styleProp(st,"font-size")||"16");const bold=/bold|[6-9]00/.test(styleProp(st,"font-weight")||"");const large=fs>=24||(bold&&fs>=18.66);if(r<(large?3:4.5))lowc.push(snip(e)+"  → "+r.toFixed(2)+":1");}});
+ if(lowc.length)add("AA","1.4.3 コントラスト（最低限）","文字と背景のコントラスト不足（style属性で色指定されたもの）",lowc,"通常の文字は4.5:1以上に。下の計算機で色を調整する。CSSファイルで指定された色はここでは調べられないので、ブラウザの開発者ツールで確認する。");
+ // landmarks / skip
+ const main=doc.querySelector("main,[role=main]");
+ const firstLinks=links.slice(0,5);
+ const skipLink=firstLinks.some(a=>/^#./.test(a.getAttribute("href")||""));
+ if(!main&&!skipLink)add("A","2.4.1 ブロックスキップ","&lt;main&gt; も「本文へスキップ」リンクもない",["(main / skip link なし)"],"本文を &lt;main&gt; で囲み、先頭に &lt;a href=\"#main\"&gt;本文へスキップ&lt;/a&gt; を置く。");
+ // reCAPTCHA / captcha hint
+ if(doc.querySelector('script[src*="recaptcha"],script[src*="hcaptcha"],iframe[src*="captcha"],.g-recaptcha,.h-captcha,.cf-turnstile'))add("推奨","1.1.1・3.3.8 認証（WCAG 2.2）","CAPTCHA（画像認証）を使っている",["captcha"],"画像を選ばせる認証は使えない人がいる。音声の代替や、電話・メールでの受付を案内する。");
+ return {doc,R,stats:{img:imgs.length,links:links.length,fields:fields.length,headings:hs.length}};
+}
+function render(res){
+ const R=res.R;const a=R.filter(r=>r.lv==="A").length,aa=R.filter(r=>r.lv==="AA").length,rec=R.filter(r=>r.lv==="推奨").length;
+ $("sum").innerHTML=(R.length?'<p><span class="ng">要修正 レベルA：'+a+'種類</span> ／ <span class="ng">レベルAA：'+aa+'種類</span> ／ <span class="warn">推奨：'+rec+'種類</span></p>':'<p class="ok">機械的に見つかる問題はありませんでした。「2. 人が確認する項目」を確認してください。</p>')+'<p>調べた数：画像 '+res.stats.img+'・リンク '+res.stats.links+'・入力欄 '+res.stats.fields+'・見出し '+res.stats.headings+'</p>';
+ if(!R.length){$("res").innerHTML="";return;}
+ const order={"A":0,"AA":1,"推奨":2};R.sort((x,y)=>order[x.lv]-order[y.lv]);
+ $("res").innerHTML='<table><thead><tr><th>レベル</th><th>達成基準</th><th>見つかったこと</th><th>件数</th><th>例と直し方</th></tr></thead><tbody>'+R.map(r=>'<tr><td class="'+(r.lv==="推奨"?"warn":"ng")+'">'+r.lv+'</td><td>'+r.sc+'</td><td>'+r.title+'</td><td>'+r.n+'</td><td>'+r.ex.map(e=>'<code class="s">'+esc(e)+'</code>').join("")+r.fix+'</td></tr>').join("")+'</tbody></table>';
+}
+const SAMPLE='<!doctype html>\n<html>\n<head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">\n<style>a:focus, button:focus{outline:none}</style></head>\n<body>\n<div class="logo"><img src="logo.png"></div>\n<div onclick="openMenu()">☰</div>\n<h1>カフェ ひだまり</h1>\n<h3>11月のおすすめ</h3>\n<img src="IMG_2034.jpg" alt="IMG_2034.jpg">\n<p style="color:#aaaaaa">ランチは11時から</p>\n<p>ご予約は<a href="/reserve">こちら</a></p>\n<a href="https://instagram.com/x" target="_blank"><img src="ig.svg" alt=""></a>\n<form><input type="text" name="name" placeholder="お名前"><input type="email" name="email" id="mail"><button></button></form>\n<iframe src="https://www.google.com/maps/embed?pb=1"></iframe>\n<video src="pv.mp4" autoplay></video>\n</body></html>';
+$("run").onclick=()=>render(check($("src").value));
+$("sample").onclick=()=>{$("src").value=SAMPLE;render(check(SAMPLE));};
+$("clear").onclick=()=>{$("src").value="";$("sum").innerHTML="";$("res").innerHTML="";};
+// manual count
+function mc(){const b=[...document.querySelectorAll("#manual input")];$("mcount").textContent="確認済み "+b.filter(x=>x.checked).length+" / "+b.length;}
+document.querySelectorAll("#manual input").forEach(i=>i.onchange=mc);mc();
+// contrast
+function cc(){const f=parseColor($("fgt").value),b=parseColor($("bgt").value);
+ if(!f||!b){$("cres").innerHTML='<p class="ng">色は #336699 や rgb(51,102,153) の形で入れてください。</p>';return null;}
+ const r=ratio(f,b);const j=(t,ok)=>'<span class="'+(ok?"ok":"ng")+'">'+t+(ok?" 合格":" 不足")+'</span>';
+ $("swatch").style.color=$("fgt").value;$("swatch").style.background=$("bgt").value;
+ let sug="";if(r<4.5){// darken/lighten fg to reach 4.5
+  const dark=lum(b)>0.18;let c=f.slice();for(let k=0;k<100&&ratio(c,b)<4.5;k++){c=c.map(v=>Math.max(0,Math.min(255,Math.round(dark?v*0.96:v+(255-v)*0.06))));}
+  const hex="#"+c.map(v=>v.toString(16).padStart(2,"0")).join("");sug='<p>4.5:1にするなら文字色の例：<b>'+hex+'</b>（'+ratio(c,b).toFixed(2)+':1）</p>';}
+ $("cres").innerHTML='<p>コントラスト比 <b>'+r.toFixed(2)+':1</b>　'+j("通常文字AA(4.5)",r>=4.5)+' ／ '+j("大きな文字・アイコンAA(3)",r>=3)+' ／ '+j("AAA(7)",r>=7)+'</p>'+sug;return r;}
+$("fg").oninput=()=>{$("fgt").value=$("fg").value;cc();};$("bg").oninput=()=>{$("bgt").value=$("bg").value;cc();};
+$("cc").onclick=cc;cc();
+// policy
+function mkp(){const n=$("p_name").value,s=$("p_scope").value,l=$("p_level").value,k=$("p_kind").value,u=$("p_until").value,ex=$("p_ex").value,t=$("p_tel").value,ml=$("p_mail").value;
+ const kindT={hairyo:"適合レベル"+l+"に配慮",ichibu:"適合レベル"+l+"に一部準拠",junkyo:"適合レベル"+l+"に準拠"}[k];
+ let o="ウェブアクセシビリティ方針\n\n"+n+"は、年齢や障害の有無、使っている機器にかかわらず、だれもが当サイトの情報やサービスを利用できるよう、ウェブアクセシビリティの確保と向上に取り組みます。\n\n■ 対象範囲\n"+s+"\n\n■ 目標\nJIS X 8341-3:2016「高齢者・障害者等配慮設計指針―情報通信における機器，ソフトウェア及びサービス―第3部：ウェブコンテンツ」の"+kindT+"することを目標とします（目標時期："+u+"）。\n※JIS X 8341-3はWCAG 2.2に対応した改正が予定されています。改正後は新しい規格に合わせて本方針を見直します。\n\n■ 対象外とするもの\n"+ex+"\nこれらについては、ご要望に応じて別の方法で内容をお伝えします。\n";
+ if(k!=="hairyo")o+="\n■ 試験結果\n"+(k==="junkyo"?"準拠":"一部準拠")+"の確認のために行った試験の結果（対象ページ・達成基準チェックリスト・実施日）を以下で公開しています。\n（試験結果ページのURL）\n";
+ o+="\n■ 合理的配慮のご相談窓口\nウェブサイトの操作が難しい、画像やPDFの内容が読めないなど、お困りのことがありましたら、次の方法でご連絡ください。フォームを使わずに、お電話やメールでもお申し込み・お問い合わせを受け付けます。\n・電話："+t+"\n・メール："+ml+"\nいただいたご意見は、サイトの改善に役立てます。\n\n制定日："+new Date().getFullYear()+"年"+(new Date().getMonth()+1)+"月"+new Date().getDate()+"日\n"+n;
+ $("pout").value=o;return o;}
+$("mkp").onclick=mkp;$("copyp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($("pout").value);};mkp();
+window.__a11y={check,ratio,parseColor,mkp,cc};
+})();
+</script>
+</body>
+</html>
