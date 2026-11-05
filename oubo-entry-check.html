@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>公募応募文 文字数・禁則チェッカー（題名・本文・個人情報漏れ）｜無料</title>
+<meta name="description" content="小説・エッセイ・コピー・川柳などの公募フォームに貼る前に、題名・本文の字数上下限、禁則語・権利譲渡フレーズ、本文への氏名・住所・電話・メール・SNS漏れ、半角記号ゆれをブラウザ内で点検。CSV保存・送信なし。moji-count（原稿用紙換算）やkikakusho（企画書）とは別の「応募フォーム直前」チェック。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/oubo-entry-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],input[type=number],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row,.row2{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.en{font-size:.88em;color:#444;margin:.2em 0 .8em}
+.note{font-size:.9em;color:#444}
+#out li{margin:.35em 0}
+</style>
+</head>
+<body>
+<h1>公募応募文 文字数・禁則チェッカー</h1>
+<p class="muted">応募フォームに貼る直前の点検です。<strong>題名・本文の字数</strong>、<strong>禁則語・権利譲渡っぽい言い回し</strong>、<strong>本文への個人情報漏れ</strong>（氏名・住所・電話・メール・SNS）、半角記号のゆれを確認します。入力はこのブラウザ内だけ（送信なし）。原稿用紙換算は <a href="moji-count.html">moji-count</a>、小説企画書は <a href="kikakusho-check.html">kikakusho-check</a>、校正は <a href="kousei-check.html">kousei-check</a> を併用してください。</p>
+<p class="en">Pre-submit checker for contest entry forms: title/body length limits, banned phrases, personal-info leaks in the body, half-width punctuation. Client-side only.</p>
+
+<div class="box">
+<label>公募名（任意・結果メモ用）</label>
+<input type="text" id="contest" placeholder="例：第○回 ○○エッセイコンテスト">
+<div class="row">
+<div>
+<label>題名 下限（字・0で無視）</label>
+<input type="number" id="tmin" min="0" value="0">
+</div>
+<div>
+<label>題名 上限（字・0で無視）</label>
+<input type="number" id="tmax" min="0" value="40">
+</div>
+<div>
+<label>題名の数え方</label>
+<select id="tmode">
+<option value="all">空白・改行を含む</option>
+<option value="nosp" selected>空白・改行を除く</option>
+</select>
+</div>
+</div>
+<label>題名</label>
+<input type="text" id="title" placeholder="例：図書館で百年生きる本">
+<div class="row">
+<div>
+<label>本文 下限（字・0で無視）</label>
+<input type="number" id="bmin" min="0" value="0">
+</div>
+<div>
+<label>本文 上限（字・0で無視）</label>
+<input type="number" id="bmax" min="0" value="2000">
+</div>
+<div>
+<label>本文の数え方</label>
+<select id="bmode">
+<option value="all">空白・改行を含む</option>
+<option value="nosp" selected>空白・改行を除く</option>
+<option value="nonl">改行だけ除く</option>
+</select>
+</div>
+</div>
+<label>本文（フォームに貼る部分だけ。氏名欄・住所欄は別なのでここには書かない）</label>
+<textarea id="body" placeholder="ここに応募本文を貼り付け"></textarea>
+<div class="row2">
+<div>
+<label>追加の禁則語（カンマまたは改行区切り・任意）</label>
+<textarea id="extraBan" style="min-height:64px" placeholder="例：他社名, 商品名A, ChatGPT"></textarea>
+</div>
+<div>
+<label>自分の氏名・ペンネーム（漏れ検知用・任意）</label>
+<input type="text" id="myNames" placeholder="例：中崎慎二, 平岡しん">
+<label style="margin-top:8px">自分のメール・電話・SNS（任意）</label>
+<input type="text" id="myIds" placeholder="例：yema7582@gmail.com, @shinjinakasaki">
+</div>
+</div>
+<p class="note">よくある禁則は内蔵しています（生成AI・ChatGPT・Gemini・権利譲渡・転載可・著作権放棄・他コンテスト応募済、など）。要項の固有名詞は「追加の禁則語」に入れてください。</p>
+</div>
+
+<p>
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+</p>
+
+<div id="summary" class="box" style="display:none"></div>
+<div id="out"></div>
+
+<footer>
+<p>関連：<a href="moji-count.html">公募用 文字数・原稿用紙換算</a> ／ <a href="senryu-check.html">川柳・俳句・短歌 音数</a> ／ <a href="ai-disclosure.html">生成AI利用の申告文</a> ／ <a href="kousei-check.html">日本語校正</a></p>
+<p>問い合わせ・有料の応募文下書き点検：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎慎二）</p>
+<p><a href="./">トップ（AIでもOKな公募まとめ）</a></p>
+</footer>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const BUILTIN=[
+  {re:/Chat\s*GPT|ChatGPT|GPT-?\d|Gemini|Claude|Copilot|生成AI|生成系AI|AIが書いた|AI生成|人工知能が作成/gi, sev:'warn', msg:'生成AI・モデル名の言及があります。要項が「全部・一部のAI作成不可」の場合は本文から外し、申告欄がある公募では別途申告してください。'},
+  {re:/著作権を?(譲渡|放棄)|すべての権利を?(譲る|譲渡)|著作権は主催|著作権は貴社|権利の一切/g, sev:'warn', msg:'権利譲渡・放棄っぽい文言が本文にあります。通常は要項側の条項であり、本文に書く必要はありません。'},
+  {re:/転載(自由|可|OK)|無断転載歓迎|二次利用(自由|可)/g, sev:'warn', msg:'転載・二次利用を許す文言があります。入選後の利用は要項に従い、本文では書かない方が安全です。'},
+  {re:/他のコンテストに応募済|他誌に投稿済|既発表|すでに発表/g, sev:'bad', msg:'既発表・他コンテスト応募を匂わせる文言があります。未発表規定がある公募では失格になり得ます。'},
+  {re:/保証します|必ず入賞|当選確実/g, sev:'warn', msg:'保証・当選を約束する言い回しがあります。エッセイ・コピーでは不自然です。'},
+  {re:/https?:\/\/|www\./gi, sev:'warn', msg:'URLが含まれています。本文禁止の公募や、審査用匿名化の公募では外してください。'},
+  {re:/[!?]/g, sev:'warn', msg:'半角の「!」「?」があります。日本語公募では全角「！」「？」にそろえることが多いです。'},
+  {re:/\.\.\.(?!\.)/g, sev:'warn', msg:'半角「...」があります。日本語では「……」が一般的です。'},
+  {re:/[A-Za-z]{12,}/g, sev:'warn', msg:'長い英単語・IDらしき文字列があります。作品本文に不要なトークンが混ざっていないか確認してください。'}
+];
+function count(s, mode){
+  s=(s||'').replace(/\r/g,'');
+  if(mode==='nosp') return [...s.replace(/[\s\u3000]/g,'')].length;
+  if(mode==='nonl') return [...s.replace(/\n/g,'')].length;
+  return [...s].length;
+}
+function findPII(text, names, ids){
+  const hits=[];
+  const email=/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  const phone=/(?:0\d{1,4}[-‐−–]?\d{1,4}[-‐−–]?\d{3,4}|\+81[-‐−–]?\d{1,4}[-‐−–]?\d{1,4}[-‐−–]?\d{3,4})/g;
+  const zip=/〒?\s*\d{3}[-‐−–]?\d{4}/g;
+  const sns=/(?:^|[^\w])(@[A-Za-z0-9_]{2,30})/g;
+  let m;
+  while((m=email.exec(text))) hits.push({sev:'bad', msg:'本文にメールアドレスらしき文字列: '+m[0]});
+  while((m=phone.exec(text))) hits.push({sev:'bad', msg:'本文に電話番号らしき文字列: '+m[0]});
+  while((m=zip.exec(text))) hits.push({sev:'bad', msg:'本文に郵便番号らしき文字列: '+m[0]});
+  while((m=sns.exec(text))) hits.push({sev:'warn', msg:'本文にSNSハンドルらしき文字列: '+m[1]});
+  (names||'').split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean).forEach(n=>{
+    if(n.length>=2 && text.includes(n)) hits.push({sev:'bad', msg:'本文に指定した氏名／ペンネーム「'+n+'」があります。別紙の氏名欄へ移してください。'});
+  });
+  (ids||'').split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean).forEach(n=>{
+    if(n.length>=3 && text.toLowerCase().includes(n.toLowerCase())) hits.push({sev:'bad', msg:'本文に指定した連絡先／SNS「'+n+'」があります。'});
+  });
+  return hits;
+}
+let lastRows=[];
+function run(){
+  const title=$('title').value;
+  const body=$('body').value;
+  const tc=count(title,$('tmode').value);
+  const bc=count(body,$('bmode').value);
+  const tmin=+$('tmin').value||0, tmax=+$('tmax').value||0;
+  const bmin=+$('bmin').value||0, bmax=+$('bmax').value||0;
+  const rows=[];
+  function add(sev,msg){rows.push({sev,msg});}
+  if(!title.trim() && !body.trim()){add('warn','題名も本文も空です。');}
+  if(tmax && tc>tmax) add('bad','題名が上限を '+(tc-tmax)+' 字超えています（数え方: '+$('tmode').options[$('tmode').selectedIndex].text+' → '+tc+' 字）。');
+  else if(tmax && title.trim()) add('ok','題名は上限内です（'+tc+' / '+tmax+' 字）。');
+  if(tmin && tc<tmin) add('bad','題名が下限まで '+(tmin-tc)+' 字足りません。');
+  if(bmax && bc>bmax) add('bad','本文が上限を '+(bc-bmax)+' 字超えています（数え方: '+$('bmode').options[$('bmode').selectedIndex].text+' → '+bc+' 字）。');
+  else if(bmax && body.trim()) add('ok','本文は上限内です（'+bc+' / '+bmax+' 字）。');
+  if(bmin && bc<bmin) add('bad','本文が下限まで '+(bmin-bc)+' 字足りません。');
+  if(title.trim() && body.includes(title.trim()) && body.indexOf(title.trim())<40) add('warn','本文先頭付近に題名と同じ文言があります。フォームが題名欄と本文欄を分ける場合、本文側の重複を消してください。');
+  BUILTIN.forEach(rule=>{
+    rule.re.lastIndex=0;
+    if(rule.re.test(title+'\n'+body)) add(rule.sev, rule.msg);
+  });
+  const extra=($('extraBan').value||'').split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean);
+  extra.forEach(w=>{
+    if(w && (title.includes(w) || body.includes(w))) add('bad','追加禁則語「'+w+'」が題名または本文に含まれています。');
+  });
+  findPII(title+'\n'+body, $('myNames').value, $('myIds').value).forEach(h=>add(h.sev,h.msg));
+  if(!/[。．！？!?]/.test(body) && body.replace(/[\s\u3000]/g,'').length>80) add('warn','本文に句点・感嘆符がありません。途中で切れた貼り付けでないか確認してください。');
+  if((body.match(/\n{3,}/g)||[]).length) add('warn','空行が3つ以上続いています。フォームの字数カウントに影響することがあります。');
+
+  lastRows=rows;
+  const bad=rows.filter(r=>r.sev==='bad').length;
+  const warn=rows.filter(r=>r.sev==='warn').length;
+  const ok=rows.filter(r=>r.sev==='ok').length;
+  const sum=$('summary');
+  sum.style.display='block';
+  let pill='ok', label='提出前チェック：大きな問題は見つかりませんでした';
+  if(bad){pill='bad'; label='提出前チェック：要修正 '+bad+' 件（警告 '+warn+'）';}
+  else if(warn){pill='warn'; label='提出前チェック：確認推奨 '+warn+' 件';}
+  sum.innerHTML='<span class="pill '+pill+'">'+pill.toUpperCase()+'</span> <strong>'+label+'</strong><br class="muted">題名 '+tc+' 字 ／ 本文 '+bc+' 字 ／ OK '+ok;
+  $('out').innerHTML='<h2>結果</h2><ul>'+rows.map(r=>{
+    const cls=r.sev==='bad'?'bad':(r.sev==='warn'?'warn':'ok');
+    return '<li class="'+cls+'"><span class="pill '+cls+'">'+r.sev+'</span> '+r.msg+'</li>';
+  }).join('')+'</ul>';
+}
+$('run').onclick=run;
+$('sample').onclick=function(){
+  $('contest').value='サンプル：人権問題エッセイ（本文2000字以内・氏名は別欄）';
+  $('tmin').value=0; $('tmax').value=40; $('tmode').value='nosp';
+  $('bmin').value=400; $('bmax').value=2000; $('bmode').value='nosp';
+  $('title').value='図書館の隅で百年生きる本';
+  $('body').value='ある冬の午後、私は市立図書館の閉架書庫で、カバーの取れた一冊に出会った。貸出カードには昭和の日付が並び、最後の借出は平成の初めだった。ChatGPTにあらすじを聞いたわけではない。手触りと紙の匂いだけが手がかりだった。\n連絡は yema7582@gmail.com まで、と本文に書いてしまいそうになったが、それは応募票の欄に書くべきだ。\n中崎慎二';
+  $('myNames').value='中崎慎二, 平岡しん';
+  $('myIds').value='yema7582@gmail.com';
+  $('extraBan').value='他社名A';
+  run();
+};
+$('csv').onclick=function(){
+  if(!lastRows.length) run();
+  const lines=['severity,message,contest,title_count,body_count'];
+  const tc=count($('title').value,$('tmode').value);
+  const bc=count($('body').value,$('bmode').value);
+  const c=($('contest').value||'').replace(/"/g,'""');
+  lastRows.forEach(r=>lines.push('"'+r.sev+'","'+r.msg.replace(/"/g,'""')+'","'+c+'",'+tc+','+bc));
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='oubo-entry-check.csv'; a.click();
+};
+})();
+</script>
+</body>
+</html>
