@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>データセット販売・公開前チェック（権利・同意・ライセンス・PII・HF注意）｜無料</title>
+<meta name="description" content="データセットをHugging Face・自社サイト・研究公開・有料販売する前に、権利・同意・ライセンス・個人情報・サンプルと本番の差・HFの「店先は無料ライセンス」注意をブラウザ内で点検。CSV保存・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/dataset-sell-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],input[type=number],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:80px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.en{font-size:.88em;color:#444;margin:.2em 0 .8em}
+</style>
+</head>
+<body>
+<h1>データセット販売・公開前チェッカー</h1>
+<p class="muted">Hugging Face・GitHub・自社サイト・研究ページでデータセットを<strong>公開・販売・サンプル配布</strong>する前に、権利・同意・ライセンス・個人情報（PII）・サンプルと本番の差を点検します。入力はこのブラウザ内だけ（送信なし）。</p>
+<p class="en">Pre-flight checklist before publishing or selling a dataset (rights, consent, licence, PII, sample-vs-full, HF shop-window warning). Client-side only.</p>
+
+<div class="box">
+<label>データセット名（任意）</label>
+<input type="text" id="name" placeholder="例：JA顧客問い合わせ意図ラベル 1万件">
+<div class="row">
+<div>
+<label>公開先</label>
+<select id="venue">
+<option value="hf">Hugging Face Hub</option>
+<option value="own">自社サイト / S3 / メール納品</option>
+<option value="gh">GitHub / Zenodo / 論文付録</option>
+<option value="mix">HFでサンプル＋別経路で有料フル</option>
+</select>
+</div>
+<div>
+<label>データの種類</label>
+<select id="dtype">
+<option value="text">テキスト（チャット・レビュー・文書）</option>
+<option value="image">画像・動画</option>
+<option value="audio">音声</option>
+<option value="tab">表・ログ・センサー</option>
+<option value="mix">複合</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div>
+<label>想定ライセンス（公開時）</label>
+<select id="lic">
+<option value="unknown">まだ決めていない</option>
+<option value="cc0">CC0 / パブリックドメイン相当</option>
+<option value="ccby">CC BY</option>
+<option value="ccbync">CC BY-NC（非商用）</option>
+<option value="odc">ODC-By / ODbL などオープンデータ系</option>
+<option value="custom">独自EULA / 商用ライセンス</option>
+<option value="closed">非公開・NDAのみ</option>
+</select>
+</div>
+<div>
+<label>行数・件数の目安（任意）</label>
+<input type="number" id="nrows" min="0" placeholder="例：10000">
+</div>
+</div>
+<label>短い説明・出所メモ（任意・ローカル点検用）</label>
+<textarea id="memo" placeholder="例：自社CSログを顧客同意のうえ匿名化。氏名・電話は削除済み。スクレイピングは含まない。"></textarea>
+</div>
+
+<h2>1. 権利・出所（Rights &amp; provenance）</h2>
+<div class="chk"><input type="checkbox" id="c_own"><label for="c_own" style="font-weight:400;margin:0">自分が著作権・データベース権を持っている、または権利者から配布・販売の許諾を文書でもらっている</label></div>
+<div class="chk"><input type="checkbox" id="c_scrape"><label for="c_scrape" style="font-weight:400;margin:0">ウェブ収集がある場合、利用規約・robots・API条項に反していない（「スクレイピング禁止」サイトを無視していない）</label></div>
+<div class="chk"><input type="checkbox" id="c_third"><label for="c_third" style="font-weight:400;margin:0">第三者データ（官公庁オープンデータ、他社API、既存データセット）のライセンス条件を守れる（帰属表示・改変・商用の可否）</label></div>
+<div class="chk"><input type="checkbox" id="c_model"><label for="c_model" style="font-weight:400;margin:0">生成AIの出力を含む場合、そのモデル／サービスの利用規約で再配布・販売が許されている</label></div>
+
+<h2>2. 同意・個人情報（Consent &amp; PII）</h2>
+<div class="chk"><input type="checkbox" id="c_consent"><label for="c_consent" style="font-weight:400;margin:0">人に関するデータなら、収集目的と第三者提供・公開の同意がある（または同意不要な匿名加工が法的に成り立つ根拠がある）</label></div>
+<div class="chk"><input type="checkbox" id="c_pii"><label for="c_pii" style="font-weight:400;margin:0">氏名・住所・電話・メール・社員ID・顔・声紋・精确な位置など直接識別子を削除または不可逆に加工した</label></div>
+<div class="chk"><input type="checkbox" id="c_quasi"><label for="c_quasi" style="font-weight:400;margin:0">準識別子（社名・部署・稀な属性の組み合わせ）で個人が再特定されないか、サンプル行を目視で確認した</label></div>
+<div class="chk"><input type="checkbox" id="c_minor"><label for="c_minor" style="font-weight:400;margin:0">未成年者・患者・金融・機微なカテゴリを含む場合、特別な扱い（原則除外、または専門の法務確認）をしている</label></div>
+<div class="chk"><input type="checkbox" id="c_apack"><label for="c_apack" style="font-weight:400;margin:0">日本の個人情報保護法・外国法が絡む場合、越境移転や匿名加工のメモを残している（このツールは法的助言ではない）</label></div>
+
+<h2>3. ライセンスカード（Licence card）</h2>
+<div class="chk"><input type="checkbox" id="c_card"><label for="c_card" style="font-weight:400;margin:0">README／カードに「できること・できないこと」（商用可否、再配布、学習利用、出典表記）を一文で書いた</label></div>
+<div class="chk"><input type="checkbox" id="c_compat"><label for="c_compat" style="font-weight:400;margin:0">元データのライセンスと、これから付けるライセンスが矛盾していない（例：非商用ソースを商用EULAで売らない）</label></div>
+<div class="chk"><input type="checkbox" id="c_cite"><label for="c_cite" style="font-weight:400;margin:0">引用・帰属（citation）文と連絡先（メール）をカードに入れた</label></div>
+
+<h2>4. Hugging Face を「店先」にするときの注意（重要）</h2>
+<p class="note">HF Hub に<strong>公開リポジトリ</strong>として置くと、多くの場合そのファイルは誰でも永久に無料で取れます。有料の「本番フルセット」を守りたいなら、公開はサンプルだけにし、商用ライセンスは<strong>プラットフォーム外</strong>（自社決済・Human Native・直接契約など）で渡す設計が安全です。「公開＝カタログ」「フル＝別契約」。</p>
+<div class="chk"><input type="checkbox" id="c_hfwarn"><label for="c_hfwarn" style="font-weight:400;margin:0">HFに上げる範囲は「見せてよいサンプル／メタデータ」だけだと理解している（フル有料データをpublicに置かない）</label></div>
+<div class="chk"><input type="checkbox" id="c_gated"><label for="c_gated" style="font-weight:400;margin:0">gated / 申請制にする場合でも、承認後に渡す条件（研究のみ・商用別途）をカードとメール文に書いた</label></div>
+<div class="chk"><input type="checkbox" id="c_sample"><label for="c_sample" style="font-weight:400;margin:0">サンプルとフルの差分（行数・フィールド・年代）を明記し、サンプルだけで本番品質だと誤解させない</label></div>
+
+<h2>5. 品質・再現・販売ページ</h2>
+<div class="chk"><input type="checkbox" id="c_schema"><label for="c_schema" style="font-weight:400;margin:0">スキーマ・ラベル定義・アノテ手順・既知の偏り（bias）をREADMEに書いた</label></div>
+<div class="chk"><input type="checkbox" id="c_hash"><label for="c_hash" style="font-weight:400;margin:0">配布ファイルのハッシュ（SHA256）や版番号があり、買い手が改ざん・取り違えを検知できる</label></div>
+<div class="chk"><input type="checkbox" id="c_price"><label for="c_price" style="font-weight:400;margin:0">価格・納品方法・返金不可／範囲・禁止用途（違法監視など）を販売ページか契約書に書いた</label></div>
+<div class="chk"><input type="checkbox" id="c_tax"><label for="c_tax" style="font-weight:400;margin:0">日本の個人事業なら、売上の記録方法（インボイス・源泉の要否メモ）を決めている</label></div>
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+<button type="button" class="sec" id="card">カード下書きを表示</button>
+</p>
+<div id="out"></div>
+<div id="cardout" class="box" style="display:none"></div>
+
+<div class="box note">
+<strong>有料の続き（ファイル納品）</strong>：公開前チェック表＋ライセンス／READMEカード下書き＋サンプル設計（HF店先／本番フルの切り分け）をセットで。目安 <b>¥8,000〜</b>（データセット販売前チェック＋カード下書き）。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="cross-tab.html">クロス集計</a> ・ <a href="csv-henkan.html">CSV列変換</a> ・ <a href="yasashii-check.html">やさしい日本語</a> ・ <a href="tokusho-check.html">特商法表記</a></p>
+<p>入力は端末内のみ。法律・コンプライアンスの助言ではありません。各プラットフォームの利用規約を優先してください。</p>
+<p>作成：中崎 慎二（フリーランス翻訳者）。依頼：shinji-work@mail.grokbot.com</p>
+</footer>
+<script>
+const CHECKS=[
+  ['c_own','権利','権利・許諾','bad','権利が曖昧なまま公開・販売すると削除請求や契約違反になる。'],
+  ['c_scrape','権利','収集条件の遵守','bad','規約違反のスクレイピングは販売どころか公開も危険。'],
+  ['c_third','権利','第三者ライセンス','warn','オープンデータでも帰属・非商用条項を見落とさない。'],
+  ['c_model','権利','生成AI出力の再配布','warn','モデル規約で学習データ再販が禁じられていることがある。'],
+  ['c_consent','個人情報','同意または匿名加工の根拠','bad','人に関するデータの公開・販売の中心リスク。'],
+  ['c_pii','個人情報','直接識別子の除去','bad','メールや電話が1件残っているだけで事故になる。'],
+  ['c_quasi','個人情報','再特定の目視','warn','稀な組み合わせは匿名化後も危ない。'],
+  ['c_minor','個人情報','機微・未成年など','warn','含むなら原則除外か専門確認。'],
+  ['c_apack','個人情報','越境・法令メモ','warn','このツールは法的助言ではない。メモを残す。'],
+  ['c_card','ライセンス','カードに可否を一文','bad','買い手が「学習に使ってよいか」を誤解する。'],
+  ['c_compat','ライセンス','元ライセンスとの両立','bad','NCソースを商用EULAで売ると破綻する。'],
+  ['c_cite','ライセンス','引用と連絡先','warn','研究利用・クレーム対応に必要。'],
+  ['c_hfwarn','HF店先','公開範囲＝サンプル理解','bad','HF public は実質無料の永久配布になりやすい。'],
+  ['c_gated','HF店先','gated条件の文書化','warn','申請制でも条件を書かないと商用に流用されやすい。'],
+  ['c_sample','HF店先','サンプルとフルの差','warn','サンプルだけで品質を過大に見せない。'],
+  ['c_schema','品質','スキーマ・偏り','warn','ラベル定義がないと使えない／クレームになる。'],
+  ['c_hash','品質','ハッシュ・版','warn','取り違えと改ざん検知。'],
+  ['c_price','販売','価格・禁止用途','warn','特に違法監視・再識別目的を禁止文に。'],
+  ['c_tax','販売','日本の売上記録','warn','確定申告用にCSVメモを残すと後が楽。']
+];
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function analyze(){
+  const venue=$('venue').value, lic=$('lic').value, dtype=$('dtype').value;
+  const memo=$('memo').value||'', name=$('name').value||'';
+  const nrows=Number($('nrows').value);
+  const rows=[]; const push=(sev,cat,title,detail)=>rows.push({sev,cat,title,detail});
+  if(lic==='unknown') push('bad','入力','ライセンス未決定','公開前に付けるライセンスを決める。');
+  if(venue==='hf' && lic==='custom') push('warn','HF店先','HF公開＋独自EULA','publicファイルは実質無料配布になりがち。サンプルのみ公開＋外でEULAが安全。');
+  if(venue==='hf' && (lic==='cc0'||lic==='ccby')) push('warn','HF店先','寛容ライセンスで公開','商用フルを売りたいならHFはサンプルに限定した方がよい。');
+  if(venue==='mix' && !$('c_hfwarn').checked) push('bad','HF店先','店先設計が未確認','サンプル公開と有料フルの切り分けを先に決める。');
+  if(venue==='mix' && !$('c_sample').checked) push('warn','HF店先','差分未記載','サンプルとフルの差を書かないと誤解を招く。');
+  if((dtype==='text'||dtype==='audio'||dtype==='image'||dtype==='mix') && !$('c_consent').checked) push('bad','個人情報','同意チェックが外れている','人由来データが多い類型。');
+  if(memo && /(スクレイピング|crawl|scrape)/i.test(memo) && !/(スクレイピングなし|スクレイピングは含まない|no\s*scraping|without scraping)/i.test(memo) && !$('c_scrape').checked) push('warn','権利','メモに収集の記述','収集条件チェックを入れて再確認。');
+  if(isFinite(nrows) && nrows>0 && nrows<50 && venue!=='own') push('warn','品質','件数が少ない','サンプルとしてはよいが「データセット販売」には説明が要る。');
+  CHECKS.forEach(([id,cat,title,sev,detail])=>{ if(!$(id).checked) push(sev,cat,title+'：未チェック',detail); });
+  if($('c_own').checked && $('c_compat').checked===false && lic!=='closed') push('warn','ライセンス','自前でもメタ条件','学習利用・再配布の一文はカードに残す。');
+  if(!$('c_hfwarn').checked && (venue==='hf'||venue==='mix')) push('bad','HF店先','店先警告を未確認','公開＝無料配布になり得る点を先に読む。');
+  const score={bad:0,warn:0,ok:0}; rows.forEach(r=>score[r.sev]++);
+  return {rows,score,meta:{name,venue,lic,dtype,nrows,memo}};
+}
+function pill(sev){return `<span class="pill ${sev}">${sev==='bad'?'必須':sev==='warn'?'注意':'OK'}</span>`}
+function render(a){
+  let h=`<p>結果：<span class="bad"><b>${a.score.bad}</b> 必須欠け</span> ／ <span class="warn"><b>${a.score.warn}</b> 注意</span></p>`;
+  if(a.score.bad===0 && a.score.warn<=3) h+=`<p class="ok">公開・販売の最低ラインは近そうです。カード下書きを出してREADMEに貼ってください。</p>`;
+  h+='<table><tr><th>重要度</th><th>区分</th><th>項目</th><th>メモ</th></tr>';
+  a.rows.forEach(r=>{h+=`<tr><td>${pill(r.sev)}</td><td>${esc(r.cat)}</td><td>${esc(r.title)}</td><td>${esc(r.detail)}</td></tr>`;});
+  if(!a.rows.length) h+='<tr><td colspan="4" class="ok">チェックはすべてONです。最終はサンプル行の目視と契約文面で確認を。</td></tr>';
+  h+='</table>';
+  h+=`<h2>次の一手</h2><ol>
+<li>ライセンス一文と禁止用途をカードに書く</li>
+<li>HFを使うなら <b>サンプルのみ</b> public／フルは外で契約</li>
+<li>PII残存をランダム50行で再スキャン</li>
+<li>SHA256と版番号をREADMEに追記</li>
+</ol>`;
+  $('out').innerHTML=h; window._last=a;
+}
+function toCsv(a){
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const lines=[['severity','category','item','detail'].map(q).join(',')].concat(a.rows.map(r=>[r.sev,r.cat,r.title,r.detail].map(q).join(',')));
+  return '\ufeff'+lines.join('\r\n');
+}
+function cardDraft(a){
+  const m=a.meta;
+  const licLabel={unknown:'(TBD)',cc0:'CC0-1.0',ccby:'CC-BY-4.0',ccbync:'CC-BY-NC-4.0',odc:'ODC-By',custom:'Proprietary EULA',closed:'Private / NDA'}[m.lic]||m.lic;
+  const venueNote={hf:'Hosted sample/metadata may be on Hugging Face Hub. Public files are typically freely downloadable — full commercial set is licensed off-platform.',own:'Distributed from our site or secure transfer under the licence below.',gh:'Research mirror; licence below governs use.',mix:'Public sample on HF; paid full set via separate commercial licence.'}[m.venue];
+  return `# ${m.name||'Dataset'}\n\n## Licence\n${licLabel}\n\n## What you may do\n- Use for the purposes allowed by the licence above.\n- Cite this card when you publish results.\n\n## What you may NOT do\n- Re-identify individuals or attempt to restore removed PII.\n- Use for unlawful surveillance, discrimination, or to violate platform/site terms of the source data.\n- Redistribute the paid full set if you only bought a commercial seat (custom EULA).\n\n## Sample vs full\nDescribe row counts and fields here. Sample ≠ production quality guarantee.\n\n## Provenance\n${m.memo||'(Add source, consent, and transformation notes.)'}\n\n## Citation\nNakasaki, S. (${new Date().getFullYear()}). ${m.name||'Dataset'}. Contact: shinji-work@mail.grokbot.com\n\n## Distribution note\n${venueNote}\n`;
+}
+$('sample').onclick=()=>{
+  $('name').value='JA CS intent labels (sample 500 / full 10k)';
+  $('venue').value='mix'; $('dtype').value='text'; $('lic').value='custom'; $('nrows').value='500';
+  $('memo').value='自社CSログ。顧客同意のうえ氏名・電話・メール削除。スクレイピングなし。HFには500件サンプルのみ。';
+  ['c_own','c_scrape','c_third','c_model','c_consent','c_pii','c_quasi','c_minor','c_apack','c_card','c_compat','c_cite','c_hfwarn','c_gated','c_sample','c_schema','c_hash','c_price','c_tax'].forEach(id=>$(id).checked=true);
+};
+$('run').onclick=()=>render(analyze());
+$('csv').onclick=()=>{const a=window._last||analyze();const b=new Blob([toCsv(a)],{type:'text/csv'});const x=document.createElement('a');x.href=URL.createObjectURL(b);x.download='dataset-sell-check.csv';x.click();};
+$('card').onclick=()=>{const a=window._last||analyze();const el=$('cardout');el.style.display='block';el.innerHTML='<b>README / ライセンスカード下書き</b><pre style="white-space:pre-wrap;font-size:13px">'+esc(cardDraft(a))+'</pre>';};
+</script>
+</body>
+</html>
