@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テスト問題 配点・正答バランス チェッカー（定期テスト・小テスト・塾の確認テスト：合計点・番号の抜け・正答の偏りと連続・観点別の配点割合）｜無料・送信なし</title>
+<meta name="description" content="テストの問題番号・配点・正答・観点を1問1行で貼ると、合計点が100点になっているか、番号の抜けや重複、配点や正答の書き忘れ、選択問題の正答がアやイに偏っていないか、同じ記号が続いていないか、アイウエの規則的な並び、観点別（知識・技能／思考・判断・表現）の配点割合をまとめて確認します。ブラウザの中だけで動き、どこにも送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/test-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}label{display:inline-block;margin:4px 14px 4px 0}
+textarea{width:100%;font-family:inherit;font-size:14px;height:260px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3}.ng{color:#b00;font-weight:bold}.warn{color:#a60}.ok{color:#080}code{background:#f3f3f3;padding:0 4px}
+.bar{display:inline-block;height:12px;background:#7aa7e0;vertical-align:middle}
+</style>
+</head>
+<body>
+<h1>テスト問題 配点・正答バランス チェッカー</h1>
+<p>定期テスト・小テスト・塾の確認テストを作ったあと、印刷する前の最終確認用です。1問1行で <b>番号・配点・正答・観点</b> を貼ると、合計点、番号の抜け、正答の偏りや連続、観点別の配点割合をまとめて確認できます。ブラウザの中だけで動き、入力はどこにも送信・保存されません。</p>
+<p class="note">書き方：<code>番号 ｜ 配点 ｜ 正答 ｜ 観点（任意）</code>。区切りは「｜」「|」タブ、カンマのどれでも（Excelからコピーした列もそのまま貼れます）。番号は <code>1</code>、<code>1(2)</code>、<code>2-3</code>、<code>問3</code> などでOK。記述問題の正答は「記述」や模範解答の文をそのまま書いてください。<code>#</code>で始まる行と空行は無視します。</p>
+<textarea id="src"># 例（架空のテストです）
+1(1)｜3｜ア｜知
+1(2)｜3｜ア｜知
+1(3)｜3｜ア｜知
+1(4)｜3｜イ｜知
+2(1)｜4｜ウ｜知
+2(2)｜4｜ア｜思
+2(4)｜4｜エ｜思
+3(1)｜5｜1600円｜知
+3(2)｜5｜｜思
+3(2)｜6｜記述：光合成で二酸化炭素が使われるから｜思
+4(1)｜4｜ア｜知
+4(2)｜4｜イ｜知
+4(3)｜4｜ウ｜知
+4(4)｜4｜エ｜知
+5｜10｜記述｜思
+6(1)｜8｜イ｜知
+6(2)｜｜ア｜思</textarea>
+<div>
+<label>満点 <input id="full" type="number" value="100" min="1" style="width:5em">点</label>
+<label>同じ記号が何問続いたら注意 <input id="run" type="number" value="3" min="2" style="width:4em">問</label>
+<label>観点の目標割合（任意） <input id="ratio" value="知:60, 思:40" style="width:14em"></label>
+<label><input type="checkbox" id="pat" checked> アイウエの規則的な並びを知らせる</label>
+</div>
+<button id="go">チェックする</button><button id="csv">結果をCSVで保存</button>
+<div id="sum"></div>
+<h2>問題ごとの指摘</h2><div id="out"></div>
+<h2>選択問題の正答の分布</h2><div id="dist"></div>
+<h2>観点別の配点</h2><div id="kanten"></div>
+<p style="margin-top:2em;font-size:.9em">メモ：選択肢の数がそろっている問題どうしでくらべるのが目安です。偏りがあっても問題の内容上やむをえない場合はそのままで構いません。観点名は「知識・技能」「知」「K」など、同じ書き方にそろえてください。テスト作成・見直しの代行のご相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ。<a href="index.html">ほかの無料ツール</a></p>
+<script>
+const $=id=>document.getElementById(id);let last=null;
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const z2h=s=>s.replace(/[０-９Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+const SETS=[['ア','イ','ウ','エ','オ','カ'],['A','B','C','D','E','F'],['1','2','3','4','5','6'],['①','②','③','④','⑤','⑥'],['a','b','c','d','e','f']];
+function choiceOf(a){a=z2h(a.trim());if(!a)return null;for(const s of SETS){if(s.includes(a))return {set:SETS.indexOf(s),v:a}}return null}
+function numKey(id){return z2h(id).replace(/^問|^第|問$/g,'').replace(/[（）]/g,m=>m==='（'?'(':')').replace(/\s/g,'')}
+function parse(t){return t.split(/\r?\n/).map((l,i)=>[l,i+1]).filter(([l])=>l.trim()&&!l.trim().startsWith('#')).map(([l,ln])=>{const c=l.split(/[｜|\t,，]/).map(x=>x.trim());return {ln,id:c[0]||'',pt:c[1]||'',ans:c[2]||'',kt:c[3]||''}})}
+function check(){const rows=parse($('src').value),full=+$('full').value||100,runN=+$('run').value||3;
+const res=rows.map(r=>({...r,is:[]}));let total=0;const seen={};
+res.forEach(r=>{const k=numKey(r.id);if(!k)r.is.push(['ng','番号がありません']);else if(seen[k]){r.is.push(['ng','番号「'+r.id+'」が重複（'+seen[k]+'行目と同じ）'])}else seen[k]=r.ln;
+const p=z2h(r.pt).replace(/点$/,'');if(p===''){r.is.push(['ng','配点が空です'])}else if(isNaN(+p)||+p<0){r.is.push(['ng','配点「'+r.pt+'」が数字ではありません'])}else total+=+p;
+if(!r.ans)r.is.push(['ng','正答が空です（解答・模範解答の書き忘れ）']);});
+// numbering gaps
+const groups={};Object.keys(seen).forEach(k=>{let m=k.match(/^(\d+)(?:[(\-](\d+)\)?)?$/);if(!m)return;const g=m[1];(groups[g]=groups[g]||[]).push(m[2]?+m[2]:0)});
+const big=Object.keys(groups).map(Number).sort((a,b)=>a-b);const gaps=[];
+for(let i=1;i<=(big[big.length-1]||0);i++)if(!groups[i])gaps.push('大問'+i);
+big.forEach(g=>{const s=groups[g].filter(x=>x>0).sort((a,b)=>a-b);if(!s.length)return;for(let i=1;i<=s[s.length-1];i++)if(!s.includes(i))gaps.push(g+'('+i+')')});
+// choice analysis
+const ch=res.map(r=>({r,c:choiceOf(r.ans)})).filter(x=>x.c);const dist={};
+ch.forEach(({c})=>{const k=c.set;(dist[k]=dist[k]||{});dist[k][c.v]=(dist[k][c.v]||0)+1});
+let streak=[];const flushStreak=()=>{if(streak.length>=runN){streak.forEach((x,j)=>{if(j===runN-1||j>=runN)x.r.is.push(['warn','正答「'+x.c.v+'」が'+streak.length+'問続いています（'+streak[0].r.id+'〜'+streak[streak.length-1].r.id+'）'])})}streak=[]};
+ch.forEach(x=>{if(streak.length&&(streak[0].c.v!==x.c.v||streak[0].c.set!==x.c.set))flushStreak();streak.push(x)});flushStreak();
+const patt=[];if($('pat').checked){for(let i=0;i+3<ch.length;i++){const w=ch.slice(i,i+4);if(w.every(x=>x.c.set===w[0].c.set)){const idx=w.map(x=>SETS[x.c.set].indexOf(x.c.v));if(idx.every((v,j)=>j===0||v===idx[j-1]+1)||idx.every((v,j)=>j===0||v===idx[j-1]-1)){patt.push(w[0].r.id+'〜'+w[3].r.id+'（'+w.map(x=>x.c.v).join('')+'）');w[3].r.is.push(['warn','正答が '+w.map(x=>x.c.v).join('')+' と規則的に並んでいます']);i+=3}}}}
+const distWarn=[];Object.entries(dist).forEach(([s,o])=>{const n=Object.values(o).reduce((a,b)=>a+b,0);const used=SETS[s].slice(0,Math.max(...Object.keys(o).map(v=>SETS[s].indexOf(v)))+1);if(n<6||used.length<2)return;used.forEach(v=>{const c=o[v]||0,exp=n/used.length;if(c/n>=0.5&&c>=4)distWarn.push('「'+v+'」が'+c+'/'+n+'問（'+Math.round(c/n*100)+'%）で多すぎ');else if(c===0&&n>=used.length*2)distWarn.push('「'+v+'」が正答の問題が1問もありません');})});
+// kanten
+const kt={};let ktMiss=0;res.forEach(r=>{const p=+z2h(r.pt).replace(/点$/,'')||0;if(!r.kt){ktMiss++;return}kt[r.kt]=(kt[r.kt]||0)+p});
+const target={};$('ratio').value.split(/[,，、]/).forEach(s=>{const m=s.split(/[:：=]/);if(m.length===2&&m[0].trim())target[m[0].trim()]=+z2h(m[1].trim())||0});
+const ktWarn=[];const ktSum=Object.values(kt).reduce((a,b)=>a+b,0);
+Object.keys(target).forEach(k=>{const share=ktSum?(kt[k]||0)/ktSum*100:0;if(Math.abs(share-target[k])>=5)ktWarn.push(k+'は目標'+target[k]+'%に対して'+Math.round(share)+'%')});
+Object.keys(kt).forEach(k=>{if(Object.keys(target).length&&!(k in target))ktWarn.push('観点「'+k+'」は目標割合にない書き方です（表記ゆれ？）')});
+return {res,total,full,gaps,dist,distWarn,patt,kt,ktSum,ktMiss,target,ktWarn}}
+function show(){const d=check();last=d;const ng=d.res.filter(r=>r.is.some(x=>x[0]==='ng')).length,wn=d.res.filter(r=>r.is.length&&!r.is.some(x=>x[0]==='ng')).length;
+let s='<p>'+d.res.length+'問をチェック：合計 <b class="'+(d.total===d.full?'ok':'ng')+'">'+d.total+'点</b>（満点'+d.full+'点'+(d.total===d.full?'、一致':'、'+(d.total>d.full?'+':'')+(d.total-d.full)+'点ずれ')+'）／<span class="ng">要修正 '+ng+'問</span>／<span class="warn">確認 '+wn+'問</span></p>';
+if(d.gaps.length)s+='<p class="ng">番号の抜け：'+d.gaps.map(e).join('、')+'</p>';
+$('sum').innerHTML=s;
+$('out').innerHTML='<table><tr><th>行</th><th>番号</th><th>配点</th><th>正答</th><th>観点</th><th>指摘</th></tr>'+d.res.map(r=>'<tr><td>'+r.ln+'</td><td>'+e(r.id)+'</td><td>'+e(r.pt)+'</td><td>'+e(r.ans)+'</td><td>'+e(r.kt)+'</td><td>'+(r.is.length?r.is.map(x=>'<div class="'+x[0]+'">'+(x[0]==='ng'?'要修正：':'確認：')+e(x[1])+'</div>').join(''):'<span class="ok">OK</span>')+'</td></tr>').join('')+'</table>';
+let h='';Object.entries(d.dist).forEach(([si,o])=>{const n=Object.values(o).reduce((a,b)=>a+b,0);h+='<table style="width:auto;margin-bottom:8px"><tr><th>正答</th><th>問題数</th><th></th></tr>'+SETS[si].filter(v=>o[v]!==undefined||SETS[si].indexOf(v)<=Math.max(...Object.keys(o).map(x=>SETS[si].indexOf(x)))).map(v=>'<tr><td>'+v+'</td><td>'+(o[v]||0)+'</td><td><span class="bar" style="width:'+((o[v]||0)/n*200)+'px"></span></td></tr>').join('')+'</table>'});
+h+=d.distWarn.length?'<p class="warn">'+d.distWarn.map(e).join('<br>')+'</p>':(h?'<p class="ok">大きな偏りはありません。</p>':'<p>選択問題が見つかりませんでした。</p>');
+if(d.patt.length)h+='<p class="warn">規則的な並び：'+d.patt.map(e).join('、')+'</p>';$('dist').innerHTML=h;
+let k='';if(Object.keys(d.kt).length){k='<table style="width:auto"><tr><th>観点</th><th>配点</th><th>割合</th><th>目標</th></tr>'+Object.entries(d.kt).map(([n,p])=>'<tr><td>'+e(n)+'</td><td>'+p+'</td><td>'+Math.round(p/d.ktSum*100)+'%</td><td>'+(n in d.target?d.target[n]+'%':'')+'</td></tr>').join('')+'</table>';if(d.ktMiss)k+='<p class="warn">観点が空欄の問題：'+d.ktMiss+'問</p>';k+=d.ktWarn.length?'<p class="warn">'+d.ktWarn.map(e).join('<br>')+'</p>':'<p class="ok">目標割合との差は5ポイント未満です。</p>'}else k='<p>観点の列がありません（任意）。</p>';$('kanten').innerHTML=k}
+$('go').onclick=show;
+$('csv').onclick=()=>{if(!last)show();const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const t='\ufeff行,番号,配点,正答,観点,判定,指摘\r\n'+last.res.map(r=>[r.ln,r.id,r.pt,r.ans,r.kt,r.is.some(x=>x[0]==='ng')?'要修正':r.is.length?'確認':'OK',r.is.map(x=>x[1]).join(' / ')].map(q).join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='test-check.csv';a.click()};
+show();
+</script>
+</body>
+</html>
