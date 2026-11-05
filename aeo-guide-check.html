@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生成AI検索（AIによる概要・AIモード）公式ガイド準拠チェッカー｜無料</title>
+<meta name="description" content="Google検索セントラルの生成AI向け最適化ガイドに沿って、ページ本文のコモディティ化・答え先出し・独自性の手がかりを点検。llms.txt必須などの誤解も整理。Search Consoleの生成AIパフォーマンスレポートの見方つき。データは送信されません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/aeo-guide-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.12em;border-left:5px solid #246;padding-left:8px;margin-top:28px}
+textarea{width:100%;height:180px;font-family:inherit;font-size:14px}input[type=text]{width:100%;box-sizing:border-box;padding:6px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+.ng{color:#b00}.ok{color:#075}.mid{color:#a60}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+label{display:block;margin-top:8px}ul.check{list-style:none;padding:0}ul.check li{margin:6px 0;padding:8px 10px;background:#f7f9fc;border-radius:6px}
+.score{font-size:1.6em;font-weight:700}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;margin-right:4px}
+.badge.ng{background:#fde8e8}.badge.ok{background:#e7f6ec}.badge.mid{background:#fff3d6}
+</style>
+</head>
+<body>
+<h1>生成AI検索 公式ガイド準拠チェッカー</h1>
+<p>Google検索セントラルの「<a href="https://developers.google.com/search/docs/fundamentals/ai-optimization-guide?hl=ja" rel="noopener" target="_blank">生成AI機能に向けた最適化ガイド</a>」（AIによる概要・AIモード）に沿って、ページの文章を点検します。入力はブラウザ内だけで処理し、どこにも送信しません。</p>
+<p class="note">Googleは公式に「AEO／GEO」という別枠のハックは不要で、通常のSEO（独自で役立つコンテンツ＋技術的な健全さ）が土台だと説明しています。このツールは<strong>コモディティ化した文章の兆候</strong>と<strong>よくある誤解</strong>を洗い、Search Consoleの<strong>生成AIパフォーマンスレポート</strong>で測る流れに寄せるための目安です。表示や引用を保証するものではありません。</p>
+
+<h2>1. ページの文章を貼る</h2>
+<label>ページタイトル<input type="text" id="title" placeholder="例）初めて整体を受ける人向けの7つのヒント"></label>
+<label>見出し（H2など・1行1つ）<textarea id="heads" placeholder="整体とは&#10;料金の目安&#10;よくある質問"></textarea></label>
+<label>本文（冒頭〜主要部分で可）<textarea id="body" placeholder="記事の本文を貼り付けてください"></textarea></label>
+<button id="run">チェックする</button>
+<button id="sample">コモディティ例を入れる</button>
+<button id="sample2">独自性の例を入れる</button>
+<button id="dl" disabled>結果CSVを保存</button>
+<div id="res"></div>
+
+<h2>2. Googleが「しなくてよい」としていること（誤解チェック）</h2>
+<ul class="check" id="myths"></ul>
+<p class="note">出典：上記の公式ガイド「生成AI検索の誤解を解く」節。llms.txt 等を他サービス向けに置くのは自由ですが、<strong>Google検索の生成AI機能では使われないと明記</strong>されています。</p>
+
+<h2>3. Search Consoleで測る手順</h2>
+<ol>
+<li>Search Consoleでサイトを確認し、インデックス登録とスニペット表示が問題ないことを確認する。</li>
+<li>「検索の生成AI機能」にサイトが含まれているか、公式ヘルプの要件どおりか確認する。</li>
+<li>パフォーマンス → <b>生成AI</b>（生成AIパフォーマンスレポート）で、クリック・表示・引用まわりの推移を見る。</li>
+<li>伸びた／落ちたページをこのチェッカーに通し、コモディティ化していないか・答えが先に来ているかを見直す。</li>
+<li>ローカル店・ECなら、Googleビジネスプロフィールや Merchant Center の基本情報も合わせて整える（公式ガイドの「ローカル／eコマース」節）。</li>
+</ol>
+
+<h2>4. 有料で頼むときの範囲の目安</h2>
+<p>よくある「AI検索に載ります」だけの売り込みより、<strong>公式ガイド準拠の仕分け</strong>（やらなくてよい施策の切り捨て＋独自コンテンツの改稿方針＋GSC生成AIレポートの読み方）のほうが再現しやすいです。目安：サイト診断 ¥5,000／改稿方針レポート ¥8,000〜（ページ数による）。相談は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> まで。</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<script>
+const $=id=>document.getElementById(id);
+let ROWS=[];
+const MYTHS=[
+{q:"llms.txt や AI専用の特別なマークアップを作らないと生成AIに出ない",a:"不要。Google検索（生成AI機能含む）ではそれらを使わないと公式に説明されています。",ok:false},
+{q:"AIが理解しやすいよう本文を細かく『チャンク化』する必要がある",a:"不要。ページ内の複数トピックはシステム側で扱える、と公式ガイドにあります。",ok:false},
+{q:"生成AI向けに文体を特別に書き換えないといけない",a:"不要。類義語や意図の理解があるので、オーディエンス向けに書けばよいとされています。",ok:false},
+{q:"ウェブ上の不正確な『言及』を片っ端から直すのが最優先",a:"優先度は低い。コアの品質とスパム対策の方が土台、とされています。",ok:false},
+{q:"生成AI検索のために特別な schema.org を増やし続ける必要がある",a:"必須ではない。リッチリザルト用の構造化データは従来どおり有用だが、生成AI専用の特別マークアップは不要。",ok:false},
+{q:"独自で役立つコンテンツと技術的な健全さが引き続き土台",a:"その通り。公式ガイドの中心メッセージです。",ok:true},
+{q:"Search Consoleの生成AIパフォーマンスレポートで可視性を測る",a:"その通り。サードパーティの『内部指標』主張より公式レポートを優先。",ok:true}
+];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function nk(s){return (s||"").normalize("NFKC").replace(/\s+/g," ").trim()}
+const COMMODITY=[
+[/初めて.{0,12}(人|方).{0,8}(向け|のための).{0,8}(\d+|７|７つ|七つ|5つ|五つ|10|１０).{0,4}(の)?(ヒント|ポイント|コツ)/,
+ "コモディティ型タイトル：『初めて〜向けのN個のヒント』は公式ガイドが例示する一般知識コンテンツに近い"],
+[/(\d+|７|七|５|五|１０|10)\s*(選|つの|の)\s*(方法|やり方|コツ|ポイント|ヒント|理由)/,
+ "一覧型の一般知識タイトル。体験・一次データ・固有の判断基準が本文にあるか確認"],
+[/(完全|究極|最強|絶対|完璧).{0,6}ガイド/,
+ "断定・最上級のガイド表現。根拠と対象の限定がないと信頼性が落ちやすい"],
+[/(とは？|とは\?)\s*$/,
+ "定義だけの薄いページになりやすい。直後に結論と独自の切り口があるか確認"]
+];
+const GENERIC=[/様々な|さまざまな|と言わ(れてい|れ)ます|一般的に|多くの場合|などがあります|ことが大切です|意識しましょう|おすすめです。$/];
+const UNIQUE=[/実際に|計測した|調査した|当社では|当店では|〇〇年|令和|事例|失敗|検査|測定|円\/|¥|％|%|アンケート|お客様の声|取材/];
+function firstAnswer(body){
+  const paras=body.split(/\n+/).map(nk).filter(Boolean);
+  if(!paras.length)return {ok:false,msg:"本文が空です"};
+  const first=paras[0];
+  const vague=GENERIC.some(r=>r.test(first));
+  const hasFact=/\d/.test(first)||UNIQUE.some(r=>r.test(first));
+  if(first.length<40)return {ok:false,msg:"冒頭が短すぎます。最初の1〜2文で結論や固有の事実を言い切ると引用されやすいです"};
+  if(vague&&!hasFact)return {ok:false,msg:"冒頭が一般論で始まっています。結論・数字・体験を先に置くと公式ガイドの『役立つ構造』に近づきます"};
+  if(hasFact)return {ok:true,msg:"冒頭に具体性（数字・体験・固有語）があり、答え先出しの形に近いです"};
+  return {ok:true,msg:"冒頭は一定の長さがあります。さらに結論を先に出すとよいです"};
+}
+function analyze(){
+  const title=nk($("title").value), heads=nk($("heads").value), body=nk($("body").value);
+  const findings=[];
+  if(!title&&!body)return {err:"タイトルか本文を入れてください"};
+  for(const [re,msg] of COMMODITY){if(re.test(title))findings.push({lv:"ng",tag:"コモディティ",msg})}
+  if(title&&title.length>35)findings.push({lv:"mid",tag:"タイトル長",msg:"タイトルが長めです（目安35文字前後）。検索結果とAI要約の両方で核が埋もれないよう前半に固有名詞を"});
+  if(title&&!/[0-9０-９]|円|県|市|区|駅/.test(title)&&/おすすめ|比較|ランキング/.test(title))
+    findings.push({lv:"mid",tag:"一般化",msg:"おすすめ／比較系なのに地名・数字・対象の限定がタイトルにありません"});
+  const fa=firstAnswer(body);findings.push({lv:fa.ok?"ok":"ng",tag:"答え先出し",msg:fa.msg});
+  const gens=GENERIC.filter(r=>r.test(body)).length;
+  if(gens>=3)findings.push({lv:"ng",tag:"あいまい語",msg:"『様々な』『と言われています』『一般的に』などが多め。固有の事実に置き換えを"});
+  else if(gens>=1)findings.push({lv:"mid",tag:"あいまい語",msg:"あいまいな接続表現があります。削れるか確認"});
+  const uniq=UNIQUE.filter(r=>r.test(body)).length;
+  if(body.length>200&&uniq===0)findings.push({lv:"ng",tag:"独自性",msg:"体験・計測・事例・固有データの手がかりが見つかりません。公式ガイドが重視する『独自の視点』を1つ追加"});
+  else if(uniq>=2)findings.push({lv:"ok",tag:"独自性",msg:"体験・数字・事例などの手がかりが複数あります"});
+  else if(uniq===1)findings.push({lv:"mid",tag:"独自性",msg:"独自性の手がかりは1系統。競合が真似しにくい一次情報を足すと強い"});
+  const hlines=heads.split(/\n+/).map(nk).filter(Boolean);
+  if(hlines.length===0)findings.push({lv:"mid",tag:"見出し",msg:"見出しが未入力です。段落を見出しで区切ると人間にもAIにも辿りやすいと公式ガイドも推奨"});
+  else if(hlines.length===1&&body.length>800)findings.push({lv:"mid",tag:"見出し",msg:"本文が長いのに見出しが少ないです。トピックごとにH2を"});
+  else findings.push({lv:"ok",tag:"見出し",msg:"見出しが"+hlines.length+"本あります"});
+  if(/llms\.txt|LLMs\.txt|geo.?optim|aeo.?hack/i.test(body+title))
+    findings.push({lv:"mid",tag:"誤解リスク",msg:"llms.txt／AEOハックへの言及があります。Google検索向けには必須でない旨を併記すると誠実です"});
+  let score=70;
+  for(const f of findings){if(f.lv==="ng")score-=12;else if(f.lv==="mid")score-=5;else score+=3}
+  score=Math.max(0,Math.min(100,score));
+  return {findings,score,title,hlines};
+}
+function renderMyths(){
+  $("myths").innerHTML=MYTHS.map(m=>{
+    const badge=m.ok?'<span class="badge ok">公式も推奨</span>':'<span class="badge ng">しなくてよい</span>';
+    return '<li>'+badge+'<b>'+esc(m.q)+'</b><br><span class="'+(m.ok?"ok":"mid")+'">'+esc(m.a)+'</span></li>';
+  }).join("");
+}
+function show(a){
+  if(a.err){$("res").innerHTML='<p class="ng">'+esc(a.err)+'</p>';$("dl").disabled=true;return}
+  ROWS=a.findings; $("dl").disabled=!ROWS.length;
+  const label=a.score>=75?"公式ガイドの方向に近い":a.score>=50?"改善余地あり":"コモディティ／一般論寄り";
+  let h='<p class="score">'+a.score+' <span style="font-size:.45em;font-weight:500">/ 100（目安）— '+esc(label)+'</span></p>';
+  h+='<table><tr><th>判定</th><th>観点</th><th>内容</th></tr>';
+  for(const f of ROWS){h+='<tr><td class="'+f.lv+'">'+(f.lv==="ok"?"OK":f.lv==="mid"?"注意":"要改善")+'</td><td>'+esc(f.tag)+'</td><td>'+esc(f.msg)+'</td></tr>'}
+  h+='</table><p class="note">次の一手：①独自の体験・計測・失敗談を1ブロック追加 ②冒頭2文で結論 ③GSC生成AIレポートで当該URLの表示を確認 ④llms.txt増設よりクロールと有用性を優先。</p>';
+  $("res").innerHTML=h;
+}
+$("run").onclick=()=>show(analyze());
+$("sample").onclick=()=>{$("title").value="初めて整体を受ける人向けの7つのヒント";$("heads").value="整体とは\n準備すること\nよくある質問";$("body").value="整体は様々な手法があると言われています。一般的に、初めての方は緊張することが多いです。まずはリラックスすることが大切です。おすすめのポイントをまとめました。意識しましょう。";};
+$("sample2").onclick=()=>{$("title").value="加古川で下水道管カメラ検査を省略して後悔した話（実費メモ）";$("heads").value="何を省略したか\nあとでかかった費用\n次に買う人への判断基準";$("body").value="結論から言うと、中古住宅の購入時に下水道管のカメラ検査（当時税込28,000円）を外したのは失敗でした。引き渡し後3か月で排水が逆流し、掘削修理に税込41万円。検査報告書の写真付きで、どの継手が腐食していたかも分かっています。加古川市内の木造築25年以上で、前面道路の下水桝まで15m超ある物件なら、検査免除の値引き額より修理リスクの方が大きい、というのが当店の実務上の基準です。";};
+$("dl").onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const L=[["判定","観点","内容"].map(q).join(",")];ROWS.forEach(f=>L.push([f.lv,f.tag,f.msg].map(q).join(",")));const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+L.join("\r\n")],{type:"text/csv"}));a.download="aeo_guide_check.csv";a.click()};
+renderMyths();
+</script>
+</body>
+</html>
