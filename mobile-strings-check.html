@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アプリ翻訳ファイル チェッカー（Android strings.xml・iOS Localizable.strings・.xcstrings・XLIFF）｜無料</title>
+<meta name="description" content="AndroidのstringsXML、iOSのLocalizable.stringsと String Catalog（.xcstrings）、XLIFFを原文と訳文で比べ、キーの過不足・%1$s %@ %d などのプレースホルダ崩れ・未翻訳・Androidのアポストロフィ未エスケープ・needs_review状態・長すぎる訳を一覧にする無料ツール。ブラウザ内で処理し送信しません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/mobile-strings-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.cols{display:flex;gap:12px;flex-wrap:wrap}.cols>div{flex:1;min-width:280px}
+textarea{width:100%;min-height:13em;font-size:.9em;box-sizing:border-box;font-family:ui-monospace,Menlo,Consolas,monospace}
+table{border-collapse:collapse;width:100%;font-size:.88em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top;word-break:break-all}th{background:#f3f3f3}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.e{color:#b00020;font-weight:bold}.w{color:#a15c00}.i{color:#555}
+button{font-size:1em;padding:4px 12px}small{color:#555}
+</style>
+</head>
+<body>
+<h1>アプリ翻訳ファイル チェッカー（Android / iOS / XLIFF）</h1>
+<p>スマホアプリの文字列ファイルを原文（英語など）と訳文（日本語・中国語など）で突き合わせ、<b>ビルドが落ちる・表示が崩れる・訳し忘れ</b>につながるミスを一覧にします。AI翻訳や機械翻訳の出力をストアに出す前の確認にも使えます。ファイルはブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<p>形式：<select id="fmt">
+<option value="auto">自動判定</option>
+<option value="android">Android strings.xml</option>
+<option value="ios">iOS Localizable.strings</option>
+<option value="xcstrings">iOS String Catalog（.xcstrings、1ファイルで完結）</option>
+<option value="xliff">XLIFF 1.2 / 2.0（source と target が1ファイル）</option>
+</select>
+訳文の言語コード（.xcstrings 用）：<input id="lang" value="ja" style="width:5em"></p>
+<div class="cols">
+<div><b>原文ファイル</b> <input type="file" id="fa"><br><textarea id="a" placeholder='<resources>
+  <string name="hello">Hello, %1$s!</string>
+  <string name="items">You have %d items</string>
+</resources>'></textarea><small>.xcstrings と XLIFF は原文側だけに貼れば、ファイル内の訳と比べます。</small></div>
+<div><b>訳文ファイル</b> <input type="file" id="fb"><br><textarea id="b" placeholder='<resources>
+  <string name="hello">こんにちは、%1$sさん！</string>
+</resources>'></textarea></div>
+</div>
+<p>訳文が原文の <input id="ratio" type="number" value="2" step="0.1" style="width:4em"> 倍（表示幅、全角=2）を超えたら注意
+<label><input type="checkbox" id="optSame" checked> 原文と同じ訳を「未翻訳の疑い」にする</label></p>
+<p><small>未翻訳から除外する語（アプリ名・ブランド名など、カンマ区切り）</small> <input id="keep" style="width:60%" placeholder="OK, Wi-Fi, Google"></p>
+<button id="go">チェックする</button> <button id="csv" disabled>結果をCSVで保存</button> <button id="sample">サンプルを入れる</button>
+</div>
+<div id="out"></div>
+<h2>チェックする内容</h2>
+<ul>
+<li><b>キーの過不足</b>：原文にあって訳文にないキー（英語のまま表示される）、訳文にだけある古いキー。</li>
+<li><b>プレースホルダ</b>：<code>%1$s</code> <code>%d</code> <code>%@</code> <code>%lld</code> <code>{name}</code> <code>%%</code>、HTMLタグ（<code>&lt;b&gt;</code>）、<code>\n</code> の数と種類の違い。数がずれるとアプリが落ちることがあります。語順を入れ替えるときは <code>%1$s</code> のような番号つきにします。</li>
+<li><b>Android 固有</b>：エスケープされていない <code>'</code>（アポストロフィ）や先頭の <code>@</code> <code>?</code>、<code>translatable="false"</code> の文字列の誤訳、plurals の quantity の不足（日本語・中国語は other だけで足ります）。</li>
+<li><b>iOS 固有</b>：.strings の書式エラー（セミコロン抜け・閉じていない引用符）、.xcstrings の <code>needs_review</code>・<code>new</code>・<code>stale</code> 状態や訳の抜け、plural / device バリエーションの訳し忘れ。</li>
+<li><b>XLIFF</b>：target が空、state が needs-translation / new / initial のまま。</li>
+<li><b>未翻訳の疑い・長すぎる訳</b>：原文と同じ訳、表示幅が原文より大きく長い訳（ボタンやタブで切れやすい）。</li>
+</ul>
+<div class="note">このツールは形式上の点検だけをします。訳の自然さ、画面での切れ方は、実機やスクリーンショットで最後に確かめてください。ストア用のスクリーンショットは <a href="store-shots.html">多言語キャプション作成</a>、JSON・PO は <a href="i18n-check.html">翻訳ファイル（JSON/PO）チェッカー</a>、用語の統一は <a href="yougo-check.html">対訳・用語集チェッカー</a> へ。<br>
+翻訳やチェックの作業をまとめて頼みたい方は shinji-work@mail.grokbot.com までどうぞ（日本語・英語・中国語）。</div>
+<p><a href="./">ツール一覧へ</a></p>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function readFile(inp,ta){inp.addEventListener('change',()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{ta.value=r.result};r.readAsText(f)})}
+readFile($('fa'),$('a'));readFile($('fb'),$('b'));
+function detect(t){t=t.trim();if(!t)return null;if(t[0]==='{'){try{const j=JSON.parse(t);if(j&&j.strings)return 'xcstrings'}catch(e){}}
+if(/<xliff[\s>]/.test(t))return 'xliff';if(/<resources[\s>]/.test(t))return 'android';if(/^\s*(\/\*[\s\S]*?\*\/\s*|\/\/.*\n\s*)*"/.test(t)||/"\s*=\s*"/.test(t))return 'ios';return null}
+function xml(t){const d=new DOMParser().parseFromString(t,'application/xml');const pe=d.getElementsByTagName('parsererror');if(pe.length)throw new Error('XMLの書式エラー：'+pe[0].textContent.slice(0,160));return d}
+function inner(el){let s='';for(const n of el.childNodes){s+=n.nodeType===3?n.nodeValue:(n.nodeType===4?n.nodeValue:new XMLSerializer().serializeToString(n))}return s.replace(/ xmlns="[^"]*"/g,'')}
+function parseAndroid(t){const d=xml(t),m=new Map();
+for(const s of d.getElementsByTagName('string')){m.set(s.getAttribute('name'),{v:inner(s),tr:s.getAttribute('translatable')!=='false'})}
+for(const p of d.getElementsByTagName('plurals')){const n=p.getAttribute('name');const q={};for(const it of p.getElementsByTagName('item'))q[it.getAttribute('quantity')]=inner(it);for(const k in q)m.set(n+'#'+k,{v:q[k],tr:true,plural:n})}
+for(const a of d.getElementsByTagName('string-array')){const n=a.getAttribute('name');[...a.getElementsByTagName('item')].forEach((it,i)=>m.set(n+'['+i+']',{v:inner(it),tr:a.getAttribute('translatable')!=='false'}))}
+return {m}}
+function parseIOS(t){const m=new Map(),errs=[];const s=t.replace(/\/\*[\s\S]*?\*\//g,c=>c.replace(/[^\n]/g,' ')).replace(/^\s*\/\/.*$/gm,'');
+const re=/"((?:[^"\\]|\\.)*)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*(;)?/g;let x,last=0;
+while((x=re.exec(s))){const gap=s.slice(last,x.index);if(gap.trim())errs.push('解釈できない部分：'+gap.trim().slice(0,60));if(!x[3])errs.push('セミコロン抜け：「'+x[1]+'」');m.set(x[1],{v:x[2],tr:true,line:s.slice(0,x.index).split('\n').length});last=re.lastIndex}
+if(s.slice(last).trim())errs.push('末尾に解釈できない部分（閉じていない引用符など）：'+s.slice(last).trim().slice(0,60));return {m,errs}}
+function parseXc(t,lang){const j=JSON.parse(t);const src=new Map(),tgt=new Map(),notes=[];const sl=j.sourceLanguage||'en';
+for(const k in j.strings){const e=j.strings[k]||{};if(e.shouldTranslate===false){src.set(k,{v:k,tr:false});continue}
+const L=e.localizations||{};const sv=(L[sl]&&L[sl].stringUnit&&L[sl].stringUnit.value)||k;src.set(k,{v:sv,tr:true});
+const T=L[lang];if(!T){continue}
+if(T.variations&&!T.stringUnit)src.delete(k);
+if(T.stringUnit)tgt.set(k,{v:T.stringUnit.value||'',tr:true,state:T.stringUnit.state});
+if(T.variations){const sv2=L[sl]&&L[sl].variations;for(const vk in T.variations){for(const q in T.variations[vk]){const u=T.variations[vk][q].stringUnit||{};const key=k+'#'+vk+':'+q;tgt.set(key,{v:u.value||'',tr:true,state:u.state,plural:k});const su=sv2&&sv2[vk]&&sv2[vk][q]&&sv2[vk][q].stringUnit;src.set(key,{v:su?su.value:sv,tr:true,plural:k})}}
+if(sv2)for(const vk in sv2)for(const q in sv2[vk]){const key=k+'#'+vk+':'+q;if(!src.has(key))src.set(key,{v:sv2[vk][q].stringUnit.value,tr:true,plural:k})}}}
+return {src,tgt,sl}}
+function parseXliff(t){const d=xml(t),src=new Map(),tgt=new Map();
+for(const u of d.getElementsByTagName('trans-unit')){const id=u.getAttribute('id')||u.getAttribute('resname');const s=u.getElementsByTagName('source')[0],g=u.getElementsByTagName('target')[0];
+src.set(id,{v:s?inner(s):'',tr:u.getAttribute('translate')!=='no'});if(g)tgt.set(id,{v:inner(g),tr:true,state:g.getAttribute('state')||''})}
+for(const u of d.getElementsByTagName('unit')){const id=u.getAttribute('id');let i=0;for(const sg of u.getElementsByTagName('segment')){const key=id+(i?'.'+i:'');const s=sg.getElementsByTagName('source')[0],g=sg.getElementsByTagName('target')[0];
+src.set(key,{v:s?inner(s):'',tr:u.getAttribute('translate')!=='no'});if(g)tgt.set(key,{v:inner(g),tr:true,state:sg.getAttribute('state')||''});i++}}
+return {src,tgt}}
+const PH=/%(?:\d+\$)?[-+ 0#]*\d*(?:\.\d+)?(?:hh|h|ll|l|q|z|t|j)?[@sdDuUxXoOfFeEgGcCSpaA%]|\{[A-Za-z0-9_.]+\}|<\/?[A-Za-z][^>]*>|\\n|\$\{[^}]+\}/g;
+function phs(s){return (s.match(PH)||[]).map(x=>x.replace(/\s+/g,' ').replace(/<([A-Za-z]+)[^>]*>/,'<$1>')).sort()}
+function width(s){let w=0;for(const c of s.replace(PH,'xx'))w+=/[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6]/.test(c)?2:1;return w}
+let rows=[];
+function add(sev,key,kind,msg,s,t){rows.push({sev,key,kind,msg,s:s||'',t:t||''})}
+function run(){rows=[];const out=$('out');let fmt=$('fmt').value;const A=$('a').value,B=$('b').value;
+if(fmt==='auto')fmt=detect(A)||detect(B);if(!fmt){out.innerHTML='<p class="e">形式を判定できませんでした。形式を選んでください。</p>';return}
+const keep=$('keep').value.split(',').map(s=>s.trim()).filter(Boolean);const ratio=+$('ratio').value||2;
+let S,T,extra=[];
+try{
+if(fmt==='android'){S=parseAndroid(A).m;T=parseAndroid(B).m}
+else if(fmt==='ios'){const a=parseIOS(A),b=parseIOS(B);S=a.m;T=b.m;a.errs.forEach(e=>add('e','(原文)','書式',e));b.errs.forEach(e=>add('e','(訳文)','書式',e))}
+else if(fmt==='xcstrings'){const r=parseXc(A,$('lang').value.trim()||'ja');S=r.src;T=r.tgt}
+else{const r=parseXliff(A);S=r.src;T=r.tgt}
+}catch(e){out.innerHTML='<p class="e">読み込みエラー：'+esc(e.message)+'</p>';return}
+const pluralT=new Set([...T.values()].filter(v=>v.plural).map(v=>v.plural));
+for(const [k,s] of S){const t=T.get(k);
+if(!s.tr){if(t&&fmt==='android')add('w',k,'翻訳不要','translatable="false" の文字列が訳文ファイルにあります（原文のまま使われるはず）',s.v,t.v);continue}
+if(!t){if(s.plural&&pluralT.has(s.plural)){continue}
+add('e',k,'訳なし',fmt==='xcstrings'?'この言語の訳がありません':'訳文ファイルにキーがありません',s.v,'');continue}
+if(t.state&&/needs[-_]?review|needs-translation|new|initial|stale|needs-adaptation|needs-l10n/i.test(t.state))add('w',k,'状態','state が「'+t.state+'」のままです',s.v,t.v);
+if(!t.v.trim()){add('e',k,'空の訳','訳が空です',s.v,t.v);continue}
+const ps=phs(s.v),pt=phs(t.v);if(ps.join('|')!==pt.join('|')){const miss=ps.filter(x=>{const i=pt.indexOf(x);return i<0}),ext=pt.filter(x=>ps.indexOf(x)<0);
+add('e',k,'プレースホルダ','原文 ['+ps.join(' ')+'] と訳文 ['+pt.join(' ')+'] が違います'+(miss.length?'／不足：'+miss.join(' '):'')+(ext.length?'／余分：'+ext.join(' '):''),s.v,t.v)}
+const un=ps.filter(x=>/^%[@sdDuUxXfFeEgGcC]$/.test(x)).length;if(un>=2)add('w',k,'語順','番号なしのプレースホルダが2つ以上あります。日本語などで語順を変えるなら %1$s のように番号をつけます',s.v,t.v);
+if(fmt==='android'){if(/(^|[^\\])'/.test(t.v)&&!/^".*"$/s.test(t.v.trim()))add('e',k,'アポストロフィ','エスケープされていない \' があります（\\\' にする）。ビルドエラーの原因になります',s.v,t.v);
+if(/^[@?]/.test(t.v.trim()))add('w',k,'先頭記号','先頭の @ や ? はリソース参照と見なされます。文字として使うなら \\@ \\? にします',s.v,t.v)}
+if($('optSame').checked&&s.v.trim()===t.v.trim()&&/[A-Za-z]{3}/.test(s.v)&&!keep.some(w=>s.v.trim()===w))add('w',k,'未翻訳の疑い','原文と同じです',s.v,t.v);
+const ws=width(s.v),wt=width(t.v);if(ws>=4&&wt>ws*ratio)add('w',k,'長さ','表示幅が原文の '+(wt/ws).toFixed(1)+' 倍です（ボタン・タブで切れやすい）',s.v,t.v)}
+for(const [k,t] of T){if(!S.has(k))add('i',k,'余分なキー','原文にないキーです（古い文字列の残り？）','',t.v)}
+const ne=rows.filter(r=>r.sev==='e').length,nw=rows.filter(r=>r.sev==='w').length;
+let h='<div class="res">形式：'+fmt+'／原文 '+S.size+' 件・訳文 '+T.size+' 件／<span class="e">エラー '+ne+'</span>・<span class="w">注意 '+nw+'</span>・<span class="i">情報 '+(rows.length-ne-nw)+'</span></div>';
+if(rows.length){h+='<table><tr><th>重要度</th><th>キー</th><th>種類</th><th>内容</th><th>原文</th><th>訳文</th></tr>'+rows.map(r=>'<tr><td class="'+r.sev+'">'+({e:'エラー',w:'注意',i:'情報'})[r.sev]+'</td><td>'+esc(r.key)+'</td><td>'+r.kind+'</td><td>'+esc(r.msg)+'</td><td>'+esc(r.s)+'</td><td>'+esc(r.t)+'</td></tr>').join('')+'</table>'}else h+='<p>問題は見つかりませんでした。</p>';
+out.innerHTML=h;$('csv').disabled=!rows.length;window.__rows=rows}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c])}
+$('go').addEventListener('click',run);
+$('csv').addEventListener('click',()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const csv='\ufeff'+['重要度,キー,種類,内容,原文,訳文'].concat(rows.map(r=>[({e:'エラー',w:'注意',i:'情報'})[r.sev],r.key,r.kind,r.msg,r.s,r.t].map(q).join(','))).join('\r\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='strings-check.csv';a.click()});
+$('sample').addEventListener('click',()=>{$('fmt').value='android';
+$('a').value='<resources>\n  <string name="app_name" translatable="false">Tapsy</string>\n  <string name="hello">Hello, %1$s!</string>\n  <string name="sync">Synced %1$d of %2$d files</string>\n  <string name="tab_settings">Settings</string>\n  <string name="dont">Don\'t show again</string>\n  <string name="login">Log in</string>\n  <plurals name="items"><item quantity="one">%d item</item><item quantity="other">%d items</item></plurals>\n</resources>';
+$('b').value='<resources>\n  <string name="hello">こんにちは、%sさん！</string>\n  <string name="sync">%2$d 件中 %1$d 件のファイルを同期しました</string>\n  <string name="tab_settings">アプリケーションの詳細設定</string>\n  <string name="dont">今後は表示しない</string>\n  <string name="old_key">古い文字列</string>\n  <plurals name="items"><item quantity="other">%d 件</item></plurals>\n</resources>';run()});
+window.__run=run;
+})();
+</script>
+</body>
+</html>

@@ -51,3 +51,4 @@
 - [令和8年分 年末調整 年税額・過不足 一括計算](https://yema7582-code.github.io/koubo-ai-ok/nencho-zeigaku.html): 従業員ごとの年調年税額と還付・徴収額を一括計算（令和8年12月施行の基礎控除104万円・給与所得控除最低74万円・219.1万〜220万円の特例に対応、改正前との差の目安、11月30日以前の最終給与の注意、住宅ローン控除可能額、CSV入出力、送信なし）
 - [支払調書（報酬・料金）提出要否 一括判定＆e-Tax義務チェッカー](https://yema7582-code.github.io/koubo-ai-ok/shiharai-chosho.html): 外注先・士業・講師への1年分の支払を相手ごとに合計し、報酬・料金等の支払調書と非居住者の支払調書の提出要否を判定（5万円・50万円基準、消費税区分時は税抜判定）。令和9年1月以後の前々年30枚以上 e-Tax等義務を種類ごとに判定、CSV保存、送信なし
 
+- [アプリ翻訳ファイル チェッカー（Android strings.xml / iOS .strings / .xcstrings / XLIFF）](https://yema7582-code.github.io/koubo-ai-ok/mobile-strings-check.html): キー過不足・プレースホルダ崩れ・アポストロフィ・needs_review・plural抜けを点検
