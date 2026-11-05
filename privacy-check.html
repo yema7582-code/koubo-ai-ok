@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー・外部送信規律 記載項目チェッカー｜無料</title>
+<meta name="description" content="プライバシーポリシーやCookie・外部送信の案内文を貼り付けると、個人情報保護法でよく求められる公表事項と、電気通信事業法の外部送信規律（送信される情報・送信先名・利用目的）らしい記載があるかを一覧で確認できる無料ツール。項目の有無だけを見ます。入力はブラウザ内のみ。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/privacy-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:240px;font-size:1em;font-family:inherit;box-sizing:border-box}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.ng{color:#a40000}.ok{color:#176b00}.mid{color:#8a5a00}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ddd;padding:4px 8px;vertical-align:top;font-size:.93em}
+button{font-size:.95em;padding:6px 14px;margin-right:8px;margin-top:6px}
+label{display:inline-block;margin-right:1em;margin-bottom:.4em}
+.tag{display:inline-block;background:#eee;border-radius:4px;padding:1px 6px;margin:2px;font-size:.85em}
+</style>
+</head>
+<body>
+<h1>プライバシーポリシー・外部送信規律 記載項目チェッカー</h1>
+<p>ウェブサイトやアプリの<strong>プライバシーポリシー</strong>・Cookie案内・外部送信の説明文を貼り付けると、(1) 個人情報保護法でよく求められる<strong>保有個人データの公表事項</strong>らしい文言があるか、(2) 電気通信事業法の<strong>外部送信規律</strong>（令和5年6月施行）で通知すべき3点——送信される情報の内容・送信先の名称・利用目的——らしい記載があるか、を一覧にします。根拠の一例：<a href="https://www.ppc.go.jp/personalinfo/legal/guidelines_tsusoku/" rel="noopener">個人情報保護委員会ガイドライン（通則編）</a>、<a href="https://www.soumu.go.jp/main_sosiki/joho_tsusin/d_syohi/gaibusoushin_kiritsu_00001.html" rel="noopener">総務省 外部送信規律</a>。</p>
+<div class="box">
+<label><input type="checkbox" id="corp" checked> 法人・屋号で運営している</label>
+<label><input type="checkbox" id="gaibu" checked> Google Analytics・広告タグ・SNSプラグインなど外部送信がある（またはありそう）</label>
+<label><input type="checkbox" id="abroad"> 外国にある事業者へ個人データを提供・委託している</label>
+<label><input type="checkbox" id="joint"> 共同利用がある</label>
+<textarea id="t" placeholder="ここにプライバシーポリシー全文、または外部送信・Cookieの説明ページの文章を貼り付け"></textarea>
+<button type="button" id="go">チェックする</button>
+<button type="button" id="csv">CSV保存</button>
+</div>
+<div id="out"></div>
+<h2>使い方のヒント</h2>
+<ul>
+<li>「プライバシーポリシー」ページ全体をコピーするのが確実です。Cookieバナーの文言だけだと、外部送信3点が足りないことが多いです。</li>
+<li>外部送信規律は、送信先<strong>ごと</strong>に「何を・誰に・何のために」送るかを、利用者が容易に知ることができる状態に置くことが求められます。このツールは文章にそれらしい語があるかだけを見ます。</li>
+<li>よくある送信先の例：Google Analytics / Google広告、Meta（Facebook）Pixel、LINEタグ、X（旧Twitter）広告、ヒートマップ系。タグ名が出ていても、3点が揃っていないと「不足の可能性」と出ます。</li>
+<li>個人情報の取扱いについて迷う場合は、個人情報保護委員会や専門家に確認してください。契約書・規約の<strong>作成・カスタム</strong>は行政書士等の独占業務になり得るので、このサービスでは行いません。</li>
+</ul>
+<p class="note">このツールは「その項目らしい言葉があるか」を調べるだけで、記載内容が正しいか、法律に合っているかは判断しません（法的な助言ではありません）。入力内容はサーバーに送らず、このブラウザ内だけで処理します。特商法表記の点検は <a href="tokusho-check.html">tokusho-check</a>、業務委託契約の確認ポイントは <a href="keiyaku-check.html">keiyaku-check</a>。英語・中国語へのポリシー翻訳のご相談は shinji-work@mail.grokbot.com まで。</p>
+<p><a href="index.html">他の無料ツール一覧</a> ／ <a href="tokusho-check.html">特商法表記チェッカー</a> ／ <a href="stema-check.html">ステマ規制 PR表記</a> ／ <a href="ai-robots-check.html">robots.txt AIクローラー</a></p>
+<script>
+const PPC=[
+ {k:'事業者の氏名・名称',r:[/事業者(の)?(氏名|名称)/,/運営(者|会社|事業者)/,/当社(の名称|は)/,/会社名/,/個人事業主/,/屋号/],need:'req'},
+ {k:'住所（所在地）',r:[/所在地/,/住所/,/〒\s*\d{3}-?\d{4}/,/本店/,/事務所/],need:'req'},
+ {k:'代表者の氏名（法人の場合）',r:[/代表者/,/代表取締役/,/代表社員/],need:'corp'},
+ {k:'個人情報の利用目的',r:[/利用目的/,/取得した個人情報を.{0,20}(利用|使用)/,/次の目的/,/以下の目的/],need:'req'},
+ {k:'開示・訂正・利用停止等の手続',r:[/開示/,/訂正/,/利用停止/,/消去/,/削除(の)?請求/,/保有個人データ/],need:'req'},
+ {k:'苦情・問い合わせ窓口（連絡先）',r:[/苦情/,/お問い合わせ/,/問合せ/,/窓口/,/ご連絡/,/メール/,/E-?mail/i,/電話/],need:'req'},
+ {k:'安全管理措置の概要',r:[/安全管理/,/セキュリティ/,/漏えい|漏洩/,/不正アクセス/,/アクセス制限/,/暗号化/],need:'mid'},
+ {k:'第三者提供について',r:[/第三者(への)?提供/,/第三者に提供/,/提供先/],need:'mid'},
+ {k:'委託について（ある場合）',r:[/委託/,/再委託/,/業務委託先/],need:'opt'},
+ {k:'Cookie・アクセス解析の言及',r:[/Cookie/i,/クッキー/,/アクセス解析/,/トラッキング/,/ウェブビーコン/,/ローカルストレージ/],need:'mid'},
+ {k:'外国にある第三者への提供（該当する場合）',r:[/外国/,/国外/,/域外/,/海外(の|に|へ).{0,12}(提供|移転|送信)/,/adequacy|十分性/i],need:'abroad'},
+ {k:'共同利用（該当する場合）',r:[/共同利用/,/共同して利用/],need:'joint'},
+ {k:'認定個人情報保護団体（該当する場合）',r:[/認定個人情報保護団体/,/個人情報保護団体/],need:'opt'},
+];
+const GAIBU3=[
+ {k:'外部送信：送信される情報の内容',r:[/送信(さ)?れる(情報|データ)/,/送信(する|される)情報の内容/,/送信情報/,/(Cookie|識別子|端末|IP|閲覧).{0,20}(情報|データ)/,/どのような情報/],need:'gaibu'},
+ {k:'外部送信：送信先の名称',r:[/送信先/,/提供先/,/連携先/,/Google(,| |　|社| LLC| LLC\.| Ireland)/i,/Meta|Facebook|LINEヤフー|Yahoo|Microsoft|TikTok|X Corp|Twitter/i,/名称(は|：|:)/],need:'gaibu'},
+ {k:'外部送信：利用目的（自社または送信先）',r:[/(送信先|外部|第三者).{0,30}利用目的/,/広告(の)?配信/,/アクセス解析/,/サービス改善/,/効果測定/,/利用目的/],need:'gaibu'},
+];
+const TRACKERS=[
+ {name:'Google Analytics / gtag',r:/Google Analytics|googletagmanager|gtag\(|UA-\d|G-[A-Z0-9]+|GA4/i},
+ {name:'Google Ads / DoubleClick',r:/Google Ads|DoubleClick|AW-\d|googleadservices/i},
+ {name:'Meta Pixel',r:/Meta Pixel|Facebook Pixel|fbq\(|facebook\.com\/tr/i},
+ {name:'LINEタグ',r:/LINEタグ|Line Tag|_lt\(|lin\.ee/i},
+ {name:'X / Twitter広告',r:/Twitter Pixel|twq\(|ads-twitter|X広告/i},
+ {name:'Microsoft Clarity / Ads',r:/Clarity|bing\.com\/bat|UET/i},
+ {name:'ヒートマップ系',r:/Hotjar|Microsoft Clarity|Ptengine|User Heat|ヒートマップ/i},
+];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function snip(t,re){const m=t.match(re);if(!m)return'';const i=Math.max(0,m.index-10);return t.slice(i,Math.min(t.length,m.index+m[0].length+24)).replace(/\s+/g,' ')}
+function check(text,opts){
+ opts=opts||{};
+ const corp=!!opts.corp,gaibu=!!opts.gaibu,abroad=!!opts.abroad,joint=!!opts.joint;
+ const t=String(text||'');
+ const rows=[];
+ let miss=0,mid=0;
+ function pushItem(it){
+  if(it.need==='corp'&&!corp)return;
+  if(it.need==='gaibu'&&!gaibu)return;
+  if(it.need==='abroad'&&!abroad)return;
+  if(it.need==='joint'&&!joint)return;
+  const hit=it.r.find(re=>re.test(t));
+  let st,cls;
+  if(hit){st='あり';cls='ok'}
+  else if(it.need==='opt'){st='見つからない（該当がなければ不要）';cls='mid';mid++}
+  else if(it.need==='mid'){st='見つからない（あると望ましい）';cls='mid';mid++}
+  else{st='見つからない';cls='ng';miss++}
+  rows.push({section:it.section||'',k:it.k,st,cls,snip:hit?snip(t,hit):'',need:it.need});
+ }
+ PPC.forEach(it=>{it.section='個人情報（公表事項の目安）';pushItem(it)});
+ GAIBU3.forEach(it=>{it.section='外部送信規律（3点）';pushItem(it)});
+ const foundTrackers=TRACKERS.filter(tr=>tr.r.test(t)).map(tr=>tr.name);
+ const hasGaibuWords=/外部送信|利用者情報の外部|電気通信事業法/.test(t);
+ return {rows,miss,mid,foundTrackers,hasGaibuWords,empty:!t.trim()};
+}
+function render(res){
+ if(res.empty){document.getElementById('out').innerHTML='<p class="ng">文章を貼り付けてください。</p>';return}
+ let head='';
+ if(res.miss)head+=`<p class="ng">重要と思われる項目のうち ${res.miss} 件が見つかりませんでした。</p>`;
+ else head+='<p class="ok">主な項目はすべて見つかりました（内容の正しさは別途ご確認ください）。</p>';
+ if(res.mid)head+=`<p class="mid">任意・望ましい項目で見つからないものが ${res.mid} 件あります。</p>`;
+ if(res.foundTrackers.length){
+  head+='<p>文章中に次の外部サービス名っぽい語がありました：'+res.foundTrackers.map(n=>`<span class="tag">${esc(n)}</span>`).join('')+'</p>';
+  if(document.getElementById('gaibu').checked){
+   const gMiss=res.rows.filter(r=>r.section.startsWith('外部送信')&&r.cls==='ng');
+   if(gMiss.length)head+='<p class="ng">トラッカー名は出ていますが、外部送信の3点（情報の内容・送信先名・利用目的）が揃っていない可能性があります。送信先ごとの表を足すと分かりやすくなります。</p>';
+  }
+ }else if(document.getElementById('gaibu').checked&&!res.hasGaibuWords){
+  head+='<p class="mid">「外部送信がある」にチェックがありますが、文章に外部送信・Cookie・解析ツールの具体名が見つかりません。タグ設定とポリシーの突き合わせを推奨します。</p>';
+ }
+ let rows='',last='';
+ for(const r of res.rows){
+  if(r.section!==last){rows+=`<tr><th colspan="3" style="background:#f5f5f5;text-align:left">${esc(r.section)}</th></tr>`;last=r.section}
+  rows+=`<tr><td>${esc(r.k)}</td><td class="${r.cls}">${esc(r.st)}</td><td>${esc(r.snip)}</td></tr>`;
+ }
+ document.getElementById('out').innerHTML=head+`<table><tr><th>項目</th><th>結果</th><th>見つかった箇所</th></tr>${rows}</table>`;
+ window.__lastPrivacy=res;
+}
+function toCsv(res){
+ const lines=['section,item,result,snippet'];
+ for(const r of res.rows){
+  const cells=[r.section,r.k,r.st,r.snip].map(v=>'"'+String(v).replace(/"/g,'""')+'"');
+  lines.push(cells.join(','));
+ }
+ return lines.join('\n');
+}
+document.getElementById('go').onclick=()=>{
+ const res=check(document.getElementById('t').value,{
+  corp:document.getElementById('corp').checked,
+  gaibu:document.getElementById('gaibu').checked,
+  abroad:document.getElementById('abroad').checked,
+  joint:document.getElementById('joint').checked
+ });
+ render(res);
+};
+document.getElementById('csv').onclick=()=>{
+ const res=window.__lastPrivacy||check(document.getElementById('t').value,{
+  corp:document.getElementById('corp').checked,
+  gaibu:document.getElementById('gaibu').checked,
+  abroad:document.getElementById('abroad').checked,
+  joint:document.getElementById('joint').checked
+ });
+ if(res.empty){render(res);return}
+ const blob=new Blob([toCsv(res)],{type:'text/csv;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='privacy-check.csv';a.click();
+};
+if(typeof module!=='undefined')module.exports={check,toCsv,PPC,GAIBU3,TRACKERS};
+</script>
+</body>
+</html>
