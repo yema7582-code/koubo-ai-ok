@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI映画・音楽フェス 応募前チェッカー＆プロセス文下書き（Cue／Flick／AICF・無料）</title>
+<meta name="description" content="Cue Xmas・Flick AI・AICF・AI ZONEなど無料のAI映画・音楽フェス応募前に、尺・画角・英語字幕・ショット数・権利・プロセス文の語数を点検。日英の制作プロセス／クリエイティブブリーフ下書きとCSV保存。送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-fest-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],input[type=number],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:88px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.row,.row3{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.9em;color:#444;border:1px solid #f0e0a0}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+.chk label{font-weight:400;margin:0;display:inline}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+#rulesBox{white-space:pre-wrap;font-size:.9em}
+.draftbox{margin-top:8px}
+.draftbox h3{font-size:1em;margin:.8em 0 .3em}
+</style>
+</head>
+<body>
+<h1>AI映画・音楽フェス 応募前チェッカー＆プロセス文下書き</h1>
+<p class="muted">無料のAI短編・ミュージックビデオ・音楽フェスに出す前に、<strong>尺・画角・英語字幕・ショット数・権利クリア・プロセス文の語数</strong>を点検し、日英の制作プロセス／クリエイティブブリーフ下書きを作ります。入力はブラウザ内だけ（送信なし）。最終判断は各公式要項に従ってください。</p>
+
+<div class="box">
+<label for="preset">フェスプリセット</label>
+<select id="preset">
+<option value="cue">Cue Xmas ’26（cuefilmfest.com）— 2026-11-20 23:59 ET</option>
+<option value="flick">Flick AI Film Festival（flick.art）— 2026-12-15 23:59 PT</option>
+<option value="aicf">AI Creative Festival / AICF（aicreativefestival.com）— 2026-11-25</option>
+<option value="aizone">AI ZONE — ~2026-11-30（$500 cash）</option>
+<option value="custom">Custom（自分でルールを設定）</option>
+</select>
+<div id="rulesBox" class="muted" style="margin-top:8px"></div>
+<div id="customRules" style="display:none;margin-top:10px">
+<div class="row3">
+<div><label for="cMin">最低尺（秒）</label><input type="number" id="cMin" value="60" min="0"></div>
+<div><label for="cMax">最大尺（秒）</label><input type="number" id="cMax" value="360" min="0"></div>
+<div><label for="cAspect">要求画角</label>
+<select id="cAspect"><option value="any">指定なし</option><option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select></div>
+</div>
+<div class="row">
+<div><label for="cProcMin">プロセス文 最低語数（EN相当）</label><input type="number" id="cProcMin" value="0" min="0"></div>
+<div><label for="cProcMax">プロセス文 最大語数</label><input type="number" id="cProcMax" value="0" min="0" title="0=上限なし"></div>
+</div>
+</div>
+</div>
+
+<h2>1. 作品情報</h2>
+<label for="title">タイトル</label>
+<input type="text" id="title" placeholder="例：Silent Snow / 静かな雪">
+<div class="row">
+<div>
+<label for="format">フォーマット</label>
+<select id="format">
+<option value="short">短編映画 / Short film</option>
+<option value="mv">ミュージックビデオ / Music video</option>
+<option value="music">音楽 / Music</option>
+<option value="image">画像 / Image</option>
+<option value="vertical">縦型ドラマ / Vertical</option>
+</select>
+</div>
+<div>
+<label for="lang">作品の言語</label>
+<select id="lang">
+<option value="en">英語 / English</option>
+<option value="ja">日本語 / Japanese</option>
+<option value="zh">中国語 / Chinese</option>
+<option value="other">その他 / Other</option>
+<option value="none">無言・歌詞なし / None</option>
+</select>
+</div>
+</div>
+<div class="row3">
+<div>
+<label for="runtime">尺（mm:ss または 秒）</label>
+<input type="text" id="runtime" placeholder="例：3:30 または 210">
+</div>
+<div>
+<label for="width">幅（px）</label>
+<input type="number" id="width" value="1920" min="1">
+</div>
+<div>
+<label for="height">高さ（px）</label>
+<input type="number" id="height" value="1080" min="1">
+</div>
+</div>
+<div class="row">
+<div>
+<label for="subs">英語字幕</label>
+<select id="subs">
+<option value="yes">あり / Yes</option>
+<option value="no">なし / No</option>
+<option value="na">不要（英語作品・音楽のみ等）/ N/A</option>
+</select>
+</div>
+<div>
+<label for="shots">意図的なショット数（目安）</label>
+<input type="number" id="shots" value="3" min="0">
+</div>
+</div>
+
+<div class="chk"><input type="checkbox" id="humanEdit"><label for="humanEdit">人間による最終編集あり（単一の未編集AIクリップではない）</label></div>
+<div class="chk"><input type="checkbox" id="rightsOk"><label for="rightsOk">音楽・声・肖像などの権利をクリア済み</label></div>
+<div class="chk" id="xmasRow"><input type="checkbox" id="xmasTheme"><label for="xmasTheme">クリスマス／ホリデーテーマ（Cue用）</label></div>
+<div class="chk" id="flickRow" style="display:none"><input type="checkbox" id="flickPost"><label for="flickPost">Flick透かし付きの公開SNS投稿予定／済み</label></div>
+
+<label for="tools">使用したAIツール（カンマ区切り）</label>
+<input type="text" id="tools" placeholder="例：Runway Gen-3, Midjourney, Suno, ElevenLabs, CapCut">
+<label for="humanNotes">人間が行った演出・編集・方向性のメモ</label>
+<textarea id="humanNotes" placeholder="例：絵コンテ作成、カット割り、カラーグレーディング、音楽の構成変更、声のテイク選定…"></textarea>
+<label for="processDraft">プロセス文／クリエイティブブリーフ下書き（語数チェック対象）</label>
+<textarea id="processDraft" placeholder="Generate process summary で自動生成するか、自分で書く。AICFはおおむね200–500語。"></textarea>
+<p class="muted" id="wordCount">語数（空白区切り・EN相当）：0</p>
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="gen">プロセス文を生成</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+</p>
+<div id="out"></div>
+
+<div class="draftbox" id="draftOut" style="display:none">
+<h2>生成したプロセス文</h2>
+<h3>日本語</h3>
+<textarea id="draftJA" rows="10"></textarea>
+<button type="button" class="sec" id="copyJA">日本語をコピー</button>
+<h3>English</h3>
+<textarea id="draftEN" rows="10"></textarea>
+<button type="button" class="sec" id="copyEN">Englishをコピー</button>
+<button type="button" class="sec" id="useDraft">下書き欄に反映（EN）</button>
+</div>
+
+<div class="box note" style="margin-top:20px">
+<strong>有料の応募キット整備は</strong> <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎慎二）。尺・画角・字幕・権利・プロセス文・ポスター／SNS投稿文をセットで整えます。
+</div>
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="ai-disclosure.html">生成AI申告文メーカー</a> ・ <a href="jimaku-check.html">字幕SRT/VTTチェッカー</a> ・ <a href="steam-ai-check.html">Steam AI開示チェック</a></p>
+<p>入力は端末内のみ。各フェスの公式判定ではありません。要項は変更されることがあるので締切前に公式サイトを再確認してください。</p>
+</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const PRESETS={
+  cue:{
+    name:"Cue Xmas ’26",
+    due:"2026-11-20 23:59 ET",
+    site:"https://cuefilmfest.com",
+    minSec:120,maxSec:360,
+    aspect:"16:9",minW:1920,minH:1080,
+    needEnSubs:true,needMultiShot:true,needHumanEdit:true,
+    needXmas:true,needFlickPost:false,
+    procMin:0,procMax:0,
+    formats:["short","mv"],
+    blurb:"クリスマスAI短編 or AIミュージックビデオ。尺2:00–6:00、16:9 H.264 MP4 ≥1920×1080。意図的な複数ショット＋人間の最終編集必須（単一未編集AIクリップは不可）。非英語は英語字幕。クリエイティブブリーフ＋AIプロセス概要＋16:9ポスター。無料。"
+  },
+  flick:{
+    name:"Flick AI Film Festival",
+    due:"2026-12-15 23:59 PT",
+    site:"https://flick.art",
+    minSec:60,maxSec:1200,
+    aspect:"any",minW:0,minH:0,
+    needEnSubs:true,needMultiShot:false,needHumanEdit:false,
+    needXmas:false,needFlickPost:true,
+    procMin:0,procMax:0,
+    formats:["short","mv","music","image","vertical"],
+    blurb:"AI Short（1–20分）・Music Video・Animation・Vertical Drama・Commercial。無料。英語字幕。Flick透かし付きの公開SNS投稿必須。使用ツールをメモに記載。"
+  },
+  aicf:{
+    name:"AI Creative Festival / AICF",
+    due:"2026-11-25",
+    site:"https://aicreativefestival.com",
+    minSec:0,maxSec:480,
+    aspect:"any",minW:0,minH:0,
+    needEnSubs:false,needMultiShot:false,needHumanEdit:false,
+    needXmas:false,needFlickPost:false,
+    procMin:200,procMax:500,
+    formats:["short","mv","music","image"],
+    videoMaxSec:300,musicMaxSec:480,
+    blurb:"Image / Video / Music。Music ≤8分 WAV/MP3 320kbps+。Video ≤5分・4K可。プロセス説明は200–500語。無料。賞＝トロフィー＋Academy Plus（現金なし）。"
+  },
+  aizone:{
+    name:"AI ZONE",
+    due:"~2026-11-30",
+    site:"",
+    minSec:0,maxSec:0,
+    aspect:"any",minW:0,minH:0,
+    needEnSubs:false,needMultiShot:false,needHumanEdit:false,
+    needXmas:false,needFlickPost:false,
+    procMin:0,procMax:0,
+    formats:["short","mv","music","image","vertical"],
+    blurb:"FilmFreeway系。任意のAIツール可。賞金目安 $500。要項は主催の最新ページで確認。"
+  },
+  custom:{
+    name:"Custom",
+    due:"—",
+    site:"",
+    minSec:60,maxSec:360,
+    aspect:"any",minW:0,minH:0,
+    needEnSubs:false,needMultiShot:false,needHumanEdit:false,
+    needXmas:false,needFlickPost:false,
+    procMin:0,procMax:0,
+    formats:["short","mv","music","image","vertical"],
+    blurb:"下のカスタム欄で最低／最大尺・画角・プロセス語数を設定してください。"
+  }
+};
+let LAST_ROWS=[];
+
+function parseRuntime(s){
+  s=String(s||"").trim();
+  if(!s)return null;
+  if(/^\d+$/.test(s))return parseInt(s,10);
+  const m=s.match(/^(\d+)\s*:\s*(\d{1,2})$/);
+  if(m)return parseInt(m[1],10)*60+parseInt(m[2],10);
+  const m2=s.match(/^(\d+)\s*:\s*(\d{1,2})\s*:\s*(\d{1,2})$/);
+  if(m2)return parseInt(m2[1],10)*3600+parseInt(m2[2],10)*60+parseInt(m2[3],10);
+  return null;
+}
+function fmtSec(sec){
+  if(sec==null||isNaN(sec))return "—";
+  const m=Math.floor(sec/60),s=sec%60;
+  return m+":"+String(s).padStart(2,"0")+"（"+sec+"秒）";
+}
+function wordCount(t){
+  t=String(t||"").trim();
+  if(!t)return 0;
+  // Prefer whitespace tokens; for JA-heavy text without spaces, approximate by CJK chars/2 + latin tokens
+  const tokens=t.split(/\s+/).filter(Boolean);
+  if(tokens.length>=20)return tokens.length;
+  const cjk=(t.match(/[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/g)||[]).join("").length;
+  const latin=tokens.filter(w=>/[A-Za-z0-9]/.test(w)).length;
+  if(cjk>40&&tokens.length<20)return Math.max(tokens.length, Math.round(cjk/2)+latin);
+  return tokens.length;
+}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1}
+function aspectLabel(w,h){
+  if(!w||!h)return "—";
+  const g=gcd(w,h);return (w/g)+":"+(h/h?h/g:0);
+}
+function isAspect(w,h,want){
+  if(want==="any"||!want)return true;
+  if(!w||!h)return false;
+  const r=w/h;
+  if(want==="16:9")return Math.abs(r-16/9)<0.03;
+  if(want==="9:16")return Math.abs(r-9/16)<0.03;
+  if(want==="1:1")return Math.abs(r-1)<0.03;
+  return true;
+}
+function currentRules(){
+  const key=$("preset").value;
+  const base=Object.assign({},PRESETS[key]);
+  if(key==="custom"){
+    base.minSec=parseInt($("cMin").value,10)||0;
+    base.maxSec=parseInt($("cMax").value,10)||0;
+    base.aspect=$("cAspect").value;
+    base.procMin=parseInt($("cProcMin").value,10)||0;
+    base.procMax=parseInt($("cProcMax").value,10)||0;
+  }
+  // AICF: tighten max by format
+  if(key==="aicf"){
+    const fmt=$("format").value;
+    if(fmt==="music"){base.maxSec=base.musicMaxSec||480;base.minSec=0;}
+    else if(fmt==="image"){base.minSec=0;base.maxSec=0;}
+    else {base.maxSec=base.videoMaxSec||300;}
+  }
+  return base;
+}
+function showRules(){
+  const r=currentRules();
+  const key=$("preset").value;
+  $("customRules").style.display=key==="custom"?"block":"none";
+  $("xmasRow").style.display=r.needXmas||key==="cue"?"flex":"none";
+  $("flickRow").style.display=r.needFlickPost||key==="flick"?"flex":"none";
+  const lines=[
+    r.name+(r.site?" — "+r.site:""),
+    "締切: "+r.due,
+    r.blurb,
+    "尺: "+(r.minSec||r.maxSec?(fmtSec(r.minSec)+" 〜 "+(r.maxSec?fmtSec(r.maxSec):"上限なし")):"指定なし（または画像）"),
+    "画角: "+(r.aspect==="any"?"指定なし":r.aspect)+(r.minW?" / ≥"+r.minW+"×"+r.minH:""),
+    "プロセス語数: "+(r.procMin||r.procMax?(r.procMin+"–"+(r.procMax||"∞")):"指定なし")
+  ];
+  $("rulesBox").textContent=lines.join("\n");
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+function runCheck(){
+  const r=currentRules();
+  const key=$("preset").value;
+  const rows=[];
+  const push=(lvl,code,msg)=>rows.push({lvl,code,msg});
+  const runtime=parseRuntime($("runtime").value);
+  const w=parseInt($("width").value,10)||0;
+  const h=parseInt($("height").value,10)||0;
+  const fmt=$("format").value;
+  const lang=$("lang").value;
+  const subs=$("subs").value;
+  const shots=parseInt($("shots").value,10);
+  const tools=($("tools").value||"").trim();
+  const proc=$("processDraft").value||"";
+  const wc=wordCount(proc);
+  $("wordCount").textContent="語数（空白区切り・EN相当）："+wc;
+
+  // format fit
+  if(r.formats&&r.formats.indexOf(fmt)<0){
+    push("WARN","format","このプリセットの想定カテゴリ外の可能性があります（"+fmt+"）。要項の部門を確認してください。");
+  }
+
+  // runtime
+  if(fmt!=="image"){
+    if(runtime==null){
+      push("NG","runtime","尺が未入力または形式不正です（mm:ss または秒）。");
+    }else{
+      if(r.minSec&&runtime<r.minSec)push("NG","runtime","尺が短すぎます：現在 "+fmtSec(runtime)+"／最低 "+fmtSec(r.minSec)+"。");
+      if(r.maxSec&&runtime>r.maxSec)push("NG","runtime","尺が長すぎます：現在 "+fmtSec(runtime)+"／最大 "+fmtSec(r.maxSec)+"。");
+      if((!r.minSec&&!r.maxSec)||(runtime>=(r.minSec||0)&&(!r.maxSec||runtime<=r.maxSec))){
+        if(runtime!=null&&!(r.minSec&&runtime<r.minSec)&&!(r.maxSec&&runtime>r.maxSec))
+          push("OK","runtime","尺は範囲内："+fmtSec(runtime)+"。");
+      }
+    }
+  }else{
+    push("OK","runtime","画像部門のため尺チェックをスキップ。");
+  }
+
+  // aspect / resolution
+  if(r.aspect&&r.aspect!=="any"){
+    if(!isAspect(w,h,r.aspect))push("NG","aspect","画角が "+r.aspect+" ではありません（現在 約 "+aspectLabel(w,h)+" = "+w+"×"+h+"）。");
+    else push("OK","aspect","画角は "+r.aspect+" 相当（"+w+"×"+h+"）。");
+  }else if(w&&h){
+    push("OK","aspect","解像度 "+w+"×"+h+"（画角指定なし）。");
+  }
+  if(r.minW&&(w<r.minW||h<r.minH)){
+    push("NG","resolution","解像度が不足：≥"+r.minW+"×"+r.minH+" が必要（現在 "+w+"×"+h+"）。");
+  }else if(r.minW){
+    push("OK","resolution","解像度は要件以上。");
+  }
+  if(key==="aicf"&&(fmt==="short"||fmt==="mv"||fmt==="vertical")&&w&&h&&(w<3840&&h<2160)&&Math.max(w,h)<3840){
+    push("WARN","4k","AICFはVideo最大5分・4K可。現在は4K未満です（必須ではない場合あり）。");
+  }
+
+  // English subs
+  if(r.needEnSubs){
+    if(lang==="en"||lang==="none"){
+      if(subs==="no")push("WARN","subs","英語／無言作品でも字幕があると親切です（現状：なし）。");
+      else push("OK","subs","英語字幕："+(subs==="yes"?"あり":"N/A")+"。");
+    }else{
+      if(subs!=="yes")push("NG","subs","非英語作品には英語字幕が必要です（現状："+subs+"）。");
+      else push("OK","subs","英語字幕あり。");
+    }
+  }else{
+    if(subs==="no"&&lang!=="en"&&lang!=="none")push("WARN","subs","英語字幕なし（このフェスでは必須ではないが推奨）。");
+    else push("OK","subs","字幕要件なし／現状OK。");
+  }
+
+  // multi-shot + human edit (Cue)
+  if(r.needMultiShot){
+    if(!(shots>=2))push("NG","shots","意図的な複数ショットが必要です（現状："+(isNaN(shots)?"未入力":shots)+"）。単一AIクリップは不可。");
+    else push("OK","shots","ショット数 目安 "+shots+" ≥ 2。");
+  }
+  if(r.needHumanEdit){
+    if(!$("humanEdit").checked)push("NG","human_edit","人間による最終編集の確認がオフです（Cue等では必須）。");
+    else push("OK","human_edit","人間の最終編集を確認済み。");
+  }else if($("humanEdit").checked){
+    push("OK","human_edit","人間編集あり（任意だが推奨）。");
+  }
+
+  // Christmas
+  if(r.needXmas){
+    if(!$("xmasTheme").checked)push("NG","xmas","Cue Xmas はクリスマス／ホリデーテーマが前提です（チェックオフ）。");
+    else push("OK","xmas","クリスマス／ホリデーテーマ確認。");
+  }
+
+  // Flick social
+  if(r.needFlickPost){
+    if(!$("flickPost").checked)push("NG","flick_post","Flick透かし付きの公開SNS投稿が必要です（未確認）。");
+    else push("OK","flick_post","Flick透かし付きSNS投稿を確認。");
+  }
+
+  // tools
+  if(!tools)push("NG","tools","使用AIツールが未記入です（多くのフェスで記載必須／推奨）。");
+  else push("OK","tools","ツール記載あり："+tools+"。");
+
+  // rights
+  if(!$("rightsOk").checked)push("WARN","rights","音楽・声・肖像などの権利クリアが未確認です。");
+  else push("OK","rights","権利クリア確認済み。");
+
+  // process word count
+  if(r.procMin||r.procMax){
+    if(!proc.trim())push("NG","process","プロセス説明が空です（要件 "+r.procMin+"–"+r.procMax+" 語）。");
+    else if(wc<r.procMin)push("NG","process","プロセス文の語数が不足："+wc+" 語（最低 "+r.procMin+"）。");
+    else if(r.procMax&&wc>r.procMax)push("NG","process","プロセス文の語数が超過："+wc+" 語（最大 "+r.procMax+"）。");
+    else push("OK","process","プロセス文の語数 OK："+wc+" 語（"+r.procMin+"–"+r.procMax+"）。");
+  }else if(key==="cue"){
+    if(!proc.trim())push("WARN","process","Cueはクリエイティブブリーフ＋AIプロセス概要が必要です（下書きが空）。");
+    else push("OK","process","プロセス／ブリーフ下書きあり（"+wc+" 語）。");
+  }else if(proc.trim()){
+    push("OK","process","プロセス下書きあり（"+wc+" 語）。");
+  }
+
+  // title
+  if(!($("title").value||"").trim())push("WARN","title","タイトルが空です。");
+  else push("OK","title","タイトルあり。");
+
+  LAST_ROWS=rows;
+  const ng=rows.filter(x=>x.lvl==="NG").length;
+  const wn=rows.filter(x=>x.lvl==="WARN").length;
+  const ok=rows.filter(x=>x.lvl==="OK").length;
+  let summary;
+  if(ng)summary=`<span class="pill bad">NG ${ng}</span>`;
+  else if(wn)summary=`<span class="pill warn">WARN ${wn}</span><span class="pill ok">OK ${ok}</span>`;
+  else summary=`<span class="pill ok">OK ${ok}</span>`;
+  let html=`<div class="box"><b>結果</b>：${summary} ／ プリセット ${esc(r.name)} ／ 尺 ${esc(fmtSec(runtime))} ／ ${w}×${h}</div>`;
+  html+="<table><thead><tr><th>判定</th><th>項目</th><th>理由</th></tr></thead><tbody>";
+  rows.forEach(row=>{
+    const cls=row.lvl==="OK"?"ok":row.lvl==="WARN"?"warn":"bad";
+    html+=`<tr><td class="${cls}"><span class="pill ${cls==="bad"?"bad":cls==="warn"?"warn":"ok"}">${row.lvl}</span></td><td>${esc(row.code)}</td><td>${esc(row.msg)}</td></tr>`;
+  });
+  html+="</tbody></table>";
+  $("out").innerHTML=html;
+  return rows;
+}
+
+function generateProcess(){
+  const r=currentRules();
+  const title=($("title").value||"").trim()||"（無題）";
+  const fmtMap={short:"短編映画",mv:"ミュージックビデオ",music:"音楽作品",image:"画像作品",vertical:"縦型ドラマ"};
+  const fmtMapEn={short:"short film",mv:"music video",music:"music piece",image:"image work",vertical:"vertical drama"};
+  const fmt=$("format").value;
+  const tools=($("tools").value||"").trim()||"（ツール未記入）";
+  const human=($("humanNotes").value||"").trim()||"絵コンテとカット割りを決め、生成結果からテイクを選び、リズムと物語が通るよう最終編集した。";
+  const runtime=parseRuntime($("runtime").value);
+  const lang=$("lang").value;
+  const xmas=$("xmasTheme").checked;
+  const w=parseInt($("width").value,10)||0;
+  const h=parseInt($("height").value,10)||0;
+
+  const ja=[
+    `作品タイトル「${title}」は、${fmtMap[fmt]||fmt}として制作した。`,
+    xmas?"クリスマス／ホリデーの情景と感情を軸に、静けさと温かさが交差するトーンを狙った。":"物語の核となる感情とビジュアルの一貫性を優先した。",
+    `生成AIは主に次の用途で用いた：${tools}。AIにはコンセプトボード、キービジュアル、カット候補、（必要に応じて）音声・音楽のドラフト生成を担当させ、最終的な物語の骨格・演出・編集判断は人間が行った。`,
+    `人間の作業：${human}`,
+    runtime!=null?`完成尺は約 ${fmtSec(runtime)}。`:"",
+    w&&h?`納品解像度は ${w}×${h}（約 ${aspectLabel(w,h)}）。`:"",
+    lang!=="en"&&lang!=="none"?"非英語の台詞・歌詞がある場合は英語字幕を付与し、国際審査でも意図が伝わるようにした。":"言語面は英語（または無言）で審査にそのまま提出できる状態にした。",
+    "権利面では、使用した音源・声・肖像・参照スタイルについて、商用／コンテスト利用が許された素材・ライセンスのみを採用した（または自作に置き換えた）。",
+    "単一の未編集生成クリップをそのまま提出するのではなく、意図的なショット構成と人間による最終編集を経ている。",
+    `本プロセスは ${r.name} の提出要件（プロセス説明／クリエイティブブリーフ）を満たすための自己申告要約である。`
+  ].filter(Boolean).join("");
+
+  // Expand JA a bit for AICF word targets when EN is primary count
+  const en=[
+    `The work titled "${title}" was created as a ${fmtMapEn[fmt]||fmt}.`,
+    xmas?"The creative brief centers on Christmas/holiday mood: stillness, warmth, and a quiet emotional turn rather than spectacle for its own sake.":"The creative brief prioritizes a coherent emotional arc and consistent visual language over one-shot novelty.",
+    `AI tools used: ${tools}. AI assisted with concept frames, key visuals, shot candidates, and where relevant draft audio or music. Human authorship remained in story structure, directing choices, take selection, pacing, color, and final edit.`,
+    `Human direction and craft: ${human}`,
+    runtime!=null?`Final runtime is approximately ${fmtSec(runtime)}.`:"",
+    w&&h?`Delivery resolution is ${w}×${h} (approx. ${aspectLabel(w,h)}).`:"",
+    lang!=="en"&&lang!=="none"?"Because the spoken language is not English, English subtitles were prepared so international jurors can follow intent.":"Language was prepared for English-language review (or the piece is nonverbal).",
+    "Rights: music, voices, likenesses, and reference styles were limited to cleared or original assets suitable for festival submission.",
+    "The submission is not a single unedited AI clip; it uses intentional multi-shot construction and a human final edit where the festival requires it.",
+    `This summary is a self-reported process / creative-brief draft prepared for ${r.name}. Please verify against the official rules before entry.`
+  ].filter(Boolean).join(" ");
+
+  // Pad EN toward 200–400 if short
+  let enFull=en;
+  const pad=" Additional iteration cycles discarded inconsistent lighting and anatomy artifacts, then re-timed cuts to music or dialogue. Poster and still frames were exported in 16:9 where required. Tool prompts, seed notes, and edit decisions were logged for transparency.";
+  while(wordCount(enFull)<220){enFull+=pad;if(enFull.length>5000)break;}
+  // trim if huge
+  let tokens=enFull.split(/\s+/);
+  if(tokens.length>400)enFull=tokens.slice(0,380).join(" ")+" …";
+
+  $("draftJA").value=ja;
+  $("draftEN").value=enFull;
+  $("draftOut").style.display="block";
+  return {ja,en:enFull};
+}
+
+function sample(){
+  $("preset").value="cue";
+  showRules();
+  $("title").value="Silent Snow";
+  $("format").value="short";
+  $("lang").value="ja";
+  $("runtime").value="3:30";
+  $("width").value=1920;
+  $("height").value=1080;
+  $("subs").value="yes";
+  $("shots").value=5;
+  $("humanEdit").checked=true;
+  $("rightsOk").checked=true;
+  $("xmasTheme").checked=true;
+  $("tools").value="Runway Gen-3, Midjourney, ElevenLabs, CapCut";
+  $("humanNotes").value="絵コンテ作成、テイク選定、カット割り、カラーグレーディング、英語字幕のタイミング調整。";
+  $("processDraft").value="";
+  generateProcess();
+  $("processDraft").value=$("draftEN").value;
+  $("wordCount").textContent="語数（空白区切り・EN相当）："+wordCount($("processDraft").value);
+  runCheck();
+}
+
+function downloadCsv(){
+  if(!LAST_ROWS.length)runCheck();
+  const r=currentRules();
+  const lines=[["level","code","message","preset","title","runtime","width","height"].join(",")];
+  const title=($("title").value||"").replace(/"/g,'""');
+  const rt=$("runtime").value||"";
+  const w=$("width").value,h=$("height").value;
+  LAST_ROWS.forEach(row=>{
+    lines.push([row.lvl,row.code,'"'+String(row.msg).replace(/"/g,'""')+'"',r.name,'"'+title+'"',rt,w,h].join(","));
+  });
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="ai-fest-check.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$("preset").addEventListener("change",showRules);
+["cMin","cMax","cAspect","cProcMin","cProcMax","format"].forEach(id=>{
+  const el=$(id);if(el)el.addEventListener("change",showRules);
+});
+$("processDraft").addEventListener("input",()=>{
+  $("wordCount").textContent="語数（空白区切り・EN相当）："+wordCount($("processDraft").value);
+});
+$("run").addEventListener("click",runCheck);
+$("gen").addEventListener("click",()=>{generateProcess();});
+$("sample").addEventListener("click",sample);
+$("csv").addEventListener("click",downloadCsv);
+$("copyJA").addEventListener("click",()=>{navigator.clipboard&&navigator.clipboard.writeText($("draftJA").value);});
+$("copyEN").addEventListener("click",()=>{navigator.clipboard&&navigator.clipboard.writeText($("draftEN").value);});
+$("useDraft").addEventListener("click",()=>{
+  $("processDraft").value=$("draftEN").value;
+  $("wordCount").textContent="語数（空白区切り・EN相当）："+wordCount($("processDraft").value);
+});
+
+// Expose for jsdom tests
+window.__aiFest={parseRuntime,wordCount,runCheck,generateProcess,currentRules,PRESETS,showRules,getLastRows:()=>LAST_ROWS};
+
+showRules();
+})();
+</script>
+</body>
+</html>
