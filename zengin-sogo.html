@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全銀フォーマット 総合振込データ作成・チェッカー（CSV→120バイト固定長・無料・送信なし）</title>
+<meta name="description" content="Excel・CSVの振込先一覧から、全銀協フォーマットの総合振込データ（種別コード21・120バイト固定長・Shift_JIS半角カナ）を作成。受取人名のカナ変換（株式会社→ｶ)など）、使えない文字・桁数・金額の点検、合計件数と金額のトレーラーを自動作成。ブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/zengin-sogo.html">
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;max-width:860px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.88em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:5px 7px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+pre{background:#111;color:#e8e8e8;padding:10px;border-radius:8px;overflow:auto;font-size:12px}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.9em;color:#444;border:1px solid #f0e0a0}
+a{color:#0b57d0}footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+</style>
+</head>
+<body>
+<h1>全銀フォーマット 総合振込データ作成・チェッカー</h1>
+<p class="muted">振込先の一覧（CSV・Excelからコピー）を貼るだけで、ネットバンキングに取り込む<strong>総合振込ファイル（全銀協規定・種別コード21・1行120バイト）</strong>を作ります。受取人名は半角カナに自動変換（株式会社→ｶ)・小さい「ッ」→ﾂ・長音→-）し、使えない文字・桁あふれ・金額の打ち間違いを先に見つけます。データはブラウザの外に出ません。</p>
+
+<h2>1. 依頼人（自社）の情報</h2>
+<div class="row">
+<div><label for="irCode">振込依頼人コード（10桁・銀行から指定）</label><input type="text" id="irCode" value="0000000000"></div>
+<div><label for="irName">振込依頼人名（カナ・40文字まで）</label><input type="text" id="irName" value="カブシキガイシャ サンプル"></div>
+<div><label for="torikumi">振込指定日（MMDD）</label><input type="text" id="torikumi" placeholder="1125"></div>
+</div>
+<div class="row">
+<div><label for="myBank">仕向銀行番号（4桁）／銀行名カナ</label><input type="text" id="myBank" value="0001,ﾐｽﾞﾎ"></div>
+<div><label for="myBranch">仕向支店番号（3桁）／支店名カナ</label><input type="text" id="myBranch" value="001,ﾄｳｷﾖｳｴｲｷﾞﾖｳﾌﾞ"></div>
+<div><label for="myAcct">預金種目（1普通 2当座）／口座番号7桁</label><input type="text" id="myAcct" value="1,1234567"></div>
+</div>
+
+<h2>2. 振込先一覧</h2>
+<p class="muted">1行1件、カンマかタブ区切り：<code>銀行番号,銀行名カナ,支店番号,支店名カナ,預金種目,口座番号,受取人名,金額[,顧客コード]</code>（見出し行・「円」「,」付き金額もOK。預金種目は 1普通 2当座 4貯蓄 または「普通」「当座」）</p>
+<textarea id="list">銀行番号,銀行名,支店番号,支店名,種目,口座番号,受取人名,金額,顧客コード
+0005,ﾐﾂﾋﾞｼﾕｰｴﾌｼﾞｴｲ,123,シンジュク,普通,765432,株式会社テックサンプル,"110,000",A001
+0009,ミツイスミトモ,456,ﾏﾙﾉｳﾁ,当座,0012345,ヤマダ　タロウ,55000円,</textarea>
+<div class="row">
+<div><label for="eol">改行</label><select id="eol"><option value="crlf">CRLF（多くの銀行）</option><option value="none">改行なし（120バイト連続）</option><option value="lf">LF</option></select></div>
+<div><label for="edi">顧客コード欄の使い方</label><select id="edi"><option value="cust">顧客コード1・2（通常）</option><option value="edi">EDI情報（20桁・振込指定区分「7」なし）</option></select></div>
+<div><label for="eofmark">エンドレコード後</label><select id="eofmark"><option value="none">なにも付けない</option><option value="1a">EOF(0x1A)を付ける</option></select></div>
+</div>
+<button id="run">点検してファイルを作る</button><button class="sec" id="dl" disabled>ダウンロード（.txt・Shift_JIS）</button><button class="sec" id="csv" disabled>点検結果CSV</button>
+<div id="summary" class="box" hidden></div>
+<div id="table"></div>
+<details><summary>できたファイルの中身（先頭）</summary><pre id="preview"></pre></details>
+
+<div class="note"><strong>注意：</strong>銀行ごとに改行・EOF・依頼人コードの要否・EDI欄の扱いが少し違います。初回は必ず少額・テスト取込で確認し、取込後の明細を目で見てから承認してください。このツールは全銀協の公開仕様（ヘッダ1・データ2・トレーラ8・エンド9）をもとにしており、銀行の承認を得たものではありません。受取人名のカナ化は機械変換なので、漢字の名前は読みを入れてください。</div>
+
+<h2>よくあるエラーと直し方</h2>
+<ul>
+<li><b>受取人名に漢字・全角が残っている</b>：全銀データは半角英数大文字・半角カナ・一部記号（( ) - . / ,  ｢ ｣ \ とスペース）だけ。このツールで変換できない漢字は赤で出します。</li>
+<li><b>小さい「ャュョッ」・長音「ー」</b>：ﾔﾕﾖﾂ・-に置き換えるのが一般的です。</li>
+<li><b>法人略語</b>：株式会社＝ｶ、有限会社＝ﾕ、合同会社＝ﾄﾞ、一般社団法人＝ｼﾔ、医療法人＝ｲ、学校法人＝ｶﾞｸ、特定非営利活動法人＝ﾄｸﾋ など。前株は「ｶ)ﾃﾂｸ」、後株は「ﾃﾂｸ(ｶ」。</li>
+<li><b>口座番号が6桁以下</b>：先頭に0を補って7桁にします（ゆうちょ銀行は記号番号から振込用の店名・口座番号に読み替えが必要）。</li>
+</ul>
+
+<footer>作成：中崎 慎二（フリーランス）。給与・経費の振込データ作成、会計ソフトCSVからの変換の代行もお受けします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> ／ <a href="index.html">ほかの無料ツール</a></footer>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const CORP=[["特定非営利活動法人","ﾄｸﾋ"],["一般社団法人","ｼﾔ"],["一般財団法人","ｻﾞｲ"],["公益社団法人","ｼﾔ"],["公益財団法人","ｻﾞｲ"],["社会福祉法人","ﾌｸ"],["医療法人社団","ｲ"],["医療法人財団","ｲ"],["医療法人","ｲ"],["学校法人","ｶﾞｸ"],["株式会社","ｶ"],["有限会社","ﾕ"],["合同会社","ﾄﾞ"],["合名会社","ﾒ"],["合資会社","ｼ"],["(株)","ｶ"],["（株）","ｶ"],["(有)","ﾕ"],["（有）","ﾕ"],["(同)","ﾄﾞ"],["（同）","ﾄﾞ"]];
+const H="ｧｱｨｲｩｳｪｴｫｵｶｶﾞｷｷﾞｸｸﾞｹｹﾞｺｺﾞｻｻﾞｼｼﾞｽｽﾞｾｾﾞｿｿﾞﾀﾀﾞﾁﾁﾞｯﾂﾂﾞﾃﾃﾞﾄﾄﾞﾅﾆﾇﾈﾉﾊﾊﾞﾊﾟﾋﾋﾞﾋﾟﾌﾌﾞﾌﾟﾍﾍﾞﾍﾟﾎﾎﾞﾎﾟﾏﾐﾑﾒﾓｬﾔｭﾕｮﾖﾗﾘﾙﾚﾛﾜﾜｲｴｦﾝｳﾞ";
+// map katakana U+30A1..U+30F4 to halfwidth sequence
+const KMAP={};(function(){const seq=[];let i=0;const s=H;const toks=[];while(i<s.length){let t=s[i];if(s[i+1]==="ﾞ"||s[i+1]==="ﾟ"){t+=s[i+1];i++}toks.push(t);i++}
+for(let c=0x30A1,k=0;c<=0x30F4&&k<toks.length;c++,k++){KMAP[String.fromCharCode(c)]=toks[k]}})();
+const SMALL={"ｧ":"ｱ","ｨ":"ｲ","ｩ":"ｳ","ｪ":"ｴ","ｫ":"ｵ","ｬ":"ﾔ","ｭ":"ﾕ","ｮ":"ﾖ","ｯ":"ﾂ"};
+function kana(s,isName){
+ if(s==null)return"";s=String(s).trim();
+ if(isName){for(const[a,b]of CORP){if(s.startsWith(a)){s=b+")"+s.slice(a.length);break}if(s.endsWith(a)){s=s.slice(0,-a.length)+"("+b;break}}}
+ s=s.replace(/[\uFF01-\uFF5E]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\u3000/g," ");
+ s=s.replace(/[\u3041-\u3096]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+ let o="";for(const ch of s){if(KMAP[ch]!==undefined)o+=KMAP[ch];else if(ch==="ー"||ch==="－"||ch==="ｰ"||ch==="―"||ch==="‐")o+="-";else if(ch==="・"||ch==="･")o+=".";else if(ch==="「")o+="｢";else if(ch==="」")o+="｣";else if(ch==="ヵ")o+="ｶ";else if(ch==="ヶ")o+="ｹ";else o+=ch}
+ o=o.toUpperCase();o=[...o].map(c=>SMALL[c]||c).join("");
+ return o.replace(/ {2,}/g," ");
+}
+function badChars(s){const bad=[];for(const c of s){const u=c.charCodeAt(0);if(/[0-9A-Z ()\-.\/,\\]/.test(c))continue;if(u>=0xFF62&&u<=0xFF9F&&!(u>=0xFF67&&u<=0xFF70))continue;bad.push(c)}return[...new Set(bad)]}
+function sjisBytes(s){const out=[];for(const c of s){const u=c.charCodeAt(0);if(u<0x80)out.push(u);else if(u>=0xFF61&&u<=0xFF9F)out.push(u-0xFF61+0xA1);else out.push(0x3F)}return out}
+function blen(s){return[...s].length}
+function padT(s,n){s=String(s);const a=[...s];if(a.length>n)return a.slice(0,n).join("");return s+" ".repeat(n-a.length)}
+function padN(v,n){return String(v).padStart(n,"0").slice(-n)}
+function parseLine(l){const out=[];let cur="",q=false;const sep=l.includes("\t")?"\t":",";for(let i=0;i<l.length;i++){const c=l[i];if(q){if(c==='"'){if(l[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}else if(c==='"')q=true;else if(c===sep){out.push(cur);cur=""}else cur+=c}out.push(cur);return out.map(x=>x.trim())}
+function syumoku(v){v=String(v).trim();if(/^[1１]$|普通|総合/.test(v))return"1";if(/^[2２]$|当座/.test(v))return"2";if(/^[4４]$|貯蓄/.test(v))return"4";if(/^[9９]$|その他/.test(v))return"9";return""}
+function num(v){return String(v).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[,，円\s¥￥]/g,"")}
+let lastBytes=null,lastRows=[];
+function run(){
+ const eol={crlf:"\r\n",lf:"\n",none:""}[$("eol").value];
+ const msgs=[];const rows=[];
+ const ir=num($("irCode").value);if(!/^\d{1,10}$/.test(ir))msgs.push(["bad","振込依頼人コードは数字10桁です"]);
+ const irName=kana($("irName").value,true);const bIr=badChars(irName);if(bIr.length)msgs.push(["bad","依頼人名に使えない文字："+bIr.join(" ")]);if(blen(irName)>40)msgs.push(["warn","依頼人名が40文字を超えるので切れます"]);
+ const tk=num($("torikumi").value);if(!/^(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/.test(tk))msgs.push(["bad","振込指定日はMMDD（例 1125）で入れてください"]);
+ const[mb,mbn]=$("myBank").value.split(/[,\t]/);const[ms,msn]=$("myBranch").value.split(/[,\t]/);const[mt,ma]=$("myAcct").value.split(/[,\t]/);
+ if(!/^\d{4}$/.test(num(mb||"")))msgs.push(["bad","仕向銀行番号は4桁"]);if(!/^\d{3}$/.test(num(ms||"")))msgs.push(["bad","仕向支店番号は3桁"]);
+ const myAcct=num(ma||"");if(!/^\d{1,7}$/.test(myAcct))msgs.push(["bad","依頼人の口座番号は7桁以内の数字"]);
+ const header="1"+"21"+"0"+padN(ir,10)+padT(irName,40)+padN(tk,4)+padN(num(mb||""),4)+padT(kana(mbn||""),15)+padN(num(ms||""),3)+padT(kana(msn||""),15)+(syumoku(mt||"1")||"1")+padN(myAcct,7)+" ".repeat(17);
+ const lines=$("list").value.split(/\r?\n/).filter(l=>l.trim());
+ let total=0,cnt=0;const data=[];const seen={};
+ lines.forEach((l,idx)=>{const f=parseLine(l);if(idx===0&&!/\d/.test(f[0]||""))return;
+  const r={no:idx+1,issues:[],level:"ok"};const add=(lv,m)=>{r.issues.push(m);if(lv==="bad"||r.level!=="bad")r.level=lv==="bad"?"bad":(r.level==="ok"?lv:r.level)};
+  if(f.length<8){add("bad","列が8つ未満です");rows.push(r);return}
+  const bank=num(f[0]),bname=kana(f[1]),br=num(f[2]),brname=kana(f[3]),st=syumoku(f[4]),acct=num(f[5]),name=kana(f[6],true),amt=num(f[7]),cc=(f[8]||"").toUpperCase();
+  Object.assign(r,{bank,bname,br,brname,st,acct,name,amt});
+  if(!/^\d{1,4}$/.test(bank))add("bad","銀行番号が数字4桁でない");if(!/^\d{1,3}$/.test(br))add("bad","支店番号が数字3桁でない");
+  if(bank.length<4&&/^\d+$/.test(bank))add("warn","銀行番号を0埋めしました");if(br.length<3&&/^\d+$/.test(br))add("warn","支店番号を0埋めしました");
+  if(!st)add("bad","預金種目が不明（普通/当座/貯蓄 or 1/2/4）");
+  if(!/^\d{1,7}$/.test(acct))add("bad","口座番号が7桁以内の数字でない");else if(acct.length<7)add("warn","口座番号を7桁に0埋め");
+  if(bank==="9900")add("warn","ゆうちょ銀行：記号番号ではなく振込用の店名(3桁)・口座番号(7桁)か確認");
+  const bn=badChars(name);if(bn.length)add("bad","受取人名に使えない文字："+bn.join(" ")+"（漢字は読みのカナに）");
+  if(blen(name)>30)add("warn","受取人名が30文字を超えるので切れます");if(!name)add("bad","受取人名が空");
+  if(badChars(bname).length||badChars(brname).length)add("warn","銀行名・支店名に使えない文字（空白にしても取り込める銀行が多い）");
+  if(!/^\d{1,10}$/.test(amt)||+amt<=0)add("bad","金額が正の整数でない");else if(+amt>=10000000)add("warn","1,000万円以上：桁の打ち間違いでないか確認");
+  const key=bank+br+acct+amt;if(seen[key])add("warn","同じ口座・同じ金額が"+seen[key]+"行目にもあります（二重払い？）");seen[key]=r.no;
+  if(cc&&badChars(cc).length)add("warn","顧客コードは半角英数字に");
+  if(r.level!=="bad"){total+=+amt;cnt++;
+   const custArea=$("edi").value==="edi"?padT(cc,20)+" "+" ":padT(cc,10)+padT("",10)+" "+" ";
+   // custArea = 顧客コード1(10)+顧客コード2(10)+振込指定区分(1)+識別表示(1)
+   const rec="2"+padN(bank,4)+padT(bname,15)+padN(br,3)+padT(brname,15)+"0000"+st+padN(acct,7)+padT(name,30)+padN(amt,10)+"0"+custArea+" ".repeat(7);
+   data.push(rec)}
+  rows.push(r)});
+ const trailer="8"+padN(cnt,6)+padN(total,12)+" ".repeat(101);const end="9"+" ".repeat(119);
+ const recs=[header,...data,trailer,end];const lenErr=recs.filter(x=>sjisBytes(x).length!==120);
+ if(lenErr.length)msgs.push(["bad","120バイトにならない行があります（内部エラー）"]);
+ let bytes=[];recs.forEach(x=>{bytes=bytes.concat(sjisBytes(x));for(const c of eol)bytes.push(c.charCodeAt(0))});if($("eofmark").value==="1a")bytes.push(0x1A);
+ const nbad=rows.filter(r=>r.level==="bad").length,nwarn=rows.filter(r=>r.level==="warn").length;
+ const hdrBad=msgs.some(m=>m[0]==="bad");
+ $("summary").hidden=false;
+ $("summary").innerHTML="<b>"+cnt+"件・合計 "+total.toLocaleString()+" 円</b> をファイルに入れました。"+(nbad?" <span class='bad'>エラーで除外："+nbad+"件</span>":"")+(nwarn?" <span class='warn'>要確認："+nwarn+"件</span>":"")+(hdrBad?"<br><span class='bad'>依頼人情報にエラーがあります。直してから作り直してください。</span>":"")+msgs.map(m=>"<br><span class='"+m[0]+"'>・"+m[1]+"</span>").join("");
+ const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+ $("table").innerHTML="<table><tr><th>行</th><th>銀行-支店</th><th>種目・口座</th><th>受取人名（変換後）</th><th>金額</th><th>結果</th></tr>"+rows.map(r=>"<tr><td>"+r.no+"</td><td>"+esc(r.bank)+"-"+esc(r.br)+"</td><td>"+esc(r.st)+" "+esc(r.acct)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.amt)+"</td><td class='"+r.level+"'>"+(r.issues.length?esc(r.issues.join(" ／ ")):"OK")+"</td></tr>").join("")+"</table>";
+ $("preview").textContent=recs.slice(0,6).join("\n");
+ lastBytes=new Uint8Array(bytes);lastRows=rows;$("dl").disabled=hdrBad||cnt===0;$("csv").disabled=false;
+ window.__zengin={recs,cnt,total,rows,msgs,bytes:lastBytes};
+}
+function save(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+$("run").onclick=run;
+$("dl").onclick=()=>save(new Blob([lastBytes],{type:"application/octet-stream"}),"sogo_furikomi_"+($("torikumi").value||"")+".txt");
+$("csv").onclick=()=>{const q=s=>'"'+String(s==null?"":s).replace(/"/g,'""')+'"';const t="\uFEFF行,銀行,支店,種目,口座,受取人名,金額,結果,内容\r\n"+lastRows.map(r=>[r.no,r.bank,r.br,r.st,r.acct,r.name,r.amt,r.level,r.issues.join(" / ")].map(q).join(",")).join("\r\n");save(new Blob([t],{type:"text/csv"}),"zengin_check.csv")};
+const d=new Date();d.setDate(d.getDate()+3);$("torikumi").value=String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+})();
+</script>
+</body>
+</html>
