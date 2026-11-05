@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yahoo!プレイス終了対応チェックリスト｜新規申込11/30・サービス終了2027/3/31（無料）</title>
+<meta name="description" content="Yahoo!プレイスは2027年3月31日に終了、新規申込は2026年11月30日正午頃まで。登録状況別にやることをチェックし、Yahoo・Googleビジネスプロフィール・自社サイトの店名・住所・電話を突き合わせ、作業メモとCSVを出せる無料ツール。送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yahoo-place-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.dead{background:#ffe8e8;padding:10px 12px;border-radius:8px;margin:12px 0}
+.ok{color:#176b00}.ng{color:#a40000}.mid{color:#8a5a00}
+table{border-collapse:collapse;width:100%;margin-top:8px}td,th{border:1px solid #ddd;padding:4px 8px;vertical-align:top;font-size:.93em}
+button{font-size:.95em;padding:6px 14px;margin:6px 6px 6px 0}
+label.row{display:block;margin:.35em 0}
+input[type=text],textarea{width:100%;box-sizing:border-box;font-size:.95em;font-family:inherit}
+textarea{min-height:4.5em}
+.badge{display:inline-block;background:#eee;border-radius:4px;padding:1px 8px;margin-right:6px;font-size:.85em}
+.done{background:#e8f6e8}.miss{background:#ffe5e5}.skip{background:#f5f5f5;color:#666}
+</style>
+</head>
+<body>
+<h1>Yahoo!プレイス終了対応チェックリスト</h1>
+<p>LINEヤフーは <a href="https://yplace.yahoo.co.jp/notices/archive/30619423" rel="noopener">公式お知らせ（2026-09-28）</a> で、Yahoo!プレイスのサービス提供を <strong>2027年3月31日</strong> に終了すると発表しました。新規お申し込み（子施設登録含む）は <strong>2026年11月30日正午頃</strong> までです。終了後は管理画面に入れず、情報の編集・クチコミ返信・分析データの閲覧ができなくなります。このページは、店舗の状況に合わせて「今やる／後でやる」を一覧にし、Yahoo・Googleビジネスプロフィール・自社サイトの表記を突き合わせるための無料チェックです（公式の代替サービス案内はありません）。</p>
+
+<div class="dead" id="countdown"></div>
+
+<div class="box">
+<h2>1. お店の状況</h2>
+<label class="row"><input type="radio" name="st" value="unreg" checked> まだ Yahoo!プレイスに登録していない（または管理画面に入れない）</label>
+<label class="row"><input type="radio" name="st" value="reg"> 登録済みで、管理画面から情報を直せる</label>
+<label class="row"><input type="radio" name="st" value="rsv"> 登録済みで、Yahoo!リザベーションマネージャー（ネット予約）も使っている</label>
+<p><small>リザベーションマネージャーも 2027-03-31 終了予定。予約の受付切替はプレイス本体とは別に進めてください（公式の予約側案内も確認）。</small></p>
+</div>
+
+<div class="box">
+<h2>2. 対応チェック（状況に合わせて項目が変わります）</h2>
+<div id="checks"></div>
+<button type="button" id="score">進捗を集計</button>
+<button type="button" id="csv">チェック結果をCSV保存</button>
+<button type="button" id="memoBtn">作業メモを作る</button>
+</div>
+
+<div class="box">
+<h2>3. 店名・住所・電話（NAP）の突き合わせ</h2>
+<p><small>形式：<code>掲載先 | 店名 | 住所 | 電話</code>（| またはタブ区切り）。1行目を「正本」として比較します。全角半角・丁目表記のゆれはそろえたうえで、中身の食い違いだけ赤くします。</small></p>
+<textarea id="nap">自社サイト(正本) | 喫茶ひだまり | 〒150-0001 東京都渋谷区神宮前1丁目2番3号 ひだまりビル2F | 03-1234-5678
+Yahoo!プレイス | 喫茶 ひだまり | 東京都渋谷区神宮前１－２－３ ひだまりビル２階 | 0312345678
+Googleビジネスプロフィール | 喫茶ひだまり 原宿店 | 東京都渋谷区神宮前1-2-3 | 03-1234-5678
+Instagram | ひだまりカフェ | 渋谷区神宮前1-2-4 | 03-1234-5678</textarea>
+<button type="button" id="napRun">比較する</button>
+<div id="napOut"></div>
+<textarea id="napMemo" readonly placeholder="NAP修正メモ"></textarea>
+</div>
+
+<div class="box">
+<h2>4. 作業メモ（コピー用）</h2>
+<textarea id="plan" readonly placeholder="上の「作業メモを作る」で生成"></textarea>
+<button type="button" id="copy">メモをコピー</button>
+</div>
+
+<div class="note">
+<b>ポイント</b><br>
+・公式に「Googleへ自動移行」とは書かれていません。終了後もデータは同社が維持・利用すると案内されていますが、店舗が自分で直せる地図情報は実質 Googleビジネスプロフィールと自社サイトが中心になります。<br>
+・未登録店でも Yahoo!マップに古い情報が載っていることがあります。11月30日までに登録して直せるなら、その機会は最後です（審査に数日かかることがあるので余裕を持って）。<br>
+・店名に「駅前」「24時間」「今すぐお電話を」などを足すのは Google のガイドラインで制限されます。店名ポリシーは <a href="gbp-check.html">gbp-check</a>、掲載先ごとの NAP だけ見たいときは <a href="nap-check.html">nap-check</a>。<br>
+・日付は公式のお知らせ上の「予定」です。作業前に <a href="https://yplace.yahoo.co.jp/notices/archive/30619423" rel="noopener">最新のお知らせ</a> を確認してください。
+</div>
+
+<p class="note">入力内容はこのブラウザ内だけで処理し、どこにも送信・保存しません。店舗情報の棚卸しや Googleビジネスプロフィールの表記統一のご相談は shinji-work@mail.grokbot.com まで（行政書士・弁護士の業務は行いません）。</p>
+<p><a href="index.html">他の無料ツール一覧</a> ／ <a href="gbp-check.html">GBP 店名・説明文ポリシー</a> ／ <a href="nap-check.html">NAP表記ゆれ</a> ／ <a href="tenpo-jsonld.html">店舗 JSON-LD</a> ／ <a href="kuchikomi-henshin.html">口コミ返信下書き</a></p>
+
+<script>
+const DEAD_NEW = new Date('2026-11-30T12:00:00+09:00');
+const DEAD_RSV = new Date('2027-02-28T23:59:59+09:00');
+const DEAD_END = new Date('2027-03-31T23:59:59+09:00');
+function daysUntil(d){const n=new Date();const ms=d-n;return Math.ceil(ms/86400000)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+const ITEMS={
+ common:[
+  {id:'official',t:'公式お知らせを読み、終了日・新規申込締切を社内で共有した',p:'all'},
+  {id:'screenshot',t:'いまの Yahoo!マップ／Yahoo!検索の店舗表示（店名・住所・電話・営業時間・写真）をスクリーンショットで保存した',p:'all'},
+  {id:'analytics',t:'必要な分析数値・クチコミ本文を、終了前に手元へ控えた（終了後は管理画面から出せない）',p:'reg,rsv'},
+  {id:'nap_decide',t:'正本の店名・住所・電話・営業時間の書き方を1つに決めた（自社サイト基準推奨）',p:'all'},
+  {id:'gbp_owner',t:'Googleビジネスプロフィールのオーナー権限がお店のアカウントにあるか確認した（辞めた業者・スタッフが持っていないか）',p:'all'},
+  {id:'gbp_sync',t:'GBP の店名・住所・電話・営業時間・URL・写真を正本どおりに揃えた',p:'all'},
+  {id:'site_sync',t:'自社サイトの店舗ページ（アクセス・営業時間・臨時休業）を最新にした',p:'all'},
+  {id:'sns_sync',t:'SNSプロフィール・ポータル（食べログ等）の NAP を正本に寄せた',p:'all'},
+  {id:'partner',t:'テクニカルパートナー経由で Yahoo! に入稿している契約があれば、終了後の扱いをパートナーに確認した',p:'reg,rsv'},
+  {id:'move',t:'2027年3月までに移転・閉店・電話番号変更の予定があれば、終了前に Yahoo! 側も直す予定を立てた',p:'reg,rsv'},
+ ],
+ unreg:[
+  {id:'need_reg',t:'未登録だが Yahoo!マップに店舗が出ている／誤りがある → 11/30正午までに新規申込して直す方針を決めた',p:'unreg'},
+  {id:'apply',t:'Yahoo!プレイスへ新規申込した（または申込不要と判断した理由をメモした）',p:'unreg'},
+  {id:'after_review',t:'審査通過後、誤りを管理画面から直し、数日後にマップ表示を再確認する予定を入れた',p:'unreg'},
+ ],
+ reg:[
+  {id:'login',t:'管理画面にログインでき、施設情報を編集できることを確認した',p:'reg,rsv'},
+  {id:'update_all',t:'店名・住所・電話・営業時間・定休日・URL・写真・支払い方法などを最新にした',p:'reg,rsv'},
+  {id:'reviews',t:'未返信のクチコミに必要な返信を済ませた（終了後は返信不可）',p:'reg,rsv'},
+ ],
+ rsv:[
+  {id:'rsv_policy',t:'Yahoo!リザベーションの新規受付をいつ止めるか決めた（目安：2027-02-28 前後の公式案内も確認）',p:'rsv'},
+  {id:'rsv_alt',t:'代替の予約手段（自社フォーム・Tabelog・ホットペッパー・Google予約リンク等）を決め、導線をテストした',p:'rsv'},
+  {id:'rsv_customers',t:'既存予約の確認方法と、お客さまへの案内文を用意した',p:'rsv'},
+ ]
+};
+
+function status(){const el=document.querySelector('input[name=st]:checked');return el?el.value:'unreg'}
+function relevantItems(){
+ const st=status();
+ const list=[];
+ ITEMS.common.forEach(it=>{if(it.p==='all'||it.p.split(',').includes(st))list.push(it)});
+ if(st==='unreg')ITEMS.unreg.forEach(it=>list.push(it));
+ if(st==='reg'||st==='rsv')ITEMS.reg.forEach(it=>list.push(it));
+ if(st==='rsv')ITEMS.rsv.forEach(it=>list.push(it));
+ return list;
+}
+function renderChecks(){
+ const box=document.getElementById('checks');
+ const items=relevantItems();
+ box.innerHTML=items.map(it=>`<label class="row"><input type="checkbox" data-id="${esc(it.id)}"> ${esc(it.t)}</label>`).join('');
+}
+function checkedMap(){
+ const m={};document.querySelectorAll('#checks input[type=checkbox]').forEach(cb=>{m[cb.dataset.id]=cb.checked});return m;
+}
+function score(){
+ const items=relevantItems();const m=checkedMap();
+ let done=0;items.forEach(it=>{if(m[it.id])done++});
+ const left=items.length-done;
+ const el=document.createElement('p');
+ el.innerHTML=left===0?`<span class="ok">この状況向けの項目はすべてチェック済みです（${done}/${items.length}）。</span>`:`<span class="ng">未完了 ${left} 件</span> / 完了 ${done} / 全 ${items.length}`;
+ const old=document.getElementById('scoreLine');if(old)old.remove();
+ el.id='scoreLine';document.getElementById('checks').after(el);
+ return {done,left,total:items.length,items,m};
+}
+function buildMemo(){
+ const st=status();
+ const label={unreg:'未登録',reg:'登録済み',rsv:'登録済み＋予約マネージャー'}[st];
+ const {done,left,total,items,m}=score();
+ const lines=[`【Yahoo!プレイス終了対応メモ】状況：${label}`,`作成：${new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})} JST`,`進捗：完了 ${done} / 未完了 ${left} / 全 ${total}`,'',
+ '■期限（公式・予定）','- 新規申込終了：2026-11-30 正午頃','- リザベーション関連の目安：2027-02-28（予約側案内も要確認）','- サービス終了：2027-03-31','',
+ '■未完了'];
+ items.forEach(it=>{if(!m[it.id])lines.push('- [ ] '+it.t)});
+ lines.push('','■完了済み');
+ items.forEach(it=>{if(m[it.id])lines.push('- [x] '+it.t)});
+ const nap=document.getElementById('napMemo').value.trim();
+ if(nap){lines.push('','■NAP修正メモ',nap)}
+ lines.push('','公式：https://yplace.yahoo.co.jp/notices/archive/30619423');
+ document.getElementById('plan').value=lines.join('\n');
+ return lines.join('\n');
+}
+function toCsv(){
+ const {items,m}=score();
+ const lines=['id,done,item'];
+ items.forEach(it=>{
+  const cells=[it.id,m[it.id]?'yes':'no',it.t].map(v=>'"'+String(v).replace(/"/g,'""')+'"');
+  lines.push(cells.join(','));
+ });
+ return lines.join('\n');
+}
+
+/* NAP compare (same spirit as nap-check) */
+function z2h(s){return s.replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\u3000/g,' ').replace(/[－ー―‐ｰ−—–]/g,'-')}
+const kn={'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function kan2num(s){return s.replace(/[一二三四五六七八九十〇]+(?=丁目|番|号)/g,m=>{let n=0,cur=0;for(const c of m){if(c==='十'){n+=(cur||1)*10;cur=0;}else cur=kn[c];}return String(n+cur)})}
+function normName(s){return z2h(s).replace(/\s+/g,'').toLowerCase()}
+function normPhone(s){return z2h(s).replace(/[^0-9+]/g,'').replace(/^\+81/,'0')}
+function splitAddr(s){
+ let a=kan2num(z2h(s)).replace(/〒?\s*\d{3}-?\d{4}/,'').trim();
+ a=a.replace(/(\d+)丁目/g,'$1-').replace(/(\d+)番地?/g,'$1-').replace(/(\d+)号/g,'$1').replace(/-+/g,'-').replace(/-\s/g,' ');
+ a=a.replace(/(\d)\s*-\s*(\d)/g,'$1-$2');
+ const m=a.match(/^(.*?\d+(?:-\d+)*)(.*)$/);
+ let main=m?m[1]:a,bld=m?m[2]:'';
+ main=main.replace(/\s+/g,'').replace(/-$/,'');
+ bld=bld.replace(/^[-\s]+/,'').replace(/\s+/g,'').replace(/(\d+)(階|F)$/i,'$1F').replace(/(\d+)階/g,'$1F').toUpperCase();
+ return {main,bld};
+}
+function pref(main){const p=main.match(/^(東京都|北海道|(?:京都|大阪)府|.{2,3}県)/);return p?p[1]:''}
+function runNap(){
+ const rows=document.getElementById('nap').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\s*[|｜\t]\s*/));
+ if(rows.length<2){document.getElementById('napOut').textContent='2行以上入力してください。';return null}
+ const base=rows[0];const bN=normName(base[1]||''),bA=splitAddr(base[2]||''),bP=normPhone(base[3]||'');
+ let html='<table><tr><th>掲載先</th><th>店名</th><th>住所</th><th>電話</th></tr>';const memo=[];
+ rows.forEach((r,i)=>{
+  const n=normName(r[1]||''),a=splitAddr(r[2]||''),p=normPhone(r[3]||'');const issues=[];
+  let mainA=a.main;if(!pref(mainA)&&pref(bA.main))mainA=pref(bA.main)+mainA;
+  const nOk=n===bN,aOk=mainA===bA.main,bOk=a.bld===bA.bld,pOk=p===bP;
+  if(i>0){
+   if(!nOk)issues.push(`店名「${r[1]||'（なし）'}」→「${base[1]}」`);
+   if(!aOk)issues.push(`住所「${r[2]||'（なし）'}」→「${base[2]}」`);
+   else if(!bOk)issues.push(a.bld?`建物名・階「${a.bld}」が基準「${bA.bld||'なし'}」と違う`:`建物名・階が抜けている（基準：${bA.bld}）`);
+   if(!pref(a.main))issues.push('住所に都道府県がない');
+   if(!pOk)issues.push(`電話「${r[3]||'（なし）'}」→「${base[3]}」`);
+   if(p&&!/^0\d{9,10}$/.test(p))issues.push('電話番号の桁数が10〜11桁ではない');
+   if(issues.length)memo.push(`■${r[0]}\n- `+issues.join('\n- '));
+  }
+  const c=ok=>i===0?'':(ok?' class="ok"':' class="ng"');
+  html+=`<tr><td>${esc(r[0]||'')}</td><td${c(nOk)}>${esc(r[1]||'')}</td><td${c(aOk&&bOk)}>${esc(r[2]||'')}</td><td${c(pOk)}>${esc(r[3]||'')}</td></tr>`;
+ });
+ html+='</table>';
+ document.getElementById('napOut').innerHTML=html+(memo.length?`<p class="ng">${memo.length}件の掲載先に修正候補があります。</p>`:'<p class="ok">すべて基準と一致しました。</p>');
+ document.getElementById('napMemo').value=memo.length?'【NAP修正メモ】基準：'+base[0]+'\n\n'+memo.join('\n\n'):'';
+ return {memoCount:memo.length,rows:rows.length};
+}
+
+function renderCountdown(){
+ const dn=daysUntil(DEAD_NEW),de=daysUntil(DEAD_END),dr=daysUntil(DEAD_RSV);
+ let msg='';
+ if(dn>0)msg+=`<span class="badge miss">新規申込まであと約 ${dn} 日</span>`;
+ else if(dn===0)msg+=`<span class="badge miss">本日が新規申込締切（正午頃）</span>`;
+ else msg+=`<span class="badge skip">新規申込は終了済み（予定）</span>`;
+ if(dr>0)msg+=`<span class="badge mid">予約関連の目安まであと約 ${dr} 日</span>`;
+ if(de>0)msg+=`<span class="badge">サービス終了まであと約 ${de} 日</span>`;
+ else msg+=`<span class="badge skip">サービス終了日を過ぎています（予定）</span>`;
+ document.getElementById('countdown').innerHTML='<b>カウントダウン（Asia/Tokyo・予定日）</b><br>'+msg+
+  '<br><small>新規申込終了 2026-11-30 正午頃 ／ サービス終了 2027-03-31 ／ 公式発表の「予定」です。</small>';
+}
+
+/* expose for node test */
+window.__yp={status,relevantItems,score,buildMemo,toCsv,runNap,daysUntil,DEAD_NEW,DEAD_END,checkedMap,renderChecks};
+
+document.querySelectorAll('input[name=st]').forEach(r=>r.addEventListener('change',()=>{renderChecks();document.getElementById('plan').value=''}));
+document.getElementById('score').onclick=()=>score();
+document.getElementById('memoBtn').onclick=()=>buildMemo();
+document.getElementById('csv').onclick=()=>{
+ score();
+ const blob=new Blob([toCsv()],{type:'text/csv;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='yahoo-place-check.csv';a.click();
+};
+document.getElementById('napRun').onclick=()=>runNap();
+document.getElementById('copy').onclick=()=>{const t=document.getElementById('plan');t.select();navigator.clipboard&&navigator.clipboard.writeText(t.value)};
+renderCountdown();renderChecks();runNap();
+</script>
+</body>
+</html>
