@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SNS投稿サイズ一括チェッカー（Instagram・X・TikTok・YouTube・LINE・Facebook）｜無料</title>
+<meta name="description" content="画像を選ぶか幅×高さを入れるだけで、Instagram・X（Twitter）・TikTok・YouTubeサムネ・LINE・Facebook・LinkedIn・Pinterestの推奨ピクセルと照合。比率のずれ・小さすぎ・セーフゾーン注意・ファイル容量を一覧。ブラウザ内処理・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/sns-size-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.88em}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top}th{background:#f3f3f3;text-align:left}
+.e{color:#b00020;font-weight:bold}.w{color:#a15c00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+button{font-size:1em;padding:4px 12px;margin-right:6px}
+.chips label{display:inline-block;margin:2px 8px 2px 0;font-size:.9em}
+#prev{max-width:100%;max-height:220px;border:1px solid #ccc;margin-top:8px}
+small{color:#555}
+input[type=number]{width:6em}
+</style>
+</head>
+<body>
+<h1>SNS投稿サイズ一括チェッカー</h1>
+<p>CanvaやPhotoshopで書き出した画像が、各SNSの推奨サイズに合っているかをまとめて確認します。画像を選ぶか、幅×高さを手入力してください。ファイルはブラウザの中だけで処理し、どこにも送信しません。</p>
+<div class="box">
+<p><b>画像</b> <input type="file" id="file" accept="image/*"> <span id="fname"></span></p>
+<p>または手入力：幅 <input type="number" id="w" min="1" placeholder="1080"> × 高さ <input type="number" id="h" min="1" placeholder="1350"> px
+　ファイル容量（任意） <input type="number" id="kb" min="0" step="1" placeholder="例: 800"> KB</p>
+<p class="chips" id="plats"></p>
+<p><button id="go">チェックする</button> <button id="sample">サンプル（IG 4:5）</button> <button id="csv" disabled>結果をCSVで保存</button></p>
+<img id="prev" alt="" hidden>
+</div>
+<div id="out"></div>
+<h2>チェックする内容</h2>
+<ul>
+<li><b>推奨ピクセル一致</b>：幅・高さがその投稿形式の推奨値と一致するか。</li>
+<li><b>アスペクト比</b>：ピクセルが違っても比率が近いか（±2%以内を「比率OK」）。</li>
+<li><b>小さすぎ</b>：推奨より短い辺が80%未満だと、拡大されてぼやけやすい。</li>
+<li><b>容量の目安</b>：各形式のよくある上限（厳格なAPI上限ではない）を超えていないか。</li>
+<li><b>セーフゾーン</b>：ストーリー／リール／TikTokは上下にUIが乗るので、重要文字を端に置かない注意を出します。</li>
+</ul>
+<div class="note">プラットフォームの仕様は変わることがあります（2026年11月時点の一般的な推奨値）。最終確認は各公式ヘルプで。印刷用の解像度・塗り足しは <a href="print-check.html">入稿画像チェッカー</a>、OGPは <a href="ogp-maker.html">OGPメーカー</a>、ストア用スクショは <a href="store-shots.html">ストア画像キャプション</a> へ。<br>
+SNS用テンプレ一式の作成やサイズ直しは <a href="mailto:shinji-work@mail.grokbot.com?subject=SNS%E6%8A%95%E7%A8%BF%E3%82%B5%E3%82%A4%E3%82%BA%E3%83%BB%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> まで（日本語・英語・中国語）。</div>
+<p><a href="./">ツール一覧へ</a></p>
+<script>
+(function(){
+const PRESETS=[
+ {id:'ig-sq',plat:'Instagram',name:'投稿 正方形',w:1080,h:1080,kb:8000,safe:''},
+ {id:'ig-45',plat:'Instagram',name:'投稿 縦 4:5',w:1080,h:1350,kb:8000,safe:''},
+ {id:'ig-story',plat:'Instagram',name:'ストーリーズ / リール',w:1080,h:1920,kb:8000,safe:'上下およそ14%はUIに隠れることがあります。ロゴやCTAは中央寄りに。'},
+ {id:'ig-land',plat:'Instagram',name:'投稿 横 1.91:1',w:1080,h:566,kb:8000,safe:''},
+ {id:'x-post',plat:'X (Twitter)',name:'投稿画像',w:1600,h:900,kb:5000,safe:''},
+ {id:'x-hdr',plat:'X (Twitter)',name:'ヘッダー',w:1500,h:500,kb:5000,safe:''},
+ {id:'tt',plat:'TikTok',name:'動画カバー / 投稿',w:1080,h:1920,kb:10000,safe:'上下・右端にボタン類。顔と文字は中央〜中上に。'},
+ {id:'yt-thumb',plat:'YouTube',name:'サムネイル',w:1280,h:720,kb:2000,safe:'右下に再生時間。重要文字は端から少し内側に。'},
+ {id:'yt-banner',plat:'YouTube',name:'チャンネルアート安全域',w:2560,h:1440,kb:6000,safe:'テレビ・スマホで見える安全域は中央おおよそ1546×423。端は切れる想定。'},
+ {id:'line',plat:'LINE',name:'VOOM / リッチメッセージ目安',w:1080,h:1080,kb:10000,safe:''},
+ {id:'fb',plat:'Facebook',name:'フィード投稿',w:1200,h:630,kb:8000,safe:''},
+ {id:'li',plat:'LinkedIn',name:'投稿 / リンクプレビュー',w:1200,h:627,kb:8000,safe:''},
+ {id:'pin',plat:'Pinterest',name:'標準ピン 2:3',w:1000,h:1500,kb:10000,safe:''},
+ {id:'threads',plat:'Threads',name:'投稿 正方形',w:1080,h:1080,kb:8000,safe:''}
+];
+const $=id=>document.getElementById(id);
+const plats=$('plats');
+PRESETS.forEach(p=>{
+  const l=document.createElement('label');
+  l.innerHTML='<input type="checkbox" data-id="'+p.id+'" checked> '+p.plat+' / '+p.name;
+  plats.appendChild(l);
+});
+let lastRows=[], imgW=0, imgH=0, imgKB=0, objectURL=null;
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=b;b=a%b;a=t}return a||1}
+function ratio(w,h){const g=gcd(w,h);return (w/g)+':'+(h/g)}
+function selected(){return PRESETS.filter(p=>plats.querySelector('input[data-id="'+p.id+'"]').checked)}
+$('file').addEventListener('change',()=>{
+  const f=$('file').files[0]; if(!f)return;
+  $('fname').textContent=f.name+'（'+Math.round(f.size/1024)+' KB）';
+  imgKB=Math.round(f.size/1024); $('kb').value=imgKB;
+  if(objectURL) URL.revokeObjectURL(objectURL);
+  objectURL=URL.createObjectURL(f);
+  const im=new Image();
+  im.onload=()=>{imgW=im.naturalWidth;imgH=im.naturalHeight;$('w').value=imgW;$('h').value=imgH;
+    const pv=$('prev');pv.src=objectURL;pv.hidden=false;run()};
+  im.src=objectURL;
+});
+function grade(w,h,p){
+  const rows=[];
+  const exact=w===p.w&&h===p.h;
+  const arIn=w/h, arP=p.w/p.h, arDiff=Math.abs(arIn-arP)/arP;
+  const shortIn=Math.min(w,h), shortP=Math.min(p.w,p.h);
+  const scale=shortIn/shortP;
+  if(exact) rows.push({sev:'ok',msg:'推奨ピクセルと一致（'+p.w+'×'+p.h+'）'});
+  else if(arDiff<=0.02){
+    if(scale>=0.98) rows.push({sev:'ok',msg:'比率は一致（'+ratio(w,h)+' ≈ '+ratio(p.w,p.h)+'）。ピクセルは '+w+'×'+h+'（推奨 '+p.w+'×'+p.h+'）'});
+    else if(scale>=0.8) rows.push({sev:'w',msg:'比率OKだが推奨より小さい（短い辺 '+Math.round(scale*100)+'%）。拡大でぼやける可能性'});
+    else rows.push({sev:'e',msg:'比率は近いが小さすぎ（短い辺 '+Math.round(scale*100)+'%）。'+p.w+'×'+p.h+' 以上を推奨'});
+  } else {
+    rows.push({sev:'e',msg:'比率が違う：画像 '+ratio(w,h)+'（'+w+'×'+h+'）／推奨 '+ratio(p.w,p.h)+'（'+p.w+'×'+p.h+'）ずれ '+Math.round(arDiff*100)+'%'});
+  }
+  if(imgKB&&p.kb&&imgKB>p.kb) rows.push({sev:'w',msg:'容量の目安 '+p.kb+' KB 超（現在 '+imgKB+' KB）。圧縮を検討'});
+  if(p.safe) rows.push({sev:'w',msg:'セーフゾーン：'+p.safe});
+  const worst=rows.some(r=>r.sev==='e')?'e':(rows.some(r=>r.sev==='w')?'w':'ok');
+  return {worst,rows};
+}
+function run(){
+  const w=+$('w').value||imgW, h=+$('h').value||imgH;
+  imgKB=+$('kb').value||imgKB;
+  const out=$('out');
+  if(!w||!h){out.innerHTML='<p class="e">幅と高さを入力するか、画像を選んでください。</p>';$('csv').disabled=true;return}
+  const sel=selected();
+  if(!sel.length){out.innerHTML='<p class="e">照合する形式を1つ以上選んでください。</p>';return}
+  lastRows=[];
+  let html='<div class="res"><b>入力</b> '+w+'×'+h+' px（'+ratio(w,h)+'）'+(imgKB?' ／ '+imgKB+' KB':'')+'</div>';
+  html+='<table><tr><th>判定</th><th>プラットフォーム</th><th>形式</th><th>推奨</th><th>詳細</th></tr>';
+  sel.forEach(p=>{
+    const g=grade(w,h,p);
+    const label=g.worst==='e'?'NG':(g.worst==='w'?'注意':'OK');
+    const cls=g.worst==='e'?'e':(g.worst==='w'?'w':'ok');
+    const detail=g.rows.map(r=>r.msg).join(' ／ ');
+    html+='<tr><td class="'+cls+'">'+label+'</td><td>'+p.plat+'</td><td>'+p.name+'</td><td>'+p.w+'×'+p.h+'</td><td>'+detail+'</td></tr>';
+    lastRows.push({sev:label,plat:p.plat,name:p.name,rec:p.w+'x'+p.h,detail:detail,w:w,h:h,kb:imgKB||''});
+  });
+  html+='</table>';
+  out.innerHTML=html;
+  $('csv').disabled=!lastRows.length;
+}
+$('go').onclick=run;
+$('sample').onclick=function(){$('w').value=1080;$('h').value=1350;$('kb').value=420;imgW=1080;imgH=1350;imgKB=420;$('prev').hidden=true;run()};
+$('csv').onclick=function(){
+  if(!lastRows.length)run();
+  const lines=['severity,platform,format,recommended,detail,width,height,kb'];
+  lastRows.forEach(r=>lines.push(['"'+r.sev+'"','"'+r.plat+'"','"'+r.name+'"','"'+r.rec+'"','"'+r.detail.replace(/"/g,'""')+'"',r.w,r.h,r.kb].join(',')));
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sns-size-check.csv';a.click();
+};
+// expose for jsdom tests
+window.__SNS_SIZE__={PRESETS,grade,ratio,gcd,run};
+})();
+</script>
+</body>
+</html>
