@@ -1,6 +1,7 @@
 # AI利用OKの公募・コンテスト・ハッカソンまとめ
 > 生成AIの利用が認められている（または要項で禁止されていない）、参加無料・日本在住の個人が応募できる賞金付き公募を締切順にまとめた日本語の一覧です。各項目は公式要項へのリンク付きで、更新日はページ内に記載しています。
 
+- [Google Merchant Center／無料リスティング 商品データ否認理由セルフチェック](https://yema7582-code.github.io/koubo-ai-ok/gmc-feed-check.html): 必須属性の抜け、識別子（gtin または mpn+brand）、価格の ISO 通貨、プロモタイトル、重複 id など否認につながりやすいパターンをブラウザ内で点検。Shopify CSV 向け catalog-check とは別。
 - [AIエージェント向けショップ情報 公開前チェック＆ナレッジ文作成](https://yema7582-code.github.io/koubo-ai-ok/agent-kb-check.html): Shopify Sales channels > Agentic Knowledge base（旧アプリは2027-01-15終了）向けに、返品・配送・ギフト・支払い・連絡先・年末年始ルールの抜けを確認し、公開用MarkdownとChatGPT/Gemini用テスト質問を作成。BASE/STORESのFAQにも流用可。ブラウザ内処理。
 - [一覧ページ](https://yema7582-code.github.io/koubo-ai-ok/): 締切、賞金、AI利用条件、応募方法の表
 - [Steam カプセル画像・スクリーンショット サイズチェッカー](https://yema7582-code.github.io/koubo-ai-ok/steam-assets.html)

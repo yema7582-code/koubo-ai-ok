@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Merchant Center／無料リスティング 商品データ否認理由セルフチェック｜無料</title>
+<meta name="description" content="Google Merchant Center・無料リスティング向け商品データの必須属性（id・title・description・link・image_link・availability・price・brand・gtin/mpn・google_product_category など）の抜けと、よくある否認理由をブラウザ内で点検。CSV貼り付け／1件フォーム両対応・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/gmc-feed-check.html">
+<meta property="og:title" content="GMC／無料リスティング 商品データ否認理由セルフチェック">
+<meta property="og:description" content="必須属性の有無とよくある否認パターンを点数化。ブラウザ内完結・無料。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yema7582-code.github.io/koubo-ai-ok/gmc-feed-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0;background:#f7f8fa}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.res{background:#eef6ee;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.88em;margin-top:8px}td,th{border:1px solid #ddd;padding:4px 6px;vertical-align:top}th{background:#f3f3f3;text-align:left}
+.e{color:#b00020;font-weight:bold}.w{color:#a15c00;font-weight:bold}.ok{color:#176b2c;font-weight:bold}
+button{font-size:1em;padding:6px 14px;margin:4px 6px 4px 0;cursor:pointer}
+textarea{width:100%;min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:13px;box-sizing:border-box}
+input[type=text],select{width:100%;box-sizing:border-box;padding:6px 8px;font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+label{display:block;font-weight:600;font-size:.92em;margin:.4em 0 .15em}
+.tabs{display:flex;gap:8px;margin:8px 0}
+.tabs button{background:#fff;border:1px solid #888}
+.tabs button.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.muted{color:#555;font-size:.92em}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.e{background:#fde8e6;color:#b00020}.pill.w{background:#fff4d6;color:#a15c00}.pill.ok{background:#e6f6ec;color:#176b2c}
+a{color:#0b57d0}
+</style>
+</head>
+<body>
+<h1>Google Merchant Center／無料リスティング 商品データ否認理由セルフチェック</h1>
+<p>Googleの<strong>無料リスティング</strong>やショッピング広告に出す前に、商品フィードの必須属性の抜けと、否認につながりやすいパターンを点検します。Shopify商品CSVの「薄さ」を見る <a href="catalog-check.html">catalog-check</a> とは別で、ここでは Merchant Center の属性名（<code>id</code>・<code>title</code>・<code>gtin</code> など）に沿って確認します。</p>
+<p class="note">処理はすべてこのブラウザ内です。フィードは送信されません。結果は自己点検の目安であり、Googleの最終審査や掲載を保証しません。仕様は変わるので、最終確認は <a href="https://support.google.com/merchants/answer/7052112" target="_blank" rel="noopener">商品データ仕様</a> と Merchant Center の「要対応」タブで。</p>
+
+<div class="tabs">
+<button type="button" id="tabCsv" class="on">CSV／TSVを貼る</button>
+<button type="button" id="tabOne">1商品フォーム</button>
+</div>
+
+<div id="paneCsv" class="box">
+<label>商品フィード（ヘッダー行つき。カンマまたはタブ区切り）</label>
+<input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values">
+<textarea id="src" placeholder="id,title,description,link,image_link,availability,price,brand,condition,gtin,mpn,identifier_exists,google_product_category&#10;sku-001,有田焼 湯呑 白 200ml,手仕事の湯呑です。電子レンジ可。,https://example.com/p/1,https://example.com/img/1.jpg,in_stock,1980 JPY,Arina,new,4580123456787,,yes,&quot;Home &amp; Garden &gt; Kitchen &amp; Dining &gt; Tableware &gt; Drinkware &gt; Mugs&quot;"></textarea>
+<p class="muted">列名は英語属性名でも日本語近似でも可（例: 商品ID→id、タイトル→title）。最大500行まで点検します。</p>
+</div>
+
+<div id="paneOne" class="box" hidden>
+<div class="row">
+<div><label>id（SKU等・一意）</label><input type="text" id="f_id" placeholder="sku-001"></div>
+<div><label>availability</label>
+<select id="f_avail"><option value="in_stock">in_stock</option><option value="out_of_stock">out_of_stock</option><option value="preorder">preorder</option><option value="backorder">backorder</option><option value="">（空）</option></select></div>
+</div>
+<label>title</label><input type="text" id="f_title" placeholder="ブランド＋商品名＋仕様">
+<label>description</label><textarea id="f_desc" style="min-height:70px" placeholder="素材・サイズ・用途・同梱物など"></textarea>
+<div class="row">
+<div><label>link（商品ページURL）</label><input type="text" id="f_link" placeholder="https://..."></div>
+<div><label>image_link</label><input type="text" id="f_image" placeholder="https://...jpg"></div>
+</div>
+<div class="row">
+<div><label>price（例: 1980 JPY）</label><input type="text" id="f_price" placeholder="1980 JPY"></div>
+<div><label>brand</label><input type="text" id="f_brand" placeholder="ブランド名"></div>
+</div>
+<div class="row">
+<div><label>condition</label>
+<select id="f_cond"><option value="new">new</option><option value="refurbished">refurbished</option><option value="used">used</option><option value="">（空）</option></select></div>
+<div><label>google_product_category</label><input type="text" id="f_gpc" placeholder="例: 2271 または Home &amp; Garden > ..."></div>
+</div>
+<div class="row">
+<div><label>gtin（JAN等）</label><input type="text" id="f_gtin" placeholder="13桁など"></div>
+<div><label>mpn</label><input type="text" id="f_mpn" placeholder="メーカー型番"></div>
+</div>
+<div class="row">
+<div><label>identifier_exists</label>
+<select id="f_ide"><option value="yes">yes（識別子あり）</option><option value="no">no（識別子なしの例外）</option><option value="">（空）</option></select></div>
+<div><label>shipping（任意・摘要）</label><input type="text" id="f_ship" placeholder="JP:::500 JPY など"></div>
+</div>
+</div>
+
+<p>
+<button type="button" id="go">チェックする</button>
+<button type="button" id="sample">サンプルを入れる</button>
+<button type="button" id="csvDl" disabled>結果をCSVで保存</button>
+</p>
+<div id="out"></div>
+
+<h2>よくある否認・警告パターン（このツールが見るもの）</h2>
+<ul>
+<li><b>必須属性の欠落</b>：id / title / description / link / image_link / availability / price</li>
+<li><b>識別子</b>：gtin または（mpn＋brand）。どちらも無いのに identifier_exists=yes／空のまま → 否認や配信制限の典型</li>
+<li><b>価格形式</b>：数値＋ISO通貨（日本向けは <code>1980 JPY</code>）。円マークのみ・カンマ区切りのみは不適</li>
+<li><b>availability 値</b>：in_stock / out_of_stock / preorder / backorder 以外</li>
+<li><b>URL</b>：http(s) でない、画像がプレースホルダっぽいファイル名</li>
+<li><b>タイトル品質</b>：極端に短い／キーワード詰め／全角スペースだらけ／プロモ文言（送料無料・セール中など）</li>
+<li><b>説明文</b>：短すぎる・HTMLタグだらけで本文が取れない・promotional text 過多</li>
+<li><b>カテゴリ</b>：google_product_category 未設定（警告寄りだが品質低下）</li>
+<li><b>重複 id</b>：同一フィード内で id が重複</li>
+</ul>
+<div class="note">画像上のロゴ／透かし／CTA文字、ランディング価格とフィード価格の不一致、robots.txt によるクロール阻害などは、このページのテキスト点検では検出できません。Merchant Center の診断と実ページ確認が必要です。<br>
+フィード修復・属性マッピング・日英中の商品データの整備は <a href="mailto:shinji-work@mail.grokbot.com?subject=GMC%E3%83%95%E3%82%A3%E3%83%BC%E3%83%89%E4%BF%AE%E5%BE%A9%E7%9B%B8%E8%AB%87">shinji-work@mail.grokbot.com</a> まで（日本語・英語・中国語）。関連：<a href="catalog-check.html">Shopify CSV チェッカー</a> ／ <a href="csv-henkan.html">CSV列変換</a> ／ <a href="agent-kb-check.html">エージェント向けショップ情報</a>。</div>
+<p><a href="./">ツール一覧へ</a></p>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let lastRows=[];
+const ALIASES={
+  id:['id','item_id','sku','商品id','商品ID','ハンドル','handle'],
+  title:['title','商品名','タイトル','name','product_title'],
+  description:['description','説明','説明文','商品説明','body','body (html)','desc'],
+  link:['link','url','商品url','商品URL','product_link','landing_page'],
+  image_link:['image_link','image link','image_url','画像','画像url','画像URL','image src','image'],
+  availability:['availability','在庫','在庫状況','stock'],
+  price:['price','価格','販売価格'],
+  brand:['brand','ブランド','vendor','メーカー'],
+  condition:['condition','状態','コンディション'],
+  gtin:['gtin','jan','ean','upc','バーコード','barcode','variant barcode'],
+  mpn:['mpn','型番','メーカー型番','model_number'],
+  identifier_exists:['identifier_exists','identifier exists','識別子の有無'],
+  google_product_category:['google_product_category','google product category','gpc','商品カテゴリ','product category'],
+  shipping:['shipping','送料']
+};
+function normKey(h){return String(h||'').trim().toLowerCase().replace(/[\s_]+/g,' ').replace(/[「」]/g,'')}
+function mapHeader(headers){
+  const H=headers.map(normKey);
+  const out={};
+  for(const [canon,aliases] of Object.entries(ALIASES)){
+    let ix=-1;
+    for(const a of aliases){
+      const na=normKey(a);
+      ix=H.findIndex(h=>h===na||h.includes(na));
+      if(ix>=0)break;
+    }
+    out[canon]=ix;
+  }
+  return out;
+}
+function parseCSV(t){
+  const rows=[]; let row=[], f='', q=false;
+  t=String(t||'').replace(/^\uFEFF/,'');
+  if(!t.trim()) return rows;
+  const first=t.split(/\r?\n/)[0]||'';
+  const d=(first.split('\t').length>first.split(',').length)?'\t':',';
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(q){
+      if(c==='"'){ if(t[i+1]==='"'){f+='"';i++} else q=false; }
+      else f+=c;
+    } else if(c==='"') q=true;
+    else if(c===d){ row.push(f); f=''; }
+    else if(c==='\n'){ row.push(f.replace(/\r$/,'')); rows.push(row); row=[]; f=''; }
+    else if(c==='\r'){ /* skip */ }
+    else f+=c;
+  }
+  if(f!==''||row.length){ row.push(f.replace(/\r$/,'')); rows.push(row); }
+  return rows.filter(r=>r.some(x=>String(x).trim()!==''));
+}
+function stripHtml(h){
+  const d=document.createElement('div'); d.innerHTML=h||'';
+  return (d.textContent||'').replace(/\s+/g,' ').trim();
+}
+function gtinOk(g){
+  const d=String(g||'').replace(/\D/g,'');
+  if(!d) return false;
+  if(![8,12,13,14].includes(d.length)) return {ok:false,msg:'桁数が一般的なGTIN長（8/12/13/14）でない'};
+  // check digit
+  let sum=0;
+  const arr=d.split('').map(Number);
+  for(let i=arr.length-2,pos=0;i>=0;i--,pos++){
+    sum+=arr[i]*(pos%2===0?3:1);
+  }
+  const check=(10-(sum%10))%10;
+  if(check!==arr[arr.length-1]) return {ok:false,msg:'チェックデジット不一致の可能性'};
+  return {ok:true};
+}
+function priceOk(p){
+  const s=String(p||'').trim();
+  if(!s) return {ok:false,sev:'e',msg:'price が空'};
+  // 1980 JPY / 19.99 USD
+  if(/^\d+(\.\d{1,2})?\s+[A-Z]{3}$/.test(s)) return {ok:true};
+  if(/^¥\s*[\d,]+$/.test(s)||/^[\d,]+円$/.test(s)) return {ok:false,sev:'e',msg:'価格にISO通貨コードが必要（例: 1980 JPY）'};
+  if(/^\d+(\.\d+)?$/.test(s)) return {ok:false,sev:'e',msg:'通貨コード欠落（例: '+s+' JPY）'};
+  return {ok:false,sev:'w',msg:'価格形式が仕様どおりか要確認: '+s};
+}
+const PROMO=/送料無料|セール中|期間限定|今だけ|クーポン|％OFF|%OFF|無料プレゼント|最安|激安|買うなら|クリック|詳細はこちら|free shipping|best price|buy now|limited time/i;
+const PLACEHOLDER_IMG=/placeholder|no[\-_]?image|dummy|sample\.|default[\-_]?image|coming[\-_]?soon/i;
+const AVAIL=new Set(['in_stock','out_of_stock','preorder','backorder']);
+
+function checkItem(item, idCounts){
+  const iss=[];
+  const add=(sev,msg)=>iss.push({sev,msg});
+  let score=100;
+  const pen=s=>(score=Math.max(0,score-s));
+
+  const id=String(item.id||'').trim();
+  const title=String(item.title||'').trim();
+  const desc=stripHtml(item.description||'');
+  const link=String(item.link||'').trim();
+  const image=String(item.image_link||'').trim();
+  const avail=String(item.availability||'').trim().toLowerCase();
+  const price=String(item.price||'').trim();
+  const brand=String(item.brand||'').trim();
+  const cond=String(item.condition||'').trim().toLowerCase();
+  const gtin=String(item.gtin||'').trim();
+  const mpn=String(item.mpn||'').trim();
+  const ide=String(item.identifier_exists||'').trim().toLowerCase();
+  const gpc=String(item.google_product_category||'').trim();
+
+  if(!id){ add('e','id が空（必須）'); pen(20); }
+  else if((idCounts[id]||0)>1){ add('e','id がフィード内で重複'); pen(15); }
+
+  if(!title){ add('e','title が空（必須）'); pen(20); }
+  else {
+    if(title.length<10){ add('w','title が短い（'+title.length+'文字）'); pen(8); }
+    if(title.length>150){ add('w','title が長すぎる（'+title.length+'文字。150超は切られることが多い）'); pen(5); }
+    if(PROMO.test(title)){ add('e','title にプロモ文言（送料無料・セール等）→否認リスク'); pen(12); }
+    if((title.match(/　/g)||[]).length>=3){ add('w','title に全角スペースが多い（キーワード詰め疑惑）'); pen(5); }
+    if(/^[A-Za-z0-9\-_/.# ]+$/.test(title)&&title.length<20){ add('w','title が型番っぽく、何の商品か伝わりにくい'); pen(6); }
+  }
+
+  if(!desc){ add('e','description が空（必須）'); pen(18); }
+  else {
+    if(desc.length<50){ add('w','description が短い（'+desc.length+'文字）'); pen(8); }
+    if(PROMO.test(desc)&&desc.length<120){ add('w','description がプロモ寄りで実質説明が薄い'); pen(5); }
+  }
+
+  if(!link){ add('e','link が空（必須）'); pen(18); }
+  else if(!/^https?:\/\//i.test(link)){ add('e','link が http(s) で始まらない'); pen(12); }
+
+  if(!image){ add('e','image_link が空（必須）'); pen(18); }
+  else {
+    if(!/^https?:\/\//i.test(image)){ add('e','image_link が http(s) で始まらない'); pen(12); }
+    if(PLACEHOLDER_IMG.test(image)){ add('w','image_link がプレースホルダ画像の可能性'); pen(8); }
+  }
+
+  if(!avail){ add('e','availability が空（必須）'); pen(15); }
+  else if(!AVAIL.has(avail)){ add('e','availability の値が不正: '+avail+'（in_stock / out_of_stock / preorder / backorder）'); pen(12); }
+
+  const pr=priceOk(price);
+  if(!pr.ok){ add(pr.sev||'e', pr.msg); pen(pr.sev==='w'?6:14); }
+
+  if(!cond){ add('w','condition 未設定（多くの国で推奨。日本でも new を明示）'); pen(4); }
+  else if(!['new','refurbished','used'].includes(cond)){ add('e','condition の値が不正: '+cond); pen(8); }
+
+  if(!brand){ add('w','brand 未設定（識別子・品質の両方で不利）'); pen(6); }
+
+  const hasGtin=!!gtin.replace(/\D/g,'');
+  const hasMpnBrand=!!(mpn&&brand);
+  if(ide==='no'){
+    if(hasGtin||hasMpnBrand) add('w','identifier_exists=no なのに gtin/mpn が入っている（整合を確認）');
+  } else {
+    if(!hasGtin&&!hasMpnBrand){
+      add('e','識別子不足: gtin も (mpn+brand) も無い → 否認・配信制限の典型。例外なら identifier_exists=no');
+      pen(16);
+    } else if(hasGtin){
+      const g=gtinOk(gtin);
+      if(g&&g.ok===false){ add('w','gtin: '+g.msg); pen(6); }
+    } else if(hasMpnBrand&&!hasGtin){
+      add('w','gtin なし・mpn+brand のみ（可能な商品は gtin 推奨）'); pen(3);
+    }
+  }
+
+  if(!gpc){ add('w','google_product_category 未設定（品質・マッチング低下）'); pen(5); }
+
+  if(!iss.length) add('ok','必須属性と識別子の自己点検では重大な欠落なし');
+
+  return {id:id||'(空)', title:title||'(空)', score, issues:iss};
+}
+
+function fromForm(){
+  return [{
+    id:$('f_id').value, title:$('f_title').value, description:$('f_desc').value,
+    link:$('f_link').value, image_link:$('f_image').value, availability:$('f_avail').value,
+    price:$('f_price').value, brand:$('f_brand').value, condition:$('f_cond').value,
+    gtin:$('f_gtin').value, mpn:$('f_mpn').value, identifier_exists:$('f_ide').value,
+    google_product_category:$('f_gpc').value, shipping:$('f_ship').value
+  }];
+}
+function fromCsv(){
+  const rows=parseCSV($('src').value);
+  if(rows.length<2) return {err:'見出し行つきのCSV/TSVを入れてください'};
+  const map=mapHeader(rows[0]);
+  if(map.id<0&&map.title<0) return {err:'id または title 列が見つかりません。ヘッダー名を確認してください。'};
+  const get=(r,i)=>i>=0&&r[i]!=null?String(r[i]).trim():'';
+  const items=[];
+  for(const r of rows.slice(1,501)){
+    const o={};
+    for(const k of Object.keys(ALIASES)) o[k]=get(r,map[k]);
+    if(Object.values(o).some(v=>v)) items.push(o);
+  }
+  return {items, map};
+}
+
+function run(){
+  const mode=$('paneOne').hidden?'csv':'one';
+  let items;
+  if(mode==='one') items=fromForm();
+  else {
+    const r=fromCsv();
+    if(r.err){ alert(r.err); return; }
+    items=r.items;
+    if(!items.length){ alert('データ行がありません'); return; }
+  }
+  const idCounts={};
+  items.forEach(it=>{ const id=String(it.id||'').trim(); if(id) idCounts[id]=(idCounts[id]||0)+1; });
+  const results=items.map(it=>checkItem(it,idCounts));
+  lastRows=results;
+  $('csvDl').disabled=!results.length;
+
+  const bad=results.filter(r=>r.issues.some(i=>i.sev==='e')).length;
+  const warn=results.filter(r=>!r.issues.some(i=>i.sev==='e')&&r.issues.some(i=>i.sev==='w')).length;
+  const ok=results.length-bad-warn;
+  const avg=Math.round(results.reduce((a,r)=>a+r.score,0)/results.length);
+
+  let html='<div class="res"><b>結果:</b> '+results.length+'件 ／ <span class="e">要修正 '+bad+'</span> ／ <span class="w">注意 '+warn+'</span> ／ <span class="ok">重大欠落なし '+ok+'</span> ／ 平均点 '+avg+'（独自目安）</div>';
+  html+='<table><thead><tr><th>id</th><th>title</th><th>点</th><th>指摘</th></tr></thead><tbody>';
+  for(const r of results){
+    html+='<tr><td>'+esc(r.id)+'</td><td>'+esc(r.title.slice(0,80))+'</td><td>'+r.score+'</td><td>';
+    html+=r.issues.map(i=>'<span class="pill '+i.sev+'">'+(i.sev==='e'?'否認寄り':i.sev==='w'?'注意':'OK')+'</span>'+esc(i.msg)).join('<br>');
+    html+='</td></tr>';
+  }
+  html+='</tbody></table>';
+  if(results.length>=500) html+='<p class="muted">501行目以降は省略しました。</p>';
+  $('out').innerHTML=html;
+}
+
+$('tabCsv').onclick=()=>{
+  $('tabCsv').classList.add('on'); $('tabOne').classList.remove('on');
+  $('paneCsv').hidden=false; $('paneOne').hidden=true;
+};
+$('tabOne').onclick=()=>{
+  $('tabOne').classList.add('on'); $('tabCsv').classList.remove('on');
+  $('paneOne').hidden=false; $('paneCsv').hidden=true;
+};
+$('file').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=()=>{$('src').value=r.result}; r.readAsText(f,'utf-8');
+};
+$('go').onclick=run;
+$('sample').onclick=()=>{
+  $('tabCsv').click();
+  $('src').value=[
+    'id,title,description,link,image_link,availability,price,brand,condition,gtin,mpn,identifier_exists,google_product_category',
+    'sku-good,有田焼 湯呑 白磁 200ml,手仕事の白磁湯呑。電子レンジ・食洗機可。素材は磁器。容量200ml。箱入り。お手入れは柔らかスポンジで。,https://example.com/p/yunomi,https://example.com/img/yunomi.jpg,in_stock,1980 JPY,Arina,new,4580123456787,,yes,2271',
+    'sku-bad,セール中！！送料無料 湯呑み,,http://bad,placeholder.png,,1980,,new,,,,yes,',
+    'sku-noid,茶こし付きマグカップ 350ml 紺,日常使いに便利なマグ。,https://example.com/p/mug,https://example.com/img/mug.jpg,in_stock,2400 JPY,Arina,new,,,yes,2271',
+    'sku-dup,重複テストA,説明文があります。素材は磁器。容量200ml。,https://example.com/p/a,https://example.com/img/a.jpg,in_stock,1000 JPY,Arina,new,4580123456794,,yes,2271',
+    'sku-dup,重複テストB,説明文があります。素材は磁器。容量200ml。,https://example.com/p/b,https://example.com/img/b.jpg,in_stock,1000 JPY,Arina,new,4580123456800,,yes,2271'
+  ].join('\n');
+  run();
+};
+$('csvDl').onclick=()=>{
+  if(!lastRows.length)return;
+  const lines=[['id','title','score','severity'].join(',')];
+  for(const r of lastRows){
+    const sev=r.issues.map(i=>'['+i.sev+'] '+i.msg).join(' | ').replace(/"/g,'""');
+    lines.push([r.id, '"'+String(r.title).replace(/"/g,'""')+'"', r.score, '"'+sev+'"'].join(','));
+  }
+  const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gmc-feed-check.csv'; a.click();
+};
+
+// expose for jsdom tests
+window.__gmc={parseCSV,mapHeader,checkItem,stripHtml,gtinOk,priceOk,ALIASES};
+})();
+</script>
+</body>
+</html>
