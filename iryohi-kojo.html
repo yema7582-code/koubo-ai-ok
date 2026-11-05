@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>医療費控除・セルフメディケーション税制 概算チェッカー（令和8年分／令和9年申告：10万円か総所得5%・最高200万円／OTC12,000円超）｜無料・送信なし</title>
+<meta name="description" content="確定申告前に、支払った医療費と保険の補てん、総所得金額等から医療費控除の概算額を出します。セルフメディケーション税制（特定一般用医薬品等）とのどちらが有利かも比べます。明細CSVの貼り付け対応。国税庁タックスアンサーNo.1120・No.1129に基づく目安で、税務相談ではありません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/iryohi-kojo.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.3em}label{display:block;margin:8px 0 2px}
+input[type=number],input[type=text]{font-size:1.05em;padding:4px;width:14em}
+textarea{width:100%;font-family:inherit;font-size:13px;height:160px}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:5px 7px;vertical-align:top}
+th{background:#f3f3f3}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:#e8f5e9;font-weight:bold}.ng{color:#b00;font-weight:bold}.warn{color:#a60}.ok{color:#080}
+button{padding:6px 14px;margin:8px 6px 0 0}
+</style>
+</head>
+<body>
+<h1>医療費控除・セルフメディケーション税制 概算チェッカー</h1>
+<p>令和8年分（2026年1〜12月）の医療費を、令和9年2〜3月の確定申告で控除するときの<strong>概算額</strong>を出します。通常の医療費控除と、セルフメディケーション税制（選択適用）のどちらが有利かも比べます。入力はブラウザの中だけ、どこにも送信しません。</p>
+
+<div class="box">
+<strong>1. 所得と年分</strong>
+<label>年分 <select id="year"><option value="8" selected>令和8年分（2026年支払・令和9年申告）</option><option value="7">令和7年分（参考）</option></select></label>
+<label>その年の総所得金額等（目安） <input type="number" id="shotoku" min="0" step="1" value="3500000"> 円
+<span style="font-size:.9em">給与だけなら「給与所得控除後の金額」＋ほかの所得の合計に近い額。200万円未満だと足切りが10万円→総所得の5%になります。</span></label>
+</div>
+
+<div class="box">
+<strong>2. 通常の医療費控除（国税庁 No.1120）</strong>
+<label>実際に支払った医療費の合計 <input type="number" id="iryohi" min="0" step="1" value="180000"> 円</label>
+<label>うち保険金などで補てんされる金額 <input type="number" id="hoken" min="0" step="1" value="20000"> 円
+<span style="font-size:.9em">入院給付金・高額療養費・出産育児一時金など。その給付の対象となった医療費を超える分は、ほかの医療費から差し引きません。</span></label>
+</div>
+
+<div class="box">
+<strong>3. セルフメディケーション税制（No.1129・選択適用）</strong>
+<label>特定一般用医薬品等（対象の市販薬）の購入費合計 <input type="number" id="otc" min="0" step="1" value="45000"> 円</label>
+<label>うち保険金などで補てんされる金額 <input type="number" id="otcHoken" min="0" step="1" value="0"> 円</label>
+<label><input type="checkbox" id="kenko" checked> その年に健康診断・予防接種など一定の取組をした（適用の前提）</label>
+<p style="font-size:.9em">通常の医療費控除と<strong>どちらか一方</strong>だけ使えます。同じ年に両方は使えません。</p>
+</div>
+
+<div class="box">
+<strong>4. 明細の貼り付け（任意・合計の検算用）</strong>
+<p style="font-size:.9em">1行1件：<code>日付｜受診者｜病院・薬局｜区分(医療/OTC)｜支払額｜補てん額｜メモ</code>。区切りは｜・タブ・カンマ可。<code>#</code>行は無視。</p>
+<textarea id="src"># 例（架空）
+2026-03-12｜本人｜〇〇病院｜医療｜12000｜0｜外来
+2026-05-01｜配偶者｜△△クリニック｜医療｜85000｜30000｜入院（保険補てんあり）
+2026-06-20｜本人｜薬局｜OTC｜8200｜0｜対象マーク付き風邪薬
+2026-08-08｜子｜□□歯科｜医療｜45000｜0｜保険診療
+2026-11-02｜本人｜薬局｜OTC｜15000｜0｜対象の花粉症薬</textarea>
+<button id="agg">明細から合計を反映</button>
+</div>
+
+<button id="go">概算する</button><button id="csv">結果をCSVで保存</button>
+<div id="sum"></div>
+<h2>明細の集計</h2><div id="meisai"></div>
+
+<div class="note">
+<p><strong>計算式（国税庁タックスアンサー No.1120・No.1129）</strong></p>
+<ul>
+<li>医療費控除額 ＝（支払医療費 − 保険等の補てん）− 足切り額。足切りは<strong>10万円</strong>。ただし総所得金額等が<strong>200万円未満</strong>の人は総所得金額等の<strong>5%</strong>。控除の上限は<strong>200万円</strong>。</li>
+<li>セルフメディケーション税制の控除額 ＝（対象医薬品購入費 − 保険等の補てん）− <strong>12,000円</strong>。上限<strong>88,000円</strong>。一定の健康への取組が必要。</li>
+<li>補てん金は、その給付の目的となった医療費を限度に差し引き、引ききれない分をほかの医療費から差し引かない。</li>
+</ul>
+<p>未払いの医療費は支払った年の控除対象です。美容・予防接種（治療目的でないもの）・健康診断で異常がなかった場合の費用などは対象外になりがちです（このツールは区分を自動判定しません）。申告には「医療費控除の明細書」または「セルフメディケーション税制の明細書」の添付が必要で、領収書は原則5年保管です。</p>
+<p><strong>この計算は目安であり、税務相談ではありません。</strong>実際の申告・個別の可否は国税庁の資料または税理士にご確認ください。</p>
+<p>医療費明細の整理・控除見積もりの代行、日英中の領収書訳のご相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎 慎二）／<a href="index.html">ほかの無料ツール</a></p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const yen=n=>(n|0).toLocaleString('ja-JP')+' 円';
+const z2h=s=>String(s).replace(/[０-９．，]/g,c=>'０１２３４５６７８９．，'.indexOf(c)>=0?'.0123456789.,'['０１２３４５６７８９．，'.indexOf(c)]:c);
+let last=null;
+
+function parseRows(t){
+  return t.split(/\r?\n/).map((l,i)=>[l,i+1]).filter(([l])=>l.trim()&&!l.trim().startsWith('#')).map(([l,ln])=>{
+    const c=l.split(/[｜|\t,，]/).map(x=>x.trim());
+    const kind=(c[3]||'').toLowerCase();
+    const isOtc=/otc|セルフ|市販|薬品|くすり|薬/.test(kind);
+    const pay=+(z2h(c[4]||'').replace(/[,，円]/g,''))||0;
+    const hok=+(z2h(c[5]||'').replace(/[,，円]/g,''))||0;
+    return {ln,date:c[0]||'',who:c[1]||'',place:c[2]||'',kind:c[3]||'',pay,hok,memo:c[6]||'',isOtc,is:[]};
+  });
+}
+
+function calcIryo(pay,hok,shotoku){
+  const net=Math.max(0,pay-Math.min(hok,pay)); // 補てんはその医療費を限度
+  const floor=shotoku<2000000?Math.floor(shotoku*0.05):100000;
+  const ded=Math.max(0,Math.min(2000000,net-floor));
+  return {net,floor,ded,eligible:ded>0};
+}
+function calcSm(pay,hok,kenko){
+  if(!kenko) return {net:0,ded:0,eligible:false,reason:'健康への取組のチェックがオフです'};
+  const net=Math.max(0,pay-Math.min(hok,pay));
+  const ded=Math.max(0,Math.min(88000,net-12000));
+  return {net,ded,eligible:ded>0,reason:ded>0?'':(net<=12000?'12,000円を超えていません':'')};
+}
+
+function aggregate(){
+  const rows=parseRows($('src').value);
+  let iryo=0,iryoH=0,otc=0,otcH=0;
+  rows.forEach(r=>{
+    if(!r.kind) r.is.push(['warn','区分が空です']);
+    if(r.pay<=0) r.is.push(['ng','支払額が0または数字ではありません']);
+    if(r.hok>r.pay) r.is.push(['warn','補てん額が支払額を超えています（その件の医療費を限度に差し引きます）']);
+    if(r.isOtc){otc+=r.pay;otcH+=Math.min(r.hok,r.pay)}
+    else{iryo+=r.pay;iryoH+=Math.min(r.hok,r.pay)}
+  });
+  $('iryohi').value=iryo; $('hoken').value=iryoH; $('otc').value=otc; $('otcHoken').value=otcH;
+  $('meisai').innerHTML='<p>医療費 '+rows.filter(r=>!r.isOtc).length+'件 / OTC '+rows.filter(r=>r.isOtc).length+'件 → 合計欄に反映しました。</p>'+
+    '<table><tr><th>行</th><th>日付</th><th>受診者</th><th>場所</th><th>区分</th><th class="n">支払</th><th class="n">補てん</th><th>指摘</th></tr>'+
+    rows.map(r=>'<tr><td>'+r.ln+'</td><td>'+e(r.date)+'</td><td>'+e(r.who)+'</td><td>'+e(r.place)+'</td><td>'+e(r.kind)+(r.isOtc?'（OTC）':'（医療）')+'</td><td class="n">'+yen(r.pay)+'</td><td class="n">'+yen(r.hok)+'</td><td>'+(r.is.length?r.is.map(x=>'<div class="'+x[0]+'">'+e(x[1])+'</div>').join(''):'<span class="ok">OK</span>')+'</td></tr>').join('')+'</table>';
+  return rows;
+}
+
+function run(){
+  const rows=parseRows($('src').value);
+  const shotoku=+$('shotoku').value||0;
+  const iryo=+$('iryohi').value||0, hoken=+$('hoken').value||0;
+  const otc=+$('otc').value||0, otcH=+$('otcHoken').value||0;
+  const kenko=$('kenko').checked;
+  const a=calcIryo(iryo,hoken,shotoku);
+  const b=calcSm(otc,otcH,kenko);
+  // 注意: セルフメディケーションの対象薬は通常の医療費控除にも含められるが、選択適用なので比較は別建て
+  const best = (a.ded>=b.ded && a.eligible) || (!b.eligible && a.ded>=0) ? 'iryohi' : (b.eligible?'sm':(a.ded>0?'iryohi':'none'));
+  last={a,b,shotoku,iryo,hoken,otc,otcH,kenko,best,year:$('year').value,rows};
+
+  let s='<table><tr><th>制度</th><th class="n">対象経費（補てん差引後）</th><th class="n">足切り</th><th class="n">控除額（概算）</th><th>上限</th></tr>';
+  s+='<tr class="'+(best==='iryohi'?'best':'')+'"><td>通常の医療費控除</td><td class="n">'+yen(a.net)+'</td><td class="n">'+yen(a.floor)+'</td><td class="n">'+(a.ded?yen(a.ded):'0 円')+'</td><td>200万円</td></tr>';
+  s+='<tr class="'+(best==='sm'?'best':'')+'"><td>セルフメディケーション税制</td><td class="n">'+yen(b.net)+'</td><td class="n">12,000 円</td><td class="n">'+(b.ded?yen(b.ded):'0 円')+'</td><td>88,000円</td></tr></table>';
+
+  if(shotoku<2000000) s+='<p class="warn">総所得金額等が200万円未満のため、医療費控除の足切りは10万円ではなく総所得の5%（'+yen(a.floor)+'）です。</p>';
+  else s+='<p>総所得金額等が200万円以上のため、医療費控除の足切りは10万円です。</p>';
+
+  if(best==='iryohi'&&a.ded>0) s+='<p class="ok">この条件では<strong>通常の医療費控除</strong>のほうが有利（またはセルフが使えない）です。概算控除額 '+yen(a.ded)+'。</p>';
+  else if(best==='sm') s+='<p class="ok">この条件では<strong>セルフメディケーション税制</strong>のほうが有利です。概算控除額 '+yen(b.ded)+'。通常の医療費控除は使えません（選択適用）。</p>';
+  else s+='<p class="warn">どちらの控除額も0円です。医療費が足切り以下か、対象の市販薬が12,000円以下の可能性があります。</p>';
+
+  if(hoken>iryo) s+='<p class="warn">保険等の補てんが医療費合計を超えています。計算では医療費を限度に差し引いています。</p>';
+  if(!kenko) s+='<p class="warn">セルフメディケーションは一定の取組が前提です。チェックを外しているためセルフ側は0円扱いです。</p>';
+  if(b.reason) s+='<p class="warn">セルフ：'+e(b.reason)+'</p>';
+  s+='<p style="font-size:.9em">所得税の軽減目安（参考）：控除額 × 限界税率。住民税（所得割10%）でも別途軽減が出ることがあります。税率は申告内容で変わるため、ここでは掛けていません。</p>';
+  $('sum').innerHTML=s;
+  if(rows.length){
+    $('meisai').innerHTML='<table><tr><th>行</th><th>日付</th><th>区分</th><th class="n">支払</th><th class="n">補てん</th></tr>'+
+      rows.map(r=>'<tr><td>'+r.ln+'</td><td>'+e(r.date)+'</td><td>'+e(r.kind)+'</td><td class="n">'+yen(r.pay)+'</td><td class="n">'+yen(r.hok)+'</td></tr>').join('')+'</table>';
+  }
+}
+
+$('agg').onclick=()=>{aggregate();run()};
+$('go').onclick=run;
+$('csv').onclick=()=>{
+  if(!last)run();
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  let t='\ufeff項目,値\r\n';
+  const rows=[['年分','令和'+$('year').value+'年分'],['総所得金額等',last.shotoku],['医療費支払合計',last.iryo],['医療費の補てん',last.hoken],['医療費控除_差引後',last.a.net],['医療費控除_足切り',last.a.floor],['医療費控除_概算',last.a.ded],['OTC購入合計',last.otc],['OTCの補てん',last.otcH],['セルフメディケーション_差引後',last.b.net],['セルフメディケーション_概算',last.b.ded],['取組あり',last.kenko?'はい':'いいえ'],['有利な方',last.best==='iryohi'?'通常の医療費控除':last.best==='sm'?'セルフメディケーション':'どちらも0']];
+  t+=rows.map(r=>r.map(q).join(',')).join('\r\n')+'\r\n\r\n';
+  t+='行,日付,受診者,場所,区分,支払,補てん,メモ\r\n';
+  t+=(last.rows||[]).map(r=>[r.ln,r.date,r.who,r.place,r.kind,r.pay,r.hok,r.memo].map(q).join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='iryohi-kojo.csv';a.click();
+};
+['shotoku','iryohi','hoken','otc','otcHoken','kenko','year'].forEach(id=>$(id).addEventListener('input',run));
+run();
+</script>
+</body>
+</html>
