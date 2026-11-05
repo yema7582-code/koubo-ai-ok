@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Steam AI開示・コンテンツディスクリプタ 公開前チェッカー（Next Fest／ストア公開用・無料）</title>
+<meta name="description" content="SteamストアのAI生成コンテンツ開示とコンテンツディスクリプタを、体験版・トレーラー・ストア文と突き合わせて公開前に点検。送信なし・CSV保存。">
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:72px;font-family:ui-monospace,monospace;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+</style>
+</head>
+<body>
+<h1>Steam AI開示・コンテンツディスクリプタ 公開前チェッカー</h1>
+<p class="muted">Steam Next Fest やストア公開の前に、<strong>AI生成コンテンツの開示</strong>と<strong>コンテンツディスクリプタ</strong>が、体験版ビルド・トレーラー・ストア文と食い違っていないかを点検します。入力はブラウザ内だけ（送信なし）。公式の最終判断は <a href="https://partner.steamgames.com/doc/gettingstarted/contentsurvey" target="_blank" rel="noopener">Steamworks Content Survey</a> とパートナー画面に従ってください。</p>
+
+<div class="box">
+<label>ゲーム名（任意）</label>
+<input type="text" id="title" placeholder="例：ゆらすととまる">
+<div class="row">
+<div>
+<label>公開予定</label>
+<select id="event">
+<option value="nextfest">Steam Next Fest 体験版</option>
+<option value="launch">通常ストア公開／アップデート</option>
+<option value="wishlist">ウィッシュリスト開始（ページ公開）</option>
+</select>
+</div>
+<div>
+<label>ビルド識別（任意・デモのハッシュやビルド番号）</label>
+<input type="text" id="build" placeholder="例：demo-2026-11-05-a3f2">
+</div>
+</div>
+</div>
+
+<h2>1. AIタッチポイント（プレイヤーに見えるもの）</h2>
+<p class="note">行を追加して、実行時にモデルが呼ばれるか／オフライン生成か／開発補助だけかを選びます。「ランタイム生成」があるのに開示しない、またはトレーラーだけAIと書いてデモに無い、が典型的な不一致です。</p>
+<div id="tpRows"></div>
+<button type="button" class="sec" id="addTp">＋ タッチポイントを追加</button>
+
+<h2>2. ストア文・トレーラー・デモの主張</h2>
+<label>短い説明・紹介文（Steam short description など）</label>
+<textarea id="shortDesc" placeholder="例：AIが毎回違う客のセリフを生成するお店シミュレーター"></textarea>
+<label>トレーラーで言っていること・字幕（任意）</label>
+<textarea id="trailer" placeholder="例：0:12「AI-powered dialogue」／エンドカードにツール名"></textarea>
+<label>体験版／提出ビルドで実際に動くこと</label>
+<textarea id="demoTruth" placeholder="例：デモではスクリプト済みセリフのみ。ランタイムLLMはOFF"></textarea>
+
+<h2>3. コンテンツディスクリプタ（Steam）</h2>
+<p class="note">ページとデモで有効になっているディスクリプタが一致しているか確認します。デモに暴力があるのにページ未設定、またはその逆は Next Fest で特に問題になりやすいです。</p>
+<div class="row">
+<div>
+<strong>ストアページでONにする予定</strong>
+<div id="descPage"></div>
+</div>
+<div>
+<strong>体験版／ビルドに実際にある内容</strong>
+<div id="descDemo"></div>
+</div>
+</div>
+
+<h2>4. フォールバック・人間ゲート（ランタイム生成がある場合）</h2>
+<div class="chk"><input type="checkbox" id="fbOk"><label for="fbOk" style="font-weight:400;margin:0">ランタイム生成の各機能に、オフライン／タイムアウト時のスクリプト済み代替がある</label></div>
+<div class="chk"><input type="checkbox" id="humanGate"><label for="humanGate" style="font-weight:400;margin:0">プレイヤーに出す前に人間が承認する手順がある（または完全スクリプト）</label></div>
+<div class="chk"><input type="checkbox" id="privacyOk"><label for="privacyOk" style="font-weight:400;margin:0">プライバシーポリシーに推論API／サブプロセッサが書いてある（またはランタイム送信なし）</label></div>
+<label>使っている推論・音声・画像ベンダー（任意・カンマ区切り）</label>
+<input type="text" id="vendors" placeholder="例：OpenAI, ElevenLabs, Stable Diffusion（オフライン）">
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+</p>
+<div id="out"></div>
+
+<div class="box note">
+<strong>有料の続き（エージェントがやる範囲）</strong>：タッチポイント表＋Steam回答下書き＋トレーラー／デモ不一致表＋プライバシー追記案をセットで納品（プレイ動画のなりすまし無し）。目安 ¥8,000〜／タイトル。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="ai-disclosure.html">生成AI申告文メーカー</a> ・ <a href="steam-check.html">Steamストア翻訳チェック</a> ・ <a href="nextfest.html">Next Fest 締切カレンダー</a> ・ <a href="steam-assets.html">カプセルサイズ</a></p>
+<p>入力は端末内のみ。Steam／Valveの公式判定ではありません。</p>
+</footer>
+<script>
+(function(){
+const DESCS=[
+  {id:"violence",ja:"暴力・流血"},
+  {id:"gore",ja:"ゴア表現"},
+  {id:"nudity",ja:"ヌード"},
+  {id:"sexual",ja:"性的内容"},
+  {id:"language",ja:"強い言葉・罵倒"},
+  {id:"drugs",ja:"薬物・アルコールの乱用描写"},
+  {id:"horror",ja:"恐怖・トラウマ誘発（任意メモ）"}
+];
+const CLASSES=[
+  {v:"runtime_gen",ja:"ランタイム生成（プレイ中にモデル呼び出し）"},
+  {v:"offline_gen",ja:"オフライン生成（ビルドに成果物のみ）"},
+  {v:"assistive",ja:"開発補助のみ（プレイヤーに見えない）"},
+  {v:"moderation",ja:"モデレーションAPI（UGC送信）"}
+];
+const CATS=["text","art","voice","code_assist","other"];
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function descBoxes(rootId,prefix){
+  const root=$(rootId); root.innerHTML="";
+  DESCS.forEach(d=>{
+    const lab=document.createElement("label"); lab.className="chk"; lab.style.fontWeight="400";
+    lab.innerHTML=`<input type="checkbox" id="${prefix}_${d.id}"><span>${esc(d.ja)}</span>`;
+    root.appendChild(lab);
+  });
+}
+function addTp(data){
+  data=data||{};
+  const wrap=document.createElement("div"); wrap.className="box tp";
+  wrap.innerHTML=`
+<label>機能名</label><input type="text" class="tp-name" value="${esc(data.name||"")}" placeholder="例：NPCの客セリフ">
+<div class="row">
+<div><label>分類</label><select class="tp-class">${CLASSES.map(c=>`<option value="${c.v}" ${data.cls===c.v?"selected":""}>${esc(c.ja)}</option>`).join("")}</select></div>
+<div><label>Steamカテゴリ目安</label><select class="tp-cat">${CATS.map(c=>`<option value="${c}" ${data.cat===c?"selected":""}>${c}</option>`).join("")}</select></div>
+</div>
+<div class="row">
+<div><label>デモに含まれる？</label><select class="tp-demo"><option value="yes" ${data.demo==="yes"?"selected":""}>はい</option><option value="no" ${data.demo==="no"?"selected":""}>いいえ</option><option value="na" ${data.demo==="na"?"selected":""}>該当なし</option></select></div>
+<div><label>フォールバック</label><select class="tp-fb"><option value="yes" ${data.fb==="yes"?"selected":""}>あり</option><option value="no" ${data.fb==="no"?"selected":""}>なし</option><option value="na" ${!data.fb||data.fb==="na"?"selected":""}>不要</option></select></div>
+</div>
+<button type="button" class="sec tp-del">この行を削除</button>`;
+  wrap.querySelector(".tp-del").onclick=()=>wrap.remove();
+  $("tpRows").appendChild(wrap);
+}
+function readTps(){
+  return [...document.querySelectorAll(".tp")].map(el=>({
+    name:(el.querySelector(".tp-name").value||"").trim(),
+    cls:el.querySelector(".tp-class").value,
+    cat:el.querySelector(".tp-cat").value,
+    demo:el.querySelector(".tp-demo").value,
+    fb:el.querySelector(".tp-fb").value
+  })).filter(t=>t.name);
+}
+function readDescs(prefix){
+  const o={}; DESCS.forEach(d=>{o[d.id]=!!$("${prefix}_"+d.id).checked}); return o;
+}
+function aiKeywords(s){
+  s=(s||"").toLowerCase();
+  const keys=["ai-powered","ai generated","ai-generated","generative ai","生成ai","aiが","llm","chatgpt","stable diffusion","voice clone","aiナレーション","ai対話","aiセリフ"];
+  return keys.filter(k=>s.includes(k));
+}
+function analyze(state){
+  const issues=[];
+  const tips=[];
+  const tps=state.tps;
+  const runtime=tps.filter(t=>t.cls==="runtime_gen"||t.cls==="moderation");
+  const offline=tps.filter(t=>t.cls==="offline_gen");
+  const assist=tps.filter(t=>t.cls==="assistive");
+  const shortK=aiKeywords(state.shortDesc);
+  const trailK=aiKeywords(state.trailer);
+  const demoK=aiKeywords(state.demoTruth);
+
+  if(!tps.length){
+    issues.push({l:"warn",m:"タッチポイントが空です。AIを使っていなくても「開発補助のみ／なし」を1行書いておくと、チーム内の根拠になります。"});
+  }
+  if(runtime.length){
+    issues.push({l:"bad",m:`ランタイム生成／モデレーションが ${runtime.length} 件あります。SteamのAI開示で「AI生成コンテンツあり」側の回答が必要です（開発補助だけ、と書かない）。`});
+    runtime.forEach(t=>{
+      if(t.demo==="no" && (shortK.length||trailK.length)){
+        issues.push({l:"bad",m:`「${t.name}」はデモに無いのに、ストア／トレーラーがAIを示唆しています（${[...new Set(shortK.concat(trailK))].join(", ")||"AI表現"}）。デモONにするか、文言を削ってください。`});
+      }
+      if(t.fb==="no"){
+        issues.push({l:"bad",m:`「${t.name}」にフォールバックがありません。Next Fest向けはスクリプト済み代替＋タイムアウトが事実上必須です。`});
+      }
+    });
+    if(!state.fbOk) issues.push({l:"warn",m:"ランタイム生成があるのに「フォールバックあり」チェックが未記入です。"});
+    if(!state.humanGate) issues.push({l:"warn",m:"人間ゲート未チェック。パブリッシャーAnnexで聞かれやすい項目です。"});
+    if(!state.privacyOk) issues.push({l:"warn",m:"プライバシーポリシー整合のチェックが未記入です（推論APIへテキスト送信がある場合は特に）。"});
+  } else if(offline.length){
+    issues.push({l:"warn",m:`オフライン生成が ${offline.length} 件。Steamではアート／音声カテゴリの開示が必要なことが多いです。モバイルは「収集なし」でもストア文言と矛盾させないでください。`});
+  } else if(assist.length && !offline.length){
+    tips.push({l:"ok",m:"開発補助のみなら、プレイヤー向けAI開示は「なし」になりやすいですが、マーケが『AI制作』と書くならアシスト範囲を正直に書いてください。"});
+  }
+
+  if((shortK.length||trailK.length) && !runtime.length && !offline.length){
+    issues.push({l:"bad",m:"ストア／トレーラーにAI表現があるのに、タッチポイントに生成系がありません。在庫表を直すか文言を削除。"});
+  }
+  if(demoK.some(k=>/スクリプト|scripted|llmはoff|ランタイム.*off/i.test(state.demoTruth)) && runtime.some(t=>t.demo==="yes")){
+    issues.push({l:"warn",m:"デモ実態のメモが『スクリプト／OFF』寄りなのに、ランタイム行がデモ含むになっています。どちらかを合わせてください。"});
+  }
+
+  // descriptors mismatch
+  const page=state.descPage, demo=state.descDemo;
+  DESCS.forEach(d=>{
+    if(page[d.id] && !demo[d.id]){
+      issues.push({l:"warn",m:`ディスクリプタ「${d.ja}」はページON予定ですが、デモ側チェックがありません（過大申告 or デモ抜け）。`});
+    }
+    if(!page[d.id] && demo[d.id]){
+      issues.push({l:"bad",m:`デモに「${d.ja}」があるのにページ側がOFFです。Next Fest前にディスクリプタを合わせてください。`});
+    }
+  });
+
+  // steam answer draft
+  const steamYes=runtime.length>0 || offline.length>0 || (assist.length>0 && (shortK.length||trailK.length));
+  const cats=new Set();
+  tps.forEach(t=>{ if(t.cls!=="assistive" || shortK.length||trailK.length){ if(t.cls!=="assistive" || t.cat) cats.add(t.cat);} });
+  if(runtime.length||offline.length) tps.filter(t=>t.cls!=="assistive").forEach(t=>cats.add(t.cat));
+
+  const draft={
+    steamAiContent: steamYes ? "Yes（プレイヤー向けに生成物／ランタイムあり、またはマーケがAIを主張）" : "No（開発ツールのみ・プレイヤー非可視・マーケでもAI未主張）を検討",
+    categories:[...cats],
+    note: state.build ? `デモ／提出ビルド: ${state.build}` : "ビルド識別を入れると提出ごとに突合しやすいです",
+    vendors: state.vendors||"（未記入）"
+  };
+
+  if(!issues.length) tips.push({l:"ok",m:"大きな不一致は検出されませんでした。Steamworksの最新フォーム文言に合わせて最終転記してください。"});
+
+  return {issues,tips,draft,runtime:runtime.length,offline:offline.length,assist:assist.length,shortK,trailK};
+}
+function stateFromUi(){
+  return {
+    title:$("title").value.trim(),
+    event:$("event").value,
+    build:$("build").value.trim(),
+    tps:readTps(),
+    shortDesc:$("shortDesc").value,
+    trailer:$("trailer").value,
+    demoTruth:$("demoTruth").value,
+    descPage:readDescs("p"),
+    descDemo:readDescs("d"),
+    fbOk:$("fbOk").checked,
+    humanGate:$("humanGate").checked,
+    privacyOk:$("privacyOk").checked,
+    vendors:$("vendors").value.trim()
+  };
+}
+function render(r,state){
+  let h=`<div class="box"><b>結果サマリー</b>：ランタイム ${r.runtime} ／ オフライン生成 ${r.offline} ／ 開発補助 ${r.assist}`;
+  if(r.shortK.length) h+=` ／ ストアAI語: ${esc(r.shortK.join(", "))}`;
+  if(r.trailK.length) h+=` ／ トレーラーAI語: ${esc(r.trailK.join(", "))}`;
+  h+=`</div>`;
+  h+=`<h2>指摘</h2><ul>`;
+  (r.issues.concat(r.tips)).forEach(x=>{
+    h+=`<li><span class="pill ${x.l}">${x.l==="bad"?"要修正":x.l==="warn"?"注意":"OK"}</span>${esc(x.m)}</li>`;
+  });
+  h+=`</ul>`;
+  h+=`<h2>Steam回答の下書き（コピペ用・要最終確認）</h2>
+<pre id="draft">${esc(`【AI Content】
+判定目安: ${r.draft.steamAiContent}
+カテゴリ候補: ${r.draft.categories.join(", ")||"（なし）"}
+${r.draft.note}
+サブプロセッサ: ${r.draft.vendors}
+
+【整合メモ】
+イベント: ${state.event}
+タイトル: ${state.title||"（未記入）"}
+短い説明AI語: ${r.shortK.join(", ")||"なし"}
+トレーラーAI語: ${r.trailK.join(", ")||"なし"}
+`)}</pre>
+<button type="button" class="sec" id="cpDraft">下書きをコピー</button>`;
+  h+=`<h2>タッチポイント表</h2><table><thead><tr><th>機能</th><th>分類</th><th>カテゴリ</th><th>デモ</th><th>FB</th></tr></thead><tbody>`;
+  state.tps.forEach(t=>{
+    h+=`<tr><td>${esc(t.name)}</td><td>${esc(t.cls)}</td><td>${esc(t.cat)}</td><td>${esc(t.demo)}</td><td>${esc(t.fb)}</td></tr>`;
+  });
+  if(!state.tps.length) h+=`<tr><td colspan="5">（なし）</td></tr>`;
+  h+=`</tbody></table>`;
+  $("out").innerHTML=h;
+  const btn=$("cpDraft");
+  if(btn) btn.onclick=()=>{const t=$("draft").textContent; navigator.clipboard&&navigator.clipboard.writeText(t);};
+  window.__last= {result:r,state};
+}
+function toCsv(r,state){
+  const rows=[["severity","value"]];
+  rows.push(["title",state.title]); rows.push(["event",state.event]); rows.push(["build",state.build]);
+  rows.push(["steam_ai_draft",r.draft.steamAiContent]);
+  rows.push(["categories",r.draft.categories.join("|")]);
+  r.issues.forEach((x,i)=>rows.push(["issue_"+(i+1),`[${x.l}] ${x.m}`]));
+  state.tps.forEach((t,i)=>rows.push(["tp_"+(i+1),`${t.name}|${t.cls}|${t.cat}|demo=${t.demo}|fb=${t.fb}`]));
+  return rows.map(c=>c.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
+}
+function loadSample(){
+  $("title").value="Cozy Counter";
+  $("event").value="nextfest";
+  $("build").value="demo-2026-11-05-a3f2";
+  $("tpRows").innerHTML="";
+  addTp({name:"客のLLMセリフ",cls:"runtime_gen",cat:"text",demo:"no",fb:"no"});
+  addTp({name:"カプセル用SDイラスト",cls:"offline_gen",cat:"art",demo:"yes",fb:"na"});
+  addTp({name:"Copilotでコード補助",cls:"assistive",cat:"code_assist",demo:"na",fb:"na"});
+  $("shortDesc").value="AI-powered dialogue で毎回違うお客さんが来るお店ゲーム";
+  $("trailer").value="0:12 AI-powered dialogue / エンドカード未記載";
+  $("demoTruth").value="デモではスクリプト済みセリフのみ。ランタイムLLMはOFF";
+  $("p_violence").checked=false; $("d_violence").checked=true;
+  $("fbOk").checked=false; $("humanGate").checked=false; $("privacyOk").checked=false;
+  $("vendors").value="OpenAI";
+}
+descBoxes("descPage","p");
+descBoxes("descDemo","d");
+addTp();
+$("addTp").onclick=()=>addTp();
+$("sample").onclick=()=>{loadSample(); const s=stateFromUi(); render(analyze(s),s);};
+$("run").onclick=()=>{const s=stateFromUi(); render(analyze(s),s);};
+$("csv").onclick=()=>{
+  const s=stateFromUi(); const r=analyze(s); render(r,s);
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([toCsv(r,s)],{type:"text/csv"}));
+  a.download="steam-ai-check.csv"; a.click();
+};
+window.__steamAi={analyze,aiKeywords,CLASSES,DESCS,stateFromUi,readTps};
+})();
+</script>
+</body>
+</html>
