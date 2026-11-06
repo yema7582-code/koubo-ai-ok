@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>調査レポート・データコンペ写 公開前チェッカー（出典・日付・手法・限界／無料）</title>
+<meta name="description" content="市場調査ブリーフやKaggle／Zindiの写（write-up）を貼るだけ。出典のない数字、日付なし、手法・限界の抜け、プレースホルダURL、あいまい語、再現性の手がかり不足をブラウザ内だけで点検。CSV保存・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/writeup-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+textarea{width:100%;min-height:240px;box-sizing:border-box;font:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;padding:8px;border:1px solid #bbb;border-radius:6px}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+code.s{display:block;white-space:pre-wrap;word-break:break-all;background:#f5f5f5;padding:2px 4px;font-size:12px;margin:2px 0}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+label.row{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:.92em}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>調査レポート・データコンペ写 公開前チェッカー</h1>
+<p class="muted">クラウドワークスの<strong>Webリサーチ納品</strong>、海外クライアント向け市場調査ブリーフ、Kaggle／Zindi／DrivenData の<strong>write-up／method note</strong>を出す前に、よく落ちる穴（出典のない数字・調査日なし・手法と限界の抜け・仮URL・あいまい語・再現性の手がかり不足）を自分で潰します。処理はブラウザ内のみ（送信なし）。学術査読やコンペ公式採点の代替ではありません。</p>
+
+<div class="box">
+<p style="margin:0 0 8px">
+<label class="row"><input type="radio" name="mode" value="brief" checked> 調査ブリーフ／Webリサーチ</label>
+<label class="row"><input type="radio" name="mode" value="writeup"> データコンペ写（write-up）</label>
+</p>
+<label for="src" style="font-weight:600">本文（Markdown／プレーンテキスト／HTMLのテキスト）を貼る</label>
+<textarea id="src" aria-label="チェックする本文" placeholder="例：調査日、対象市場、数字と出典URL、手法、限界、結論…"></textarea>
+<button type="button" id="run">チェックする</button>
+<button type="button" id="sample" class="sec">弱いサンプルを入れる</button>
+<button type="button" id="clear" class="sec">消す</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+<div id="sum" role="status" aria-live="polite" style="margin-top:10px"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul id="manual" style="list-style:none;padding:0">
+<li class="chk"><input type="checkbox" id="m1"><span>主要なURLを自分で開き、2026年時点で生きている／有料壁の向こうにないことを確認した</span></li>
+<li class="chk"><input type="checkbox" id="m2"><span>数字の定義（売上／出荷／利用者、税込／税抜、円／ドル）がソースと同じ単位か突き合わせた</span></li>
+<li class="chk"><input type="checkbox" id="m3"><span>競合名・製品名のスペルと公式表記が一致している（翻訳ゆれで別人になっていない）</span></li>
+<li class="chk"><input type="checkbox" id="m4"><span>クライアントの守秘範囲外の内部資料・スクショ・個人情報を本文に混ぜていない</span></li>
+<li class="chk"><input type="checkbox" id="m5"><span>コンペ写の場合：リーダーボードのスコアと本文の主張が一致し、使っていない外部ラベルを「正解」と書いていない</span></li>
+<li class="chk"><input type="checkbox" id="m6"><span>限界・今後の作業を「次に何をすれば改善するか」まで具体にした（関連：<a href="dataset-sell-check.html">dataset-sell-check</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m7"><span>納品フォーマット（ページ数・言語・表紙・引用スタイル）が募集要項／案件文と一致している</span></li>
+<li class="chk"><input type="checkbox" id="m8"><span>AI利用の開示が必要な場合、主催者／クライアントの文言に合わせて書いた（関連：<a href="ai-disclosure.html">ai-disclosure</a>）</span></li>
+</ul>
+<p id="mcount" class="muted"></p>
+
+<div class="box">
+<p class="muted">小さなお店・スタートアップ向けの<strong>出典つき市場調査ブリーフ</strong>（調査日・範囲・数字の出典・競合表・限界・次の一手）や、データコンペの<strong>写／method note 仕上げ</strong>をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥8,000〜25,000（ブリーフ）／写は文字数目安に応相談</p>
+<p class="muted">関連：<a href="dataset-sell-check.html">データセット販売前</a> ／ <a href="sample-size.html">サンプルサイズ</a> ／ <a href="jiyu-kaito.html">自由回答集計</a> ／ <a href="cross-tab.html">クロス集計</a> ／ <a href="ai-inyou-check.html">AI引用されやすさ</a></p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページは調査品質の証明書ではありません。出典の真偽・ライセンス・コンペ規約の最終確認はご自身で行ってください。法的助言ではありません。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s).replace(/\s+/g," ").trim();n=n||140;return s.length>n?s.slice(0,n)+"…":s;}
+function mode(){const r=document.querySelector('input[name="mode"]:checked');return r?r.value:"brief";}
+let lastRows=[];
+function add(rows,sev,cat,msg,ev){rows.push({sev,cat,msg,ev:snip(ev||"")});}
+function stripHtml(t){
+  if(!/<[a-z][\s\S]*>/i.test(t)) return t;
+  const d=new DOMParser().parseFromString(t,"text/html");
+  return d.body?d.body.textContent||t:t;
+}
+function hasAny(text,res){for(const re of res){if(re.test(text)) return true;} return false;}
+function countRe(text,re){const m=text.match(re);return m?m.length:0;}
+
+const DATE_RE=/(20\d{2}[年\/\-\.]\s*\d{1,2}([月\/\-\.]\s*\d{1,2}日?)?|as of\s+20\d{2}|調査日|実施日|データ時点|accessed\s+20\d{2}|retrieved\s+20\d{2}|截至|调研日期)/i;
+const METHOD_RE=/(手法|方法|メソドロジー|methodology|approach|実験設定|experimental setup|データ前処理|feature|特徴量|モデル|model|学習|training|評価指標|metric|クロスバリデーション|cross[- ]?validation|サンプリング|収集方法)/i;
+const LIMIT_RE=/(限界|制約|limitation|caveat|注意点|未検証|今後の課題|future work|できないこと|スコープ外|out of scope|バイアス|bias)/i;
+const SOURCE_HINT_RE=/(出典|ソース|source|参考|引用|according to|per\s+|via\s+|https?:\/\/|doi\.org\/|arxiv\.org\/|\[\d+\]|\(\d{4}\))/i;
+const URL_RE=/https?:\/\/[^\s\)\]\>\"']+/gi;
+const PLACEHOLDER_URL_RE=/https?:\/\/(example\.(com|org|net|jp)|localhost|127\.0\.0\.1|xxx\.|your[-_]?site|placeholder)/i;
+const VAGUE_RE=/(様々な|さまざまな|多くの企業|と言われている|と考えられている|一般的に|近年注目|a lot of|many companies|it is said|reportedly|\bvarious\b|\bnumerous\b)/gi;
+const NUM_RE=/(?:\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?:\s*%|％|円|万円|億円|兆円|ドル|USD|US\$|€|ユーロ|人|社|件|倍)?/g;
+const REPRO_RE=/(seed|乱数種|再現|reproducib|GitHub|gitlab|コード|notebook|リポジトリ|version|データ版|commit|ハッシュ|public score|LB|リーダーボード)/i;
+const TODO_RE=/\bTODO\b|\bFIXME\b|\bTBD\b|要確認|後で書く|ここに入れる|表を挿入|INSERT\s+TABLE|Lorem ipsum|〇〇社|○○社|\[会社名\]|\[要出典\]/i;
+const PII_RE=/([a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,})|(?:\+?\d{1,3}[-\s]?)?(?:\d{2,4}[-\s]?){2}\d{3,4}|〒?\s*\d{3}-?\d{4}/gi;
+const ACTION_RE=/(次の一手|おすすめ|推奨|recommendation|action|実装|導入|やめる|始める|優先|roadmap)/i;
+const COMP_RE=/(競合|competitor|代替|vs\.|比較表|ベンチマーク|benchmark)/i;
+
+function check(raw){
+  const rows=[];
+  const text=stripHtml(raw||"").replace(/\r/g,"");
+  const m=mode();
+  if(!text.trim()){add(rows,"bad","入力","本文が空です","");return rows;}
+  const chars=text.replace(/\s+/g,"").length;
+  const lines=text.split(/\n/).filter(l=>l.trim()).length;
+  if(chars<400) add(rows,"warn","分量","本文が短めです（空白除き約"+chars+"字）。ブリーフは目安800字〜、写はコンペ指定ページ数を確認",chars+" chars / "+lines+" lines");
+  if(m==="writeup"&&chars<1200) add(rows,"warn","分量","write-up モードではやや短い可能性（空白除き約"+chars+"字）。4ページ指定なら見出し・表・限界を足す", "");
+
+  if(!DATE_RE.test(text)) add(rows,"bad","日付","調査日／データ時点／as-of／accessed 年が本文に見当たらない","例：調査日 2026-11-06 または as of 2026-11");
+  else add(rows,"ok","日付","日付・時点の手がかりあり", (text.match(DATE_RE)||[""])[0]);
+
+  if(!METHOD_RE.test(text)) add(rows,"bad","手法","手法／方法／methodology／モデル／評価指標などの節が見当たらない","");
+  else add(rows,"ok","手法","手法・評価の手がかりあり","");
+
+  if(!LIMIT_RE.test(text)) add(rows,"bad","限界","限界・制約・caveat・今後の課題が見当たらない（過大主張になりやすい）","");
+  else add(rows,"ok","限界","限界・今後の課題の手がかりあり","");
+
+  if(m==="brief"&&!ACTION_RE.test(text)) add(rows,"warn","次の一手","推奨・次の一手・action が見当たらない（調査だけで終わりがち）","");
+  if(m==="brief"&&!COMP_RE.test(text)) add(rows,"warn","競合","競合／比較の言及が薄い（市場調査ブリーフでは表があると強い）","");
+  if(m==="writeup"&&!REPRO_RE.test(text)) add(rows,"bad","再現性","seed／コード／リポジトリ／public score／データ版などの再現手がかりが見当たらない","");
+  else if(m==="writeup") add(rows,"ok","再現性","再現・スコアの手がかりあり","");
+
+  const urls=text.match(URL_RE)||[];
+  const badU=urls.filter(u=>PLACEHOLDER_URL_RE.test(u));
+  if(badU.length) add(rows,"bad","URL","プレースホルダ／localhost URL（"+badU.length+"件）",badU[0]);
+  if(urls.length===0) add(rows,"warn","URL","http(s) リンクが0件。出典URLか DOI／arXiv を足すと検証しやすい","");
+  else add(rows,"ok","URL","リンク "+urls.length+" 件",urls[0]);
+
+  if(TODO_RE.test(text)) add(rows,"bad","下書き","TODO／TBD／要確認／〇〇社／表を挿入などが残っている",(text.match(TODO_RE)||[""])[0]);
+
+  const vague=text.match(VAGUE_RE)||[];
+  if(vague.length>=3) add(rows,"warn","あいまい語","あいまい語が多め（"+vague.length+"件）。数字か固有名に置き換え",vague.slice(0,3).join(" / "));
+  else if(vague.length) add(rows,"warn","あいまい語","あいまい語あり（"+vague.length+"件）",vague[0]);
+
+  // Numbers without nearby source hint (same line or ±120 chars)
+  const numHits=[];
+  let nm;
+  const reNum=new RegExp(NUM_RE.source,"g");
+  while((nm=reNum.exec(text))){
+    const n=nm[0];
+    // skip tiny ints that are likely years/sections if alone 1-2 digits without unit — keep % and large
+    if(/^\d{1,2}$/.test(n)) continue;
+    if(/^20\d{2}$/.test(n)) continue;
+    const i=nm.index;
+    const win=text.slice(Math.max(0,i-100), Math.min(text.length,i+n.length+100));
+    if(!SOURCE_HINT_RE.test(win)) numHits.push(n+" @…"+snip(win,60));
+  }
+  if(numHits.length>=3) add(rows,"bad","出典","出典手がかりの薄い数字が複数（"+numHits.length+"件）。行末にURL／出典名／[1]を",numHits[0]);
+  else if(numHits.length) add(rows,"warn","出典","出典手がかりの薄い数字あり（"+numHits.length+"件）",numHits[0]);
+  else if((text.match(NUM_RE)||[]).length) add(rows,"ok","出典","数字の近くに出典手がかりがありそう","");
+
+  if(!SOURCE_HINT_RE.test(text)) add(rows,"bad","出典","出典／source／URL／doi／[n] が本文全体に見当たらない","");
+
+  const pii=text.match(PII_RE)||[];
+  // filter false positive years-like phones lightly
+  const pii2=pii.filter(x=>/@/.test(x)||/〒/.test(x)||(x.replace(/\D/g,"").length>=10));
+  if(pii2.length) add(rows,"warn","個人情報","メール／電話／郵便番号らしき文字列（"+pii2.length+"件）。公開写に不要なら削除",pii2[0]);
+
+  // Section-ish headings
+  const heads=(text.match(/^(#{1,3}\s+.+|[０-９0-9]+[\.．、]\s*\S+|第[一二三四五六七八九十0-9]+[章節])/gm)||[]).length;
+  if(heads<2) add(rows,"warn","構成","見出しが少ない（Markdownの # や 1. など）。背景→手法→結果→限界の順が読みやすい","");
+
+  if(m==="writeup"){
+    if(!/(結果|result|score|成績|実験結果)/i.test(text)) add(rows,"warn","結果","結果／score の節が見当たらない","");
+    if(!/(データ|dataset|訓練|train|test|検証)/i.test(text)) add(rows,"warn","データ","データ分割／dataset の言及が薄い","");
+    if(/(正解|ground truth|ラベル付き).*?(外部|AIS|非公開)/i.test(text)&&/(使った|利用|学習)/i.test(text))
+      add(rows,"bad","規約リスク","外部の正解ラベル利用を示唆する書き方。コンペ規約と照らし、使っていないなら明記して否定","");
+  }
+
+  if(m==="brief"){
+    if(!/(対象|スコープ|scope|今回は|調査範囲|対象市場|対象国)/i.test(text))
+      add(rows,"warn","範囲","調査範囲／対象市場の明示が薄い（何を調べて何を調べないか）","");
+  }
+
+  return rows;
+}
+
+function render(rows){
+  lastRows=rows;
+  const bad=rows.filter(r=>r.sev==="bad").length;
+  const warn=rows.filter(r=>r.sev==="warn").length;
+  const ok=rows.filter(r=>r.sev==="ok").length;
+  let pill="";
+  if(bad) pill='<span class="pill bad">要修正 '+bad+'</span>';
+  else if(warn) pill='<span class="pill warn">注意 '+warn+'</span>';
+  else pill='<span class="pill ok">重大な穴は見当たらず</span>';
+  $("sum").innerHTML=pill+' <span class="muted">ok '+ok+'／warn '+warn+'／bad '+bad+'（'+mode()+'）</span>';
+  if(!rows.length){$("res").innerHTML="";return;}
+  let html='<table><thead><tr><th>判定</th><th>観点</th><th>内容</th><th>根拠</th></tr></thead><tbody>';
+  for(const r of rows){
+    const lab=r.sev==="bad"?"要修正":r.sev==="warn"?"注意":"OK";
+    html+='<tr><td><span class="pill '+r.sev+'">'+lab+'</span></td><td>'+esc(r.cat)+'</td><td>'+esc(r.msg)+'</td><td><code class="s">'+esc(r.ev)+'</code></td></tr>';
+  }
+  html+='</tbody></table>';
+  $("res").innerHTML=html;
+}
+
+function run(){render(check($("src").value));}
+$("run").onclick=run;
+$("clear").onclick=()=>{$("src").value="";$("res").innerHTML="";$("sum").textContent="";lastRows=[];};
+$("sample").onclick=()=>{
+  document.querySelector('input[name="mode"][value="brief"]').checked=true;
+  $("src").value=`# 市場の簡易調査
+
+近年注目の分野で、様々な企業が参入していると言われています。市場規模は大きく、多くの企業が伸ばしています。成長率は高いです。
+
+競合もいるようです。価格は手頃。ユーザー数は多い。
+
+## 結論
+導入をおすすめします。詳細は後で書く。表を挿入。
+出典: https://example.com/report
+連絡: test@example.com 03-1234-5678
+`;
+  run();
+};
+$("csv").onclick=()=>{
+  if(!lastRows.length){run();}
+  const lines=[["sev","cat","msg","evidence"].join(",")].concat(lastRows.map(r=>[r.sev,r.cat,r.msg,r.ev].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="writeup-check.csv";a.click();
+};
+function updM(){const n=[...document.querySelectorAll("#manual input")].filter(c=>c.checked).length;$("mcount").textContent="人手確認 "+n+"/8";}
+document.querySelectorAll("#manual input").forEach(c=>c.addEventListener("change",updM));
+document.querySelectorAll('input[name="mode"]').forEach(r=>r.addEventListener("change",()=>{if($("src").value.trim())run();}));
+updM();
+})();
+</script>
+</body>
+</html>
