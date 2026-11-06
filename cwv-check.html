@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Core Web Vitals / PageSpeed 公開前チェッカー（LCP・INP・CLS・画像・フォント・無料）</title>
+<meta name="description" content="WordPress・静的サイト・LPを公開／改修する前に、LCP・INP・CLS・画像・フォント・第三者スクリプトのよくある落ちどころをブラウザ内だけで自己点検。改善優先度と作業メモ・CSV保存付き。送信なし。Google公式の代替ではありません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/cwv-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+#out{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Core Web Vitals / PageSpeed 公開前チェッカー</h1>
+<p class="muted">LP・コーポレート・WordPress を公開／改修する前に、<strong>LCP・INP・CLS</strong>と画像・フォント・第三者スクリプトのよくある落ちどころを自分で潰します。処理はブラウザ内のみ（送信なし）。PageSpeed Insights / CrUX の公式判定の代替ではなく、受託前の自己点検用です。</p>
+
+<div class="box">
+<label>サイト／ページ名（任意）</label>
+<input type="text" id="site" placeholder="例：株式会社〇〇 コーポレート / 春キャンペーンLP">
+<div class="row">
+<div>
+<label>主なスタック</label>
+<select id="stack">
+<option value="wp">WordPress（テーマ＋プラグイン）</option>
+<option value="static" selected>静的 HTML / SSG（Astro・Hugo・Next静的など）</option>
+<option value="shop">EC（Shopify / BASE / STORES / 楽天等）</option>
+<option value="lp">広告LP（ノーコード含む）</option>
+<option value="other">その他／わからない</option>
+</select>
+</div>
+<div>
+<label>今回の目的</label>
+<select id="goal">
+<option value="launch" selected>新規公開前</option>
+<option value="redesign">リニューアル直後</option>
+<option value="ads">広告出稿前（LP）</option>
+<option value="cwv_fail">Search Console で「不良／改善が必要」が出た</option>
+<option value="audit">定期点検</option>
+</select>
+</div>
+</div>
+<label>計測済みの目安（任意・モバイル優先）</label>
+<div class="row">
+<div>
+<label>LCP（秒）</label>
+<input type="text" id="lcp" placeholder="例：3.8（未計測なら空欄）">
+</div>
+<div>
+<label>INP（ms）</label>
+<input type="text" id="inp" placeholder="例：280">
+</div>
+</div>
+<div class="row">
+<div>
+<label>CLS</label>
+<input type="text" id="cls" placeholder="例：0.18">
+</div>
+<div>
+<label>計測元</label>
+<select id="source">
+<option value="none">まだ測っていない</option>
+<option value="psi" selected>PageSpeed Insights</option>
+<option value="crux">Search Console / CrUX</option>
+<option value="lighthouse">Lighthouse（ラボ）</option>
+<option value="rum">自前 RUM</option>
+</select>
+</div>
+</div>
+</div>
+
+<h2>1. LCP（Largest Contentful Paint）</h2>
+<div class="box">
+<label>ファーストビューでいちばん大きい要素は？</label>
+<select id="hero">
+<option value="">未選択</option>
+<option value="img">大きな画像／ヒーロー画像</option>
+<option value="video">動画・背景動画</option>
+<option value="text">見出しテキスト（Webフォント）</option>
+<option value="slider">スライダー／カルーセル</option>
+<option value="unknown">わからない</option>
+</select>
+<div class="chk"><input type="checkbox" id="l_preload"><span>LCP候補画像に <code>fetchpriority="high"</code> または preload を付けている（または不要と確認済み）</span></div>
+<div class="chk"><input type="checkbox" id="l_webp"><span>ヒーロー画像は WebP/AVIF 等に圧縮し、表示幅以上の巨大PNG/JPEGを避けている</span></div>
+<div class="chk"><input type="checkbox" id="l_cdn"><span>画像／静的アセットが CDN または近いオリジンから配信されている</span></div>
+<div class="chk"><input type="checkbox" id="l_nocarousel"><span>ファーストビューの自動カルーセル／巨大スライダーを止めた、または遅延読込にした</span></div>
+<div class="chk"><input type="checkbox" id="l_server"><span>TTFB が遅い原因（安い共有サーバ・未キャッシュ・重いプラグイン）を疑って切り分けた</span></div>
+</div>
+
+<h2>2. INP（Interaction to Next Paint）</h2>
+<div class="box">
+<div class="chk"><input type="checkbox" id="i_heavy"><span>クリック／タップ時に重い同期 JS（巨大メニュー・全商品フィルタ・チャット起動）をメインスレッドで一気に動かしていない</span></div>
+<div class="chk"><input type="checkbox" id="i_third"><span>チャット・ヒートマップ・MA・広告タグは同意後またはアイドル後に読み込む方針にした</span></div>
+<div class="chk"><input type="checkbox" id="i_jquery"><span>使っていない jQuery プラグイン／レガシースライダーを外した、または更新した</span></div>
+<div class="chk"><input type="checkbox" id="i_mobile"><span>実機モバイルでメニュー開閉・フォーム入力・カート追加を触って「固まる」箇所をメモした</span></div>
+</div>
+
+<h2>3. CLS（Cumulative Layout Shift）</h2>
+<div class="box">
+<div class="chk"><input type="checkbox" id="c_size"><span>画像・iframe・動画に width/height または aspect-ratio を付け、枠を先に確保している</span></div>
+<div class="chk"><input type="checkbox" id="c_font"><span>Webフォントは <code>font-display: swap</code>（または optional）で、FOITでレイアウトが跳ねない</span></div>
+<div class="chk"><input type="checkbox" id="c_banner"><span>遅延挿入のクッキーバナー／お知らせバー／広告枠が上から押し下げない（予約スペース or オーバーレイ）</span></div>
+<div class="chk"><input type="checkbox" id="c_ads"><span>広告枠の高さを固定し、読み込み後にコンテンツがズレない</span></div>
+</div>
+
+<h2>4. 画像・フォント・キャッシュ</h2>
+<div class="box">
+<div class="chk"><input type="checkbox" id="a_lazy"><span>ファーストビュー以外の画像は lazy-load（LCP画像は lazy にしない）</span></div>
+<div class="chk"><input type="checkbox" id="a_srcset"><span>srcset / sizes でモバイルに過剰解像度を送っていない</span></div>
+<div class="chk"><input type="checkbox" id="a_fontsubset"><span>日本語 Web フォントはサブセット化、またはシステムフォント優先で必要箇所だけ読み込む</span></div>
+<div class="chk"><input type="checkbox" id="a_cache"><span>静的アセットに長期キャッシュ（ハッシュ付きファイル名）を付けている</span></div>
+<div class="chk"><input type="checkbox" id="a_cssjs"><span>未使用 CSS/JS の削除、またはクリティカルCSSの分離を検討した</span></div>
+</div>
+
+<h2>5. WordPress / プラグイン特有（該当時）</h2>
+<div class="box">
+<div class="chk"><input type="checkbox" id="w_na"><span>WordPress ではない／該当なし</span></div>
+<div class="chk"><input type="checkbox" id="w_cache"><span>ページキャッシュ（またはホストのエッジキャッシュ）が有効</span></div>
+<div class="chk"><input type="checkbox" id="w_optimg"><span>画像最適化プラグイン or CDN画像変換を1系統に統一（二重最適化を避けた）</span></div>
+<div class="chk"><input type="checkbox" id="w_plugins"><span>使っていないプラグイン／ページビルダーの余分なアセットを無効化した</span></div>
+<div class="chk"><input type="checkbox" id="w_admin"><span>管理画面用スクリプトがフロントに漏れていない</span></div>
+</div>
+
+<label>メモ（任意）</label>
+<textarea id="memo" rows="3" placeholder="例：ヒーローが3MBのPNG、GTMに未使用タグ7本、日本語フォント3ファミリー同時読込…"></textarea>
+
+<p style="margin-top:16px">
+<button type="button" id="run">点検する</button>
+<button type="button" class="sec" id="csv">CSV保存</button>
+<button type="button" class="sec" id="copy">結果をコピー</button>
+</p>
+<div id="summary" class="box" style="display:none"></div>
+<div id="result"></div>
+
+<footer>
+<p class="note">参考：web.dev Core Web Vitals（LCP・INP・CLS のしきい値の考え方）、PageSpeed Insights ヘルプ。数値の合否は実測（フィールド優先）で確認してください。このページは診断代行ではなく自己点検用です。</p>
+<p>関連：<a href="a11y-check.html">Webアクセシビリティ簡易チェッカー</a> ／ <a href="ogp-maker.html">OGP・メタタグ</a> ／ <a href="hreflang.html">hreflang</a> ／ <a href="ai-robots-check.html">robots.txt AIクローラー</a> ／ <a href="index.html">ほかの無料ツール</a></p>
+<p>改善作業の相談（画像圧縮・遅延読込・タグ整理・レポート）： <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a></p>
+</footer>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const num=s=>{const n=parseFloat(String(s||'').replace(/[^0-9.]/g,''));return Number.isFinite(n)?n:null};
+
+function evaluate(){
+  const findings=[];
+  const push=(sev,area,msg,fix)=>findings.push({sev,area,msg,fix});
+  const lcp=num($('lcp').value), inp=num($('inp').value), cls=num($('cls').value);
+  const source=$('source').value, hero=$('hero').value, stack=$('stack').value, goal=$('goal').value;
+
+  if(source==='none') push('warn','計測','まだ実測していない。公開前にモバイルの PageSpeed Insights（または CrUX）で LCP/INP/CLS を取る',['psiを1回実行','Search Console の体験レポートを確認']);
+  if(lcp!=null){
+    if(lcp>4) push('bad','LCP',`LCP ${lcp}s は「不良」帯の目安（目安: 良い≤2.5 / 改善≤4 / 不良>4）`,['ヒーロー画像の圧縮と優先読込','TTFBとサーバキャッシュ']);
+    else if(lcp>2.5) push('warn','LCP',`LCP ${lcp}s は「改善が必要」帯の目安`,['画像形式・サイズ見直し','不要なレンダリングブロックCSS/JS削減']);
+    else push('ok','LCP',`LCP ${lcp}s は「良い」帯の目安（フィールドでも確認）`,[]);
+  }
+  if(inp!=null){
+    if(inp>500) push('bad','INP',`INP ${inp}ms は「不良」帯の目安（目安: 良い≤200 / 改善≤500 / 不良>500）`,['第三者タグの遅延','クリック時の重い同期処理を分割']);
+    else if(inp>200) push('warn','INP',`INP ${inp}ms は「改善が必要」帯の目安`,['メニュー・フィルタのJS最適化','未使用プラグイン削除']);
+    else push('ok','INP',`INP ${inp}ms は「良い」帯の目安`,[]);
+  }
+  if(cls!=null){
+    if(cls>0.25) push('bad','CLS',`CLS ${cls} は「不良」帯の目安（目安: 良い≤0.1 / 改善≤0.25 / 不良>0.25）`,['画像・広告枠のサイズ予約','遅延バナーをオーバーレイ化']);
+    else if(cls>0.1) push('warn','CLS',`CLS ${cls} は「改善が必要」帯の目安`,['font-displayと画像寸法','埋め込みiframeの枠確保']);
+    else push('ok','CLS',`CLS ${cls} は「良い」帯の目安`,[]);
+  }
+
+  if(hero==='img' && !$('l_webp').checked) push('bad','LCP','ヒーローが画像なのに圧縮／次世代形式の確認が未チェック',['WebP化','表示幅に合わせたリサイズ']);
+  if(hero==='img' && !$('l_preload').checked) push('warn','LCP','LCP画像の優先読込（fetchpriority/preload）が未確認',['LCP画像だけ優先、他はlazy']);
+  if(hero==='slider') push('bad','LCP','ファーストビューのスライダーは LCP/CLS を悪化させやすい',['静止ヒーローに変更','自動再生オフ＋遅延初期化']);
+  if(hero==='video') push('warn','LCP','背景動画は LCP と帯域を圧迫しやすい',['ポスター画像をLCPに','モバイルでは静止画フォールバック']);
+  if(hero==='text' && !$('c_font').checked) push('warn','CLS/LCP','見出しがWebフォント依存なのに font-display 未確認',['swap/optional','システムフォント優先']);
+
+  if(!$('l_nocarousel').checked && (hero==='slider'||hero==='')) push('warn','LCP','自動カルーセル対策が未チェック',['FVの自動切替を止める']);
+  if(!$('l_server').checked && (goal==='cwv_fail'||lcp!=null&&lcp>2.5)) push('warn','LCP','サーバ／TTFB の切り分けが未チェック',['キャッシュON','重いプラグイン一時無効で比較']);
+
+  if(!$('i_third').checked) push('bad','INP','チャット・MA・広告タグの遅延読込方針が未確認（モバイルINPの定番悪化要因）',['同意後読込','requestIdleCallback／遅延秒数']);
+  if(!$('i_mobile').checked) push('warn','INP','実機モバイルでの操作確認が未チェック',['メニュー・フォーム・カートを実機で記録']);
+  if(!$('i_heavy').checked) push('warn','INP','クリック時の重い同期JSの確認が未チェック',['長いタスクを分割','不要な再レンダー削減']);
+  if(stack==='wp' && !$('i_jquery').checked && !$('w_na').checked) push('warn','INP','レガシーjQuery／スライダーの棚卸しが未チェック',['使っていないスライダー削除']);
+
+  if(!$('c_size').checked) push('bad','CLS','画像・iframe の寸法予約が未確認',['width/height または aspect-ratio']);
+  if(!$('c_banner').checked) push('warn','CLS','遅延挿入バナーの押し下げ対策が未確認',['オーバーレイ化','予約スペース']);
+  if(!$('c_font').checked) push('warn','CLS','Webフォントの表示方針が未確認',['font-display: swap']);
+  if(!$('c_ads').checked && (stack==='shop'||stack==='lp')) push('warn','CLS','広告枠の高さ固定が未確認',['広告スロットにmin-height']);
+
+  if(!$('a_lazy').checked) push('warn','画像','FV以外の lazy-load が未確認（LCP画像は lazy 禁止）',['loading=lazy をFV以外のみ']);
+  if(!$('a_fontsubset').checked) push('warn','フォント','日本語フォントのサブセット／必要箇所限定が未確認',['使う字だけ埋め込み','可変フォント1系統に削減']);
+  if(!$('a_cache').checked) push('warn','キャッシュ','静的アセットの長期キャッシュが未確認',['ハッシュ付きファイル名＋Cache-Control']);
+  if(!$('a_cssjs').checked) push('warn','アセット','未使用CSS/JS削減の検討が未チェック',['カバレッジで未使用を特定']);
+
+  if(stack==='wp' && !$('w_na').checked){
+    if(!$('w_cache').checked) push('bad','WordPress','ページキャッシュ未確認',['ホスト／プラグインのページキャッシュを有効化']);
+    if(!$('w_plugins').checked) push('warn','WordPress','未使用プラグイン／ビルダー資産の棚卸し未チェック',['フロントで読んでいるアセット一覧を取る']);
+    if(!$('w_optimg').checked) push('warn','WordPress','画像最適化の二重化チェック未実施',['最適化は1系統に統一']);
+    if(!$('w_admin').checked) push('warn','WordPress','管理画面用スクリプトのフロント漏洩確認が未チェック',['クエリモニター等で確認']);
+  }
+
+  if(goal==='ads' && (lcp==null||source==='none')) push('bad','広告LP','出稿前なのに計測がない。出稿後に「遅いLP」だとCPAが悪化しやすい',['出稿前にモバイルPSI','実機3G相当でも確認']);
+
+  return findings;
+}
+
+function render(){
+  const findings=evaluate();
+  const bad=findings.filter(f=>f.sev==='bad').length;
+  const warn=findings.filter(f=>f.sev==='warn').length;
+  const ok=findings.filter(f=>f.sev==='ok').length;
+  const sum=$('summary'); sum.style.display='block';
+  sum.innerHTML=`<strong>結果サマリー</strong> <span class="pill bad">要対応 ${bad}</span> <span class="pill warn">注意 ${warn}</span> <span class="pill ok">良好 ${ok}</span>
+  <p class="muted" style="margin:.5em 0 0">しきい値は web.dev の一般的な目安です。合否はフィールドデータで最終確認してください。</p>`;
+  let html='<h2>詳細</h2><table><tr><th>重要度</th><th>領域</th><th>内容</th><th>次の一手</th></tr>';
+  const order={bad:0,warn:1,ok:2};
+  findings.sort((a,b)=>order[a.sev]-order[b.sev]).forEach(f=>{
+    const label=f.sev==='bad'?'要対応':f.sev==='warn'?'注意':'良好';
+    html+=`<tr><td><span class="pill ${f.sev}">${label}</span></td><td>${esc(f.area)}</td><td>${esc(f.msg)}</td><td>${(f.fix||[]).map(esc).join('／')||'—'}</td></tr>`;
+  });
+  html+='</table>';
+  const memo=$('memo').value.trim();
+  if(memo) html+=`<h2>メモ</h2><pre id="out">${esc(memo)}</pre>`;
+  html+=`<h2>有料改善パックの目安（参考）</h2><p class="note">公開前点検レポートのみ ¥8,000〜12,000／画像・タグ・キャッシュまでの改修込み ¥15,000〜25,000（ページ規模による）。公式の PageSpeed 保証ではありません。</p>`;
+  $('result').innerHTML=html;
+  window.__cwv_findings=findings;
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function toCsv(){
+  const findings=window.__cwv_findings||evaluate();
+  const rows=[['severity','area','message','fix','site','stack','goal','lcp','inp','cls','source','memo']];
+  const meta=[$('site').value,$('stack').value,$('goal').value,$('lcp').value,$('inp').value,$('cls').value,$('source').value,$('memo').value];
+  findings.forEach(f=>rows.push([f.sev,f.area,f.msg,(f.fix||[]).join('|'),...meta]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='cwv-check.csv'; a.click();
+}
+
+$('run').onclick=render;
+$('csv').onclick=()=>{if(!window.__cwv_findings)render();toCsv();};
+$('copy').onclick=()=>{
+  if(!window.__cwv_findings)render();
+  const lines=(window.__cwv_findings||[]).map(f=>`[${f.sev}] ${f.area}: ${f.msg}`);
+  navigator.clipboard.writeText(lines.join('\n')).catch(()=>{});
+};
+})();
+</script>
+</body>
+</html>
