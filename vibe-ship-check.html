@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>バイブコーディング／AI生成サイト 公開前チェッカー（秘密鍵・localhost・混在・プレースホルダ／無料）</title>
+<meta name="description" content="Cursor・v0・Bolt・Claude・ChatGPTなどで作ったWebサイト／LPのHTMLを貼るだけ。APIキー漏れ、localhostリンク、http混在、Lorem／TODO、CDNのSRIなし、フォームaction抜け、target=_blankのrel忘れなどをブラウザ内だけで点検。CSV保存・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/vibe-ship-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+textarea{width:100%;min-height:220px;box-sizing:border-box;font:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;padding:8px;border:1px solid #bbb;border-radius:6px}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+code.s{display:block;white-space:pre-wrap;word-break:break-all;background:#f5f5f5;padding:2px 4px;font-size:12px;margin:2px 0}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>バイブコーディング／AI生成サイト 公開前チェッカー</h1>
+<p class="muted">Cursor・v0・Bolt・Lovable・Claude・ChatGPT などで一気に作った<strong>HTML／LP／静的サイト</strong>を本番に出す前に、よくある穴（秘密鍵・localhost・http混在・プレースホルダ・フォーム到達不能・CDNの改ざん対策なし）を自分で潰します。処理はブラウザ内のみ（送信なし）。セキュリティ診断の代替ではなく、納品前の自己点検です。</p>
+
+<div class="box">
+<label for="src" style="font-weight:600">ページのソース（HTML）を貼る</label>
+<textarea id="src" aria-label="チェックするHTML" placeholder="<!doctype html>… ブラウザの「ページのソースを表示」でコピーしたもの"></textarea>
+<button type="button" id="run">チェックする</button>
+<button type="button" id="sample" class="sec">危険サンプルを入れる</button>
+<button type="button" id="clear" class="sec">消す</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+<div id="sum" role="status" aria-live="polite" style="margin-top:10px"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul id="manual" style="list-style:none;padding:0">
+<li class="chk"><input type="checkbox" id="m1"><span>本番ドメインで開いて、問い合わせ／申込／決済の最後まで自分で一通り通した（テスト送信含む）</span></li>
+<li class="chk"><input type="checkbox" id="m2"><span>スマホ幅（375px）とデスクトップでレイアウト崩れ・横スクロールがない</span></li>
+<li class="chk"><input type="checkbox" id="m3"><span>特商法・プラポリ・外部送信の案内が、実際の事業者情報と一致している（関連：<a href="tokusho-check.html">tokusho-check</a>／<a href="privacy-check.html">privacy-check</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m4"><span>画像・フォント・アイコンのライセンスが商用利用可で、クレジット表記が必要なものを漏らしていない</span></li>
+<li class="chk"><input type="checkbox" id="m5"><span>AI生成画像／文について、クライアントや公開先のルールに合う開示をしている</span></li>
+<li class="chk"><input type="checkbox" id="m6"><span>管理画面・プレビューURL・ステージングを本番と同じパスワード／公開状態にしていない</span></li>
+<li class="chk"><input type="checkbox" id="m7"><span>OGP・favicon・タイトルがSNSシェアで意図どおり（関連：<a href="ogp-maker.html">ogp-maker</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m8"><span>キーボード操作と読み上げで主要導線が通る（関連：<a href="a11y-check.html">a11y-check</a>）</span></li>
+</ul>
+<p id="mcount" class="muted"></p>
+
+<div class="box">
+<p class="muted">小さなお店・事務所の<strong>バイブコーディングサイト公開前点検レポート</strong>（主要ページの秘密鍵／到達／混在／プレースホルダ＋修正方針）と、当日使える修正パッチをお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥8,000〜25,000</p>
+<p class="muted">関連：<a href="a11y-check.html">アクセシビリティ</a> ／ <a href="ogp-maker.html">OGP</a> ／ <a href="privacy-check.html">プラポリ・外部送信</a> ／ <a href="tokusho-check.html">特商法</a> ／ <a href="paid-check.html">有料表示</a></p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページは診断証明書ではありません。キーらしき文字列はパターン一致であり、本物の鍵かどうかは発行元で確認してください。法的助言ではありません。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s).replace(/\s+/g," ").trim();n=n||140;return s.length>n?s.slice(0,n)+"…":s;}
+const SECRET_PATTERNS=[
+  {id:"openai",re:/\bsk-[A-Za-z0-9_\-]{20,}\b/g,label:"OpenAI系らしき sk- キー",sev:"bad"},
+  {id:"openai_proj",re:/\bsk-proj-[A-Za-z0-9_\-]{20,}\b/g,label:"OpenAI project キー",sev:"bad"},
+  {id:"anthropic",re:/\bsk-ant-[A-Za-z0-9_\-]{20,}\b/g,label:"Anthropicらしきキー",sev:"bad"},
+  {id:"google",re:/\bAIza[0-9A-Za-z_\-]{20,}\b/g,label:"Google API キーらしき文字列",sev:"bad"},
+  {id:"aws",re:/\bAKIA[0-9A-Z]{16}\b/g,label:"AWS Access Key らしき文字列",sev:"bad"},
+  {id:"github",re:/\bghp_[A-Za-z0-9]{20,}\b|\bgho_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b/g,label:"GitHub トークンらしき文字列",sev:"bad"},
+  {id:"stripe",re:/\bsk_live_[A-Za-z0-9]{16,}\b|\brk_live_[A-Za-z0-9]{16,}\b/g,label:"Stripe 本番キーらしき文字列",sev:"bad"},
+  {id:"slack",re:/\bxox[baprs]-[A-Za-z0-9\-]{10,}\b/g,label:"Slack トークンらしき文字列",sev:"bad"},
+  {id:"bearer",re:/\bBearer\s+[A-Za-z0-9\-\._~\+\/]+=*/g,label:"Bearer トークンがHTMLに直書き",sev:"bad"},
+  {id:"private_key",re:/-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/g,label:"秘密鍵ブロック",sev:"bad"},
+  {id:"supabase",re:/\beyJ[A-Za-z0-9_\-]{20,}\.[A-Za-z0-9_\-]{20,}\.[A-Za-z0-9_\-]{10,}\b/g,label:"JWTらしき長いトークン（anonでも公開注意）",sev:"warn"},
+];
+const PLACEHOLDER_RE=[
+  {re:/\bLorem ipsum\b/i,label:"Lorem ipsum が残っている"},
+  {re:/\bTODO\b|\bFIXME\b|\bXXX\b/,label:"TODO／FIXME／XXX が残っている"},
+  {re:/\bplaceholder\b/i,label:"placeholder 文言が本文に残っている可能性"},
+  {re:/\bexample\.(com|org|net|jp)\b/i,label:"example.com 等の仮ドメイン"},
+  {re:/\byour[-_ ]?(api|key|token|email|name|company)\b/i,label:"your-api-key 等の仮値"},
+  {re:/\b株式会社〇〇\b|\b（会社名）\b|\b\[会社名\]/,label:"会社名プレースホルダ"},
+  {re:/\b000-0000-0000\b|\b00-0000-0000\b/,label:"電話番号プレースホルダ"},
+  {re:/\btest@example\./i,label:"test@example メール"},
+  {re:/\bComing soon\b|\b工事中\b|\b準備中です\b/i,label:"Coming soon／工事中テキスト"},
+];
+let lastRows=[];
+function parseDoc(html){
+  return new DOMParser().parseFromString(html, "text/html");
+}
+function add(rows,sev,cat,msg,ev){
+  rows.push({sev,cat,msg,ev:snip(ev||"")});
+}
+function check(html){
+  const rows=[];
+  if(!html||!html.trim()){add(rows,"bad","入力","HTMLが空です","");return rows;}
+  const lower=html.toLowerCase();
+  const doc=parseDoc(html);
+  // secrets in raw
+  for(const p of SECRET_PATTERNS){
+    p.re.lastIndex=0;
+    const m=html.match(p.re);
+    if(m){add(rows,p.sev,"秘密情報",p.label+"（"+m.length+"件）",m[0]);}
+  }
+  if(/process\.env\.|import\.meta\.env\./.test(html)) add(rows,"warn","秘密情報","process.env／import.meta.env の参照がフロントHTMLに残っている","");
+  if(/(?:^|[\s\"'`(\/])\.env(?:\.|\b)/m.test(html)&&!/\.env\.example/.test(html)&&!/process\.env|import\.meta\.env/.test(html)) add(rows,"warn","秘密情報",".env ファイルへの言及がある（公開リポジトリ／ページに載せない）","");
+  // localhost / mixed
+  const loc=html.match(/https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?[^\s"'<>]*/gi)||[];
+  if(loc.length) add(rows,"bad","到達","localhost／127.0.0.1 リンクが残っている（"+loc.length+"件）",loc[0]);
+  const http=html.match(/\bhttp:\/\/(?!localhost|127\.0\.0\.1)[^\s"'<>]+/gi)||[];
+  // ignore xmlns and w3 schemas roughly
+  const httpReal=http.filter(u=>!/w3\.org|schema\.org|googleapis\.com\/icons/i.test(u));
+  if(httpReal.length) add(rows,"warn","混在コンテンツ","http:// のリソース参照（"+httpReal.length+"件）。HTTPSページではブロックされうる",httpReal[0]);
+  // placeholders
+  for(const p of PLACEHOLDER_RE){
+    if(p.re.test(html)) add(rows,"warn","プレースホルダ",p.label, (html.match(p.re)||[""])[0]);
+  }
+  // document structure
+  const htmlEl=doc.documentElement;
+  const lang=(doc.documentElement.getAttribute("lang")||"").trim();
+  if(!lang) add(rows,"warn","基本","<html lang> がない（日本語なら lang=\"ja\"）","");
+  const title=(doc.querySelector("title")||{}).textContent||"";
+  if(!title.trim()) add(rows,"bad","基本","<title> が空／無い","");
+  else if(/^\s*(document|app|vite|react app|next(?:\.js)? app|untitled)\s*$/i.test(title.trim())) add(rows,"warn","基本","タイトルがフレームワークの初期値のまま",title);
+  const vp=doc.querySelector('meta[name="viewport"]');
+  if(!vp) add(rows,"warn","基本","viewport メタが無い（スマホ表示が崩れやすい）","");
+  const desc=doc.querySelector('meta[name="description"]');
+  if(!desc||!(desc.getAttribute("content")||"").trim()) add(rows,"warn","基本","meta description が無い","");
+  const canon=doc.querySelector('link[rel="canonical"]');
+  if(!canon) add(rows,"warn","基本","canonical が無い（任意だが公開サイトでは推奨）","");
+  // scripts dangerous
+  if(/\beval\s*\(/.test(html)) add(rows,"bad","スクリプト","eval( がある","");
+  if(/document\.write\s*\(/.test(html)) add(rows,"warn","スクリプト","document.write( がある（パース遅延・XSS温床）","");
+  if(/innerHTML\s*=/.test(html)&&/location\.|URLSearchParams|hash/i.test(html)) add(rows,"warn","スクリプト","URL由来データを innerHTML に入れている疑い","");
+  // CDN without SRI
+  doc.querySelectorAll("script[src],link[rel='stylesheet'][href]").forEach(el=>{
+    const url=el.getAttribute("src")||el.getAttribute("href")||"";
+    if(/^https?:\/\//i.test(url)&&!el.getAttribute("integrity")&&/(cdn\.|unpkg\.|jsdelivr|cdnjs|bootstrapcdn|googleapis|cloudflare)/i.test(url)){
+      add(rows,"warn","CDN","外部CDNに SRI (integrity) が無い",url);
+    }
+  });
+  // forms
+  doc.querySelectorAll("form").forEach((f,i)=>{
+    const action=(f.getAttribute("action")||"").trim();
+    const method=(f.getAttribute("method")||"get").toLowerCase();
+    if(!action||action==="#"||/^javascript:/i.test(action)) add(rows,"bad","フォーム","form#"+(i+1)+" の action が空／#／javascript:（送信先不明）",snip(f.outerHTML,120));
+    if(method==="get"&&/password|card|credit/i.test(f.innerHTML)) add(rows,"bad","フォーム","機密入力なのに method=get","");
+  });
+  // target blank
+  doc.querySelectorAll("a[target='_blank']").forEach(a=>{
+    const rel=(a.getAttribute("rel")||"").toLowerCase();
+    if(!/\bnoopener\b/.test(rel)||!/\bnoreferrer\b/.test(rel)){
+      // noreferrer alone ok-ish; require noopener at min
+      if(!/\bnoopener\b/.test(rel)) add(rows,"warn","リンク","target=_blank に rel=\"noopener\" が無い",a.getAttribute("href")||"");
+    }
+  });
+  // images alt
+  let imgNo=0;doc.querySelectorAll("img").forEach(img=>{if(!img.hasAttribute("alt")) imgNo++;});
+  if(imgNo) add(rows,"warn","画像","alt 属性の無い img が "+imgNo+"件","");
+  // framework leftovers
+  if(/__NEXT_DATA__|\/_next\//.test(html)&&!/<html/i.test(html)) add(rows,"warn","残骸","Next.js 断片だけの貼り付けの可能性","");
+  if(/\bVite\b.+?\bapp\b/i.test(title)||/\/@vite\/client/.test(html)) add(rows,"bad","残骸","Vite 開発用クライアントが残っている","");
+  if(/ws:\/\/localhost|HMR|react-refresh/i.test(html)) add(rows,"bad","残骸","開発用 HMR／react-refresh が残っている","");
+  if(/console\.(log|debug|info)\s*\(/.test(html)) add(rows,"warn","残骸","console.log 等が残っている（本番ではノイズ・情報漏れ）","");
+  // click handlers on non-interactive
+  doc.querySelectorAll("[onclick]").forEach(el=>{
+    const t=el.tagName.toLowerCase();
+    if(t!=="button"&&t!=="a"&&!(el.getAttribute("role")==="button")) add(rows,"warn","操作","非インタラクティブ要素に onclick（キーボード不可）",snip(el.outerHTML,100));
+  });
+  // huge data uri
+  const dataUris=html.match(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9\/+=]{500,}/g)||[];
+  if(dataUris.length) add(rows,"warn","容量","巨大な data:image base64 が "+dataUris.length+"件（表示遅延）","");
+  // robots / ai
+  if(/Disallow:\s*\/\s*$/m.test(html)&&/User-agent:\s*\*/i.test(html)) add(rows,"warn","公開","robots で全体 Disallow の記述がページに含まれている（意図確認）","");
+  // mailto spam harvest - soft
+  const mails=html.match(/mailto:[^\s"'<>]+/gi)||[];
+  if(mails.length>=5) add(rows,"warn","公開","mailto が多数（"+mails.length+"）。スパム収穫されやすい",mails[0]);
+  // positive signal
+  if(!rows.some(r=>r.sev==="bad")&&!rows.some(r=>r.sev==="warn")) add(rows,"ok","結果","自動チェックで重大・注意は見つかりませんでした（人手項目は別途）","");
+  return rows;
+}
+function render(rows){
+  lastRows=rows;
+  const bad=rows.filter(r=>r.sev==="bad").length;
+  const warn=rows.filter(r=>r.sev==="warn").length;
+  const ok=rows.filter(r=>r.sev==="ok").length;
+  let pill="";
+  if(bad) pill='<span class="pill bad">要修正 '+bad+'</span>';
+  if(warn) pill+='<span class="pill warn">確認 '+warn+'</span>';
+  if(!bad&&!warn) pill='<span class="pill ok">自動OK</span>';
+  $("sum").innerHTML=pill+' <span class="muted">（okメモ '+ok+'）</span>';
+  if(!rows.length){$("res").innerHTML="";return;}
+  let t='<table><thead><tr><th>判定</th><th>区分</th><th>内容</th><th>根拠</th></tr></thead><tbody>';
+  for(const r of rows){
+    const lab=r.sev==="bad"?"要修正":r.sev==="warn"?"確認":"OK";
+    t+='<tr><td class="'+r.sev+'">'+lab+'</td><td>'+esc(r.cat)+'</td><td>'+esc(r.msg)+'</td><td><code class="s">'+esc(r.ev)+'</code></td></tr>';
+  }
+  t+='</tbody></table>';
+  $("res").innerHTML=t;
+}
+function sample(){
+  $("src").value=`<!doctype html>
+<html>
+<head><title>Vite App</title>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"><\/script>
+<script>const KEY="sk-proj-EXAMPLESECRETKEY000000000000000";<\/script>
+</head>
+<body>
+<img src="http://example.com/hero.jpg">
+<a href="http://localhost:3000/api" target="_blank">管理画面</a>
+<form action="#"><input name="email" placeholder="your-email"><button onclick="eval(location.hash)">送信</button></form>
+<p>Lorem ipsum dolor sit amet. TODO: replace copy. 株式会社〇〇</p>
+<p>API: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaaaaaaaaaaaaaaaaaaa.bbbbbbbbbb</p>
+<div onclick="doThing()">こちらをクリック</div>
+<script src="/@vite/client"><\/script>
+<script>console.log("debug", process.env.OPENAI_API_KEY)<\/script>
+</body></html>`;
+}
+function toCsv(rows){
+  const escC=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[["判定","区分","内容","根拠"].map(escC).join(",")];
+  for(const r of rows){
+    const lab=r.sev==="bad"?"要修正":r.sev==="warn"?"確認":"OK";
+    lines.push([lab,r.cat,r.msg,r.ev].map(escC).join(","));
+  }
+  return lines.join("\n");
+}
+$("run").onclick=()=>render(check($("src").value));
+$("sample").onclick=()=>{sample();render(check($("src").value));};
+$("clear").onclick=()=>{$("src").value="";$("res").innerHTML="";$("sum").innerHTML="";lastRows=[];};
+$("csv").onclick=()=>{
+  if(!lastRows.length){render(check($("src").value));}
+  if(!lastRows.length) return;
+  const blob=new Blob([toCsv(lastRows)],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="vibe-ship-check.csv";a.click();
+};
+function updManual(){
+  const boxes=[...document.querySelectorAll("#manual input[type=checkbox]")];
+  const n=boxes.filter(b=>b.checked).length;
+  $("mcount").textContent="人手チェック "+n+"／"+boxes.length;
+}
+document.querySelectorAll("#manual input").forEach(b=>b.addEventListener("change",updManual));
+updManual();
+})();
+</script>
+</body>
+</html>
