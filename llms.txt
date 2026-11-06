@@ -1,6 +1,7 @@
 # AI利用OKの公募・コンテスト・ハッカソンまとめ
 > 生成AIの利用が認められている（または要項で禁止されていない）、参加無料・日本在住の個人が応募できる賞金付き公募を締切順にまとめた日本語の一覧です。各項目は公式要項へのリンク付きで、更新日はページ内に記載しています。
 
+- [ゴースト執筆・声の一貫性チェッカー](https://yema7582-code.github.io/koubo-ai-ok/ghost-voice-check.html): Client-side ghostwriting voice-consistency preflight for note/blog/LinkedIn-style drafts — first-person drift, desu/dearu mix, AI stock phrases, hook/CTA, length bands, stock-phrase reuse vs samples, EN/JA mix, placeholders; CSV; no upload.
 - [調査レポート・データコンペ写 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/writeup-check.html): Client-side preflight for market-research briefs and Kaggle/Zindi write-ups — missing as-of dates, unsourced numbers, method/limitations gaps, placeholder URLs, vague claims, reproducibility hints; brief vs write-up modes; CSV; no upload.
 - [AI音楽・映像 権利＆開示 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/ai-rights-check.html): Preflight for AI music/video publish or client delivery — Suno/Udio plan commercial use, voice-clone/likeness/logo flags, stock licence, Content ID promise traps, festival AI-disclosure draft JA/EN + CSV; client-side only; not legal advice.
 - [暗号資産 受取アドレス＆ネットワーク照合チェッカー](https://yema7582-code.github.io/koubo-ai-ok/payout-address-check.html): Check payout address vs stated network (EVM 0x / Solana base58 / NEAR / BCH CashAddr); flags cross-chain paste mistakes; CSV; client-side only; not a wallet.

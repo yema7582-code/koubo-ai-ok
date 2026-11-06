@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ゴースト執筆・声の一貫性チェッカー（note／ブログ／短文投稿）｜無料</title>
+<meta name="description" content="過去投稿の声サンプルと今回の下書きを貼るだけ。一人称のゆれ、ですます／だ・である混在、AIっぽい定型句、フック・CTAの有無、note／LinkedIn／メルマガの分量帯、サンプルとの定型フレーズ重複、日英混在、プレースホルダをブラウザ内で点検。CSV保存・送信なし。校正・引用・公募字数チェックとは別。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ghost-voice-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:140px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row2{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+code.s{display:block;white-space:pre-wrap;word-break:break-all;background:#f5f5f5;padding:2px 4px;font-size:12px;margin:2px 0}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+label.row{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-weight:500;font-size:.92em}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>ゴースト執筆・声の一貫性チェッカー</h1>
+<p class="muted">創業者・専門家向けの<strong>note／ブログ／LinkedIn風短文</strong>の代筆や週次リテイナーで、「声が別人になっていないか」を出す前に自分で潰します。過去投稿2〜5本のサンプルと今回の下書きを貼ると、一人称・文体・AI定型句・フック／CTA・分量帯・定型フレーズの使い回しなどをヒューリスティックで点検します。処理はブラウザ内のみ（送信なし）。日本語校正は <a href="kousei-check.html">kousei-check</a>、AI検索の引用されやすさは <a href="ai-inyou-check.html">ai-inyou-check</a>、公募字数は <a href="oubo-entry-check.html">oubo-entry-check</a>、Search Consoleは <a href="gsc-check.html">gsc-check</a> を使ってください（本ツールは<strong>声の一貫性・ゴースト下書き</strong>専用）。</p>
+
+<div class="box">
+<label for="voice">声のサンプル（過去投稿2〜5本。1本ごとに空行か --- で区切る）</label>
+<textarea id="voice" aria-label="声のサンプル" placeholder="例：過去のnoteやLinkedIn投稿を2〜5本、空行で区切って貼る"></textarea>
+<label for="draft">今回の下書き</label>
+<textarea id="draft" aria-label="今回の下書き" placeholder="点検したい下書きを貼る"></textarea>
+<div class="row2">
+<div>
+<label for="person">一人称設定（任意）</label>
+<select id="person">
+<option value="auto">自動判定（サンプル優先）</option>
+<option value="私">私</option>
+<option value="僕">僕</option>
+<option value="我々">我々／私たち</option>
+<option value="社名">社名・ブランド（一人称ほぼなし）</option>
+</select>
+</div>
+<div>
+<label for="fmt">想定フォーマット</label>
+<select id="fmt">
+<option value="note">note／ブログ長文（目安800字以上）</option>
+<option value="li">LinkedIn／短文投稿（目安1300字以下）</option>
+<option value="nl">週次メルマガ</option>
+<option value="any">指定なし</option>
+</select>
+</div>
+</div>
+<p style="margin:10px 0 0">
+<button type="button" id="run">点検</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+<button type="button" id="clear" class="sec">クリア</button>
+<button type="button" id="sampleWeak" class="sec">弱いサンプル</button>
+<button type="button" id="sampleGood" class="sec">良いサンプル</button>
+</p>
+<div id="sum" role="status" aria-live="polite" style="margin-top:10px"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul style="list-style:none;padding:0">
+<li class="muted">□ 固有のエピソード・数字・固有名詞がクライアントの実話と一致している（捏造していない）</li>
+<li class="muted">□ クライアントが普段使わないカタカナ語・英語スラングを無理に足していない</li>
+<li class="muted">□ 炎上しやすい政治・宗教・他社批判がない（本人確認済み）</li>
+<li class="muted">□ 公開先の規約（note・LinkedIn・メルマガ配信）と開示ルールに合う</li>
+<li class="muted">□ AI利用の開示が必要な媒体なら、クライアント方針どおり書いた</li>
+</ul>
+
+<div class="box">
+<p class="muted">創業者・専門家向けの<strong>note／ブログ／LinkedIn風投稿の週次代筆＋声の一貫性点検</strong>（8〜12短文＋1長文、または note 週1）をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥20,000〜60,000／月</p>
+<p class="muted">関連：<a href="kousei-check.html">日本語校正</a> ／ <a href="hyoki-yure.html">表記ゆれ・ですである</a> ／ <a href="honyakucho-check.html">翻訳調</a> ／ <a href="ai-inyou-check.html">AI引用されやすさ</a> ／ <a href="stema-check.html">ステマ PR表記</a></p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページはゴースト執筆の品質証明書ではありません。最終的な声の可否・事実確認・開示はご自身（またはクライアント）で行ってください。法的助言ではありません。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s).replace(/\s+/g," ").trim();n=n||120;return s.length>n?s.slice(0,n)+"…":s;}
+function charsNoSpace(t){return [...String(t).replace(/[\s\u3000]/g,"")].length;}
+function splitSamples(raw){
+  const t=String(raw||"").replace(/\r/g,"");
+  let parts=t.split(/\n\s*---+\s*\n|\n{2,}/).map(x=>x.trim()).filter(Boolean);
+  if(parts.length<2 && t.trim()) parts=[t.trim()];
+  return parts;
+}
+let lastRows=[];
+function add(rows,sev,cat,msg,ev){rows.push({sev,cat,msg,ev:snip(ev||"")});}
+
+const AI_TELL=[
+  {re:/いかがでしたか/g, lab:"いかがでしたか"},
+  {re:/まとめますと|まとめると/g, lab:"まとめますと"},
+  {re:/重要なポイントは以下|ポイントは以下の通り|以下の通りです/g, lab:"重要なポイントは以下"},
+  {re:/ご提案させて(いただ|頂)/g, lab:"ご提案させて"},
+  {re:/ではないでしょうか/g, lab:"ではないでしょうか"},
+  {re:/いかがでしょうか/g, lab:"いかがでしょうか"},
+  {re:/結論から言うと|結論から申し上げ/g, lab:"結論から言うと"},
+  {re:/まずは.*から見ていき|順を追って説明/g, lab:"見ていき／順を追って"},
+  {re:/ぜひ参考にしてみてください|参考になれば幸い/g, lab:"参考にしてみてください"},
+  {re:/この記事では.*解説します|本記事では/g, lab:"この記事では〜解説"}
+];
+const CTA_RE=/(予約|問い合わせ|お問い合わせ|ご相談|リンク|フォロー|購読|登録|DM|詳細はこちら|申し込み|申込|フォーム|無料相談|メルマガ|newsletter|subscribe|book a call|CTA)/i;
+const DESU_RE=/です[。．!！?？]|ます[。．!！?？]|でした[。．]|ました[。．]|でしょう[。．!！?？]|ですね|ますね|ください[。．!！?？]/g;
+const DA_RE=/である[。．]|であろう[。．]|だろう[。．!！?？]|ではない[。．]|ではないか[。．]|(?:^|[^っつて])だ[。．!！?？]/gm;
+const PLACE_RE=/\[氏名\]|\[名前\]|\[社名\]|\[会社名\]|\[日付\]|TODO|FIXME|TBD|lorem ipsum|Lorem ipsum|〇〇|○○|＜ここ|ここに入れる|要確認/i;
+const PERSON_MAP={
+  "私":[/私[はがをのにも]|わたし[はがをのにも]/g],
+  "僕":[/僕[はがをのにも]|ぼく[はがをのにも]/g],
+  "我々":[/我々[はがをのにも]|私たち[はがをのにも]|われわれ[はがをのにも]|私達[はがをのにも]/g]
+};
+
+function countHits(text,re){const m=String(text).match(re);return m?m.length:0;}
+function detectPerson(text){
+  const scores={私:0,僕:0,我々:0};
+  for(const k of Object.keys(PERSON_MAP)){
+    for(const re of PERSON_MAP[k]) scores[k]+=countHits(text,re);
+  }
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  if(sorted[0][1]===0) return {key:"社名",scores};
+  return {key:sorted[0][0],scores};
+}
+function ngrams(text,n){
+  const s=String(text).replace(/\s+/g,"");
+  const out=new Map();
+  if(s.length<n) return out;
+  for(let i=0;i<=s.length-n;i++){
+    const g=s.slice(i,i+n);
+    if(!/[\u3040-\u30ff\u4e00-\u9fff]/.test(g)) continue;
+    out.set(g,(out.get(g)||0)+1);
+  }
+  return out;
+}
+function stockOverlap(samples, draft){
+  const draftG=ngrams(draft,8);
+  const hits=[];
+  const sampleJoin=samples.join("\n");
+  const sampleG=ngrams(sampleJoin,8);
+  for(const [g,c] of draftG){
+    if(c>=1 && (sampleG.get(g)||0)>=1){
+      // prefer longer unique-looking phrases that appear as stock
+      if(/ます|です|ください|でしょう|について|という|といった/.test(g))
+        hits.push(g);
+    }
+  }
+  // also check repeated fixed AI-ish phrases across sample+draft
+  const stockPhrases=["〜ではないでしょうか","いかがでしたか","まとめますと","重要なポイントは","ご提案させて","参考になれば幸い","この記事では","まずは結論から"];
+  for(const p of stockPhrases){
+    const inS=sampleJoin.includes(p.replace("〜",""));
+    const inD=draft.includes(p.replace("〜",""));
+    if(inS&&inD) hits.push(p);
+  }
+  return [...new Set(hits)].slice(0,8);
+}
+function enJaMix(text){
+  const en=(text.match(/[A-Za-z]{3,}/g)||[]).length;
+  const ja=(text.match(/[\u3040-\u30ff\u4e00-\u9fff]/g)||[]).length;
+  const longEn=(text.match(/[A-Za-z]{12,}/g)||[]);
+  return {en,ja,longEn};
+}
+function hookQuality(text){
+  const first=String(text).replace(/\s+/g," ").trim().slice(0,120);
+  const len=[...first].length;
+  const weak=/^(はじめに|今日は|今回は|こんにちは|みなさん|皆さん|Hi\b|Hello\b|In this (article|post))/i.test(first);
+  const hasHook=/[！!？?…]|突然|正直|失敗|告白|知らなかった|後悔|たった|実は|答えは|やめ/.test(first);
+  return {first,len,weak,hasHook};
+}
+function endingSoftNoCta(text){
+  const end=String(text).replace(/\s+/g," ").trim().slice(-160);
+  const soft=/(参考になれば|いかがでしたか|まとめでした|以上です|読んでいただき|ありがとうございました|また次回)/.test(end);
+  const cta=CTA_RE.test(end)||CTA_RE.test(text);
+  return {soft,cta,end};
+}
+
+function check(voiceRaw, draftRaw, personPref, fmt){
+  const rows=[];
+  const samples=splitSamples(voiceRaw);
+  const draft=String(draftRaw||"").replace(/\r/g,"");
+  if(!draft.trim()){add(rows,"bad","入力","今回の下書きが空です","");return rows;}
+  if(!voiceRaw.trim()) add(rows,"warn","入力","声のサンプルが空です。過去投稿を貼ると一人称・定型句の比較ができます","");
+  else if(samples.length<2) add(rows,"warn","入力","サンプルが1本相当です。2〜5本あると声の判定が安定します",samples.length+"本");
+  else add(rows,"ok","入力","サンプル "+samples.length+" 本を取り込み","");
+
+  const sampleText=samples.join("\n\n");
+  const dChars=charsNoSpace(draft);
+  add(rows,"ok","分量","下書き 空白除き約"+dChars+"字","");
+
+  // Length bands
+  if(fmt==="note"){
+    if(dChars<800) add(rows,"warn","分量帯","note／ブログ長文の目安は空白除き800字以上（現在約"+dChars+"字）","");
+    else add(rows,"ok","分量帯","note長文の目安（≥800字）に到達",dChars+"字");
+  } else if(fmt==="li"){
+    if(dChars>1300) add(rows,"warn","分量帯","LinkedIn／短文の目安は空白除き1300字以下（現在約"+dChars+"字）。分割か要約を検討","");
+    else if(dChars<80) add(rows,"warn","分量帯","短文としては短すぎる可能性（約"+dChars+"字）","");
+    else add(rows,"ok","分量帯","LinkedIn短文の目安（≤1300字）内",dChars+"字");
+  } else if(fmt==="nl"){
+    if(dChars<300) add(rows,"warn","分量帯","週次メルマガとしては短め（約"+dChars+"字）。導入・本論・CTAの三段を確認","");
+    else if(dChars>2500) add(rows,"warn","分量帯","メルマガとしては長め（約"+dChars+"字）。スキャンしやすい見出しを","");
+    else add(rows,"ok","分量帯","週次メルマガの目安帯",dChars+"字");
+  }
+
+  // First person
+  const samplePerson=detectPerson(sampleText||draft);
+  const draftPerson=detectPerson(draft);
+  let target=personPref==="auto"?samplePerson.key:personPref;
+  if(personPref==="auto"&&!voiceRaw.trim()) target=draftPerson.key;
+  if(target==="社名"){
+    const fp=draftPerson.scores.私+draftPerson.scores.僕+draftPerson.scores.我々;
+    if(fp>=3) add(rows,"warn","一人称","社名・ブランド設定なのに一人称が多め（"+fp+"）。トーン方針を確認",JSON.stringify(draftPerson.scores));
+    else add(rows,"ok","一人称","社名寄せ（一人称控えめ）",JSON.stringify(draftPerson.scores));
+  } else {
+    const want=PERSON_MAP[target]||[];
+    let wantN=0; for(const re of want) wantN+=countHits(draft,re);
+    const others=[];
+    for(const k of Object.keys(PERSON_MAP)){
+      if(k===target) continue;
+      let n=0; for(const re of PERSON_MAP[k]) n+=countHits(draft,re);
+      if(n) others.push(k+":"+n);
+    }
+    if(wantN===0 && dChars>120) add(rows,"warn","一人称","設定「"+target+"」が下書きにほぼ出ない。声が遠い／無人称すぎるか確認","");
+    else add(rows,"ok","一人称","設定「"+target+"」の手がかりあり（"+wantN+"）","");
+    if(others.length) add(rows,"bad","一人称","設定外の一人称が混在: "+others.join(" / ")+"（サンプル優勢は "+samplePerson.key+"）","");
+  }
+
+  // ですます vs だ・である
+  const desu=countHits(draft,DESU_RE);
+  const da=countHits(draft,DA_RE);
+  const datta=countHits(draft,/だった[。．]/g);
+  if(desu&&da){
+    if(da>=1 && desu>=1)
+      add(rows,"bad","文体","ですます調とだ・である調が混在（ですます系"+desu+"／だ・である系"+da+"）","例は hyoki-yure も併用");
+    else add(rows,"warn","文体","文体の弱い混在の可能性（ですます系"+desu+"／だ・である系"+da+"）","");
+  } else if(desu){
+    if(datta>=2) add(rows,"warn","文体","ですます優勢だが「だった。」が複数。ですました／でしたに揃えるか確認",datta+" datta");
+    else add(rows,"ok","文体","ですます調が優勢",desu+" hits");
+  } else if(da) add(rows,"ok","文体","だ・である調が優勢",da+" hits");
+  else add(rows,"warn","文体","文末の手がかりが少ない（短文・体言止め中心かも）","");
+
+  // AI telltales
+  let aiHits=[];
+  for(const t of AI_TELL){
+    const m=draft.match(t.re);
+    if(m&&m.length) aiHits.push(t.lab+"×"+m.length);
+  }
+  // ではないでしょうか density
+  const dewaN=countHits(draft,/ではないでしょうか/g);
+  if(dewaN>=2) aiHits.push("ではないでしょうか過多×"+dewaN);
+  if(aiHits.length>=3) add(rows,"bad","AI定型","AIっぽい定型句が多め: "+aiHits.join("、"),aiHits[0]);
+  else if(aiHits.length) add(rows,"warn","AI定型","定型句あり: "+aiHits.join("、"),aiHits[0]);
+  else add(rows,"ok","AI定型","代表的なAI定型句は目立たず","");
+
+  // Hook
+  const hk=hookQuality(draft);
+  if(hk.weak) add(rows,"warn","フック","冒頭80〜120字が定型の挨拶／「今回は」始まり。具体の結果・矛盾・数字で始めると強い",hk.first);
+  else if(hk.hasHook) add(rows,"ok","フック","冒頭にフックらしき手がかりあり",hk.first);
+  else add(rows,"warn","フック","冒頭に問い・意外性・具体が薄い（最初の80〜120字を見直し）",hk.first);
+
+  // CTA
+  if(CTA_RE.test(draft)) add(rows,"ok","CTA","予約／問い合わせ／リンク／フォロー等のCTA手がかりあり","");
+  else add(rows,"warn","CTA","CTA（予約・問い合わせ・リンク・フォロー・購読など）が見当たらない","");
+
+  const end=endingSoftNoCta(draft);
+  if(end.soft && !end.cta) add(rows,"bad","結び","ソフトな締め（参考になれば／ありがとうございました等）だけでCTAがない",end.end);
+  else if(end.soft) add(rows,"ok","結び","締めの丁寧さあり、かつ本文にCTA手がかりあり","");
+
+  // Stock phrases sample vs draft
+  if(voiceRaw.trim()){
+    const ov=stockOverlap(samples, draft);
+    if(ov.length>=3) add(rows,"warn","使い回し","サンプルと下書きで似た定型・8文字塊の重複が多め（"+ov.length+"）。言い回しをずらす",ov.slice(0,3).join(" / "));
+    else if(ov.length) add(rows,"warn","使い回し","サンプルとの重なりあり",ov[0]);
+    else add(rows,"ok","使い回し","目立つ定型の使い回しは少なめ","");
+  }
+
+  // EN/JA mix
+  const mix=enJaMix(draft);
+  if(mix.longEn.length>=2) add(rows,"warn","日英混在","長い英単語・フレーズが複数。クライアントの普段の語彙か確認",mix.longEn.slice(0,3).join(" / "));
+  else if(mix.en>=8 && mix.ja>50 && mix.en/Math.max(1,mix.ja/10)>1.2)
+    add(rows,"warn","日英混在","英単語が多め（"+mix.en+"）。カタカナ／和訳に寄せるか方針確認","");
+  else add(rows,"ok","日英混在","目立った英単語過多はなし","");
+
+  // Placeholders
+  if(PLACE_RE.test(draft)) add(rows,"bad","プレースホルダ","[氏名]／TODO／lorem／〇〇 などが残っている",(draft.match(PLACE_RE)||[""])[0]);
+  else add(rows,"ok","プレースホルダ","典型的なプレースホルダは見当たらず","");
+
+  return rows;
+}
+
+function render(rows){
+  lastRows=rows;
+  const bad=rows.filter(r=>r.sev==="bad").length;
+  const warn=rows.filter(r=>r.sev==="warn").length;
+  const ok=rows.filter(r=>r.sev==="ok").length;
+  let pill="";
+  if(bad) pill='<span class="pill bad">要修正 '+bad+'</span>';
+  else if(warn) pill='<span class="pill warn">注意 '+warn+'</span>';
+  else pill='<span class="pill ok">重大な穴は見当たらず</span>';
+  $("sum").innerHTML=pill+' <span class="muted">ok '+ok+'／warn '+warn+'／bad '+bad+'</span>';
+  if(!rows.length){$("res").innerHTML="";return;}
+  let html='<table><thead><tr><th>判定</th><th>観点</th><th>内容</th><th>根拠</th></tr></thead><tbody>';
+  for(const r of rows){
+    const lab=r.sev==="bad"?"要修正":r.sev==="warn"?"注意":"OK";
+    html+='<tr><td><span class="pill '+r.sev+'">'+lab+'</span></td><td>'+esc(r.cat)+'</td><td>'+esc(r.msg)+'</td><td><code class="s">'+esc(r.ev)+'</code></td></tr>';
+  }
+  html+='</tbody></table>';
+  $("res").innerHTML=html;
+}
+
+function run(){
+  render(check($("voice").value,$("draft").value,$("person").value,$("fmt").value));
+}
+$("run").onclick=run;
+$("clear").onclick=()=>{
+  $("voice").value="";$("draft").value="";$("res").innerHTML="";$("sum").textContent="";lastRows=[];
+  $("person").value="auto";$("fmt").value="note";
+};
+$("sampleWeak").onclick=()=>{
+  $("fmt").value="note";
+  $("person").value="私";
+  $("voice").value=`先週、僕は新機能をリリースした。反応はまずまずだった。
+
+---
+僕のチームでは毎週レビューをしている。数字を見るのが好きだ。`;
+  $("draft").value=`こんにちは、今回はマーケティングについて解説します。
+重要なポイントは以下の通りです。まずは結論から見ていきましょう。様々な企業が取り組んでいるのではないでしょうか。まとめますと、施策は大切です。ご提案させていただきます。
+いかがでしたか。参考になれば幸いです。
+[氏名]
+TODO: 事例を入れる
+Lorem ipsum dolor sit amet.`;
+  run();
+};
+$("sampleGood").onclick=()=>{
+  $("fmt").value="li";
+  $("person").value="私";
+  $("voice").value=`私は毎週月曜に、先月の数字を一枚のメモに落とす。きれいなダッシュボードより、その一枚の方がチームの会話が早い。
+
+---
+私は「忙しさ」を自慢しないようにしている。代わりに、やめたことを3つ書く。先月やめたのは週次の長い会議だ。`;
+  $("draft").value=`私は昨夜、提案書を捨てた。40枚あったのを、顧客が次に決めるべき一事だけ残した。
+
+反応は「短い」でした。それでいい。問い合わせはフォームからどうぞ。フォローも歓迎です。`;
+  run();
+};
+$("csv").onclick=()=>{
+  if(!lastRows.length) run();
+  const lines=[["sev","cat","msg","evidence"].join(",")].concat(
+    lastRows.map(r=>[r.sev,r.cat,r.msg,r.ev].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(","))
+  );
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ghost-voice-check.csv";a.click();
+};
+
+// Expose for jsdom smoke
+window.__ghostVoiceCheck=check;
+})();
+</script>
+</body>
+</html>
