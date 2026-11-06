@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>モール商品タイトル・箇条書き・説明 公開前チェッカー（Amazon・楽天・Yahoo!ショッピング／無料）</title>
+<meta name="description" content="Amazon.co.jp・楽天市場・Yahoo!ショッピング向けに、商品名（タイトル）・箇条書き・商品説明を貼るだけ。文字数上限、装飾記号、販促語、最安・No.1、キーワード詰め、欠落しやすい仕様をブラウザ内で点検。CSV保存・送信なし。フリマ出品文やGMCフィード、Shopify CSVとは別用途。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/mall-title-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:88px;font-size:14px}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.grid{display:grid;gap:10px}
+@media(min-width:700px){.grid-2{grid-template-columns:1fr 1fr}}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+label{font-weight:600;display:block;margin-bottom:4px}
+.inline label{display:inline;font-weight:500;margin-right:12px}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>モール商品タイトル・箇条書き・説明 公開前チェッカー</h1>
+<p class="muted">Amazon.co.jp・楽天市場・Yahoo!ショッピングの<strong>商品名／タイトル・箇条書き・商品説明</strong>を出品前に自分で潰します。文字数はモール別の目安、装飾記号・販促語・断定表現・キーワード詰め込み・よく抜けやすい仕様を機械的に洗います。処理はブラウザ内のみ・送信なし。<a href="furima-check.html">フリマ出品文</a>・<a href="gmc-feed-check.html">GMCフィード</a>・<a href="catalog-check.html">Shopify CSV</a>とは別用途です。</p>
+
+<div class="box grid">
+<div>
+<label for="mall">対象モール</label>
+<select id="mall">
+<option value="amazon">Amazon.co.jp（目安：商品名 75文字・メディア除くカテゴリ／2026年以降の短縮）</option>
+<option value="rakuten">楽天市場（目安：商品名 全角127文字＝256バイト）</option>
+<option value="yahoo">Yahoo!ショッピング（目安：商品名 全角75文字）</option>
+</select>
+</div>
+<div>
+<label for="title">商品名／タイトル</label>
+<input type="text" id="title" placeholder="例：【ブランド】ステンレスボトル 500ml 保温保冷 直飲み 水筒 シルバー">
+<p class="muted" id="tcount">文字数：0</p>
+</div>
+<div>
+<label for="bullets">箇条書き／キャッチ（1行1項目。Amazonの箇条書き・楽天のキャッチコピーなど）</label>
+<textarea id="bullets" placeholder="・容量500ml&#10;・真空断熱で約6時間保温&#10;・食洗機非対応"></textarea>
+</div>
+<div>
+<label for="desc">商品説明（任意）</label>
+<textarea id="desc" placeholder="素材・サイズ・セット内容・注意事項・保証などを貼り付け"></textarea>
+</div>
+<p class="inline">
+<label><input type="checkbox" id="cloth"> 衣類・靴（サイズ表記を重視）</label>
+<label><input type="checkbox" id="food"> 食品・サプリ寄り（賞味・アレルギー・薬機っぽい表現を注意）</label>
+<label><input type="checkbox" id="elec"> 家電・ガジェット（電圧・付属品・保証）</label>
+</p>
+<p>
+<button type="button" id="run">チェックする</button>
+<button type="button" id="sample" class="sec">弱いサンプル</button>
+<button type="button" id="good" class="sec">良いサンプル</button>
+<button type="button" id="clear" class="sec">消す</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+</p>
+<div id="sum" role="status" aria-live="polite"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul id="manual" style="list-style:none;padding:0">
+<li class="chk"><input type="checkbox" id="m1"><span>カテゴリ別の公式ガイドライン（Amazon Style Guide／楽天・Yahooの禁止表現）を最新で確認した</span></li>
+<li class="chk"><input type="checkbox" id="m2"><span>ブランド名・型番・JAN/GTINが実物・カタログと一致している</span></li>
+<li class="chk"><input type="checkbox" id="m3"><span>画像内文字・カラーバリエーション名・スペック表と本文が食い違っていない</span></li>
+<li class="chk"><input type="checkbox" id="m4"><span>他モール（公式サイト含む）とのサイズ・素材・付属品の表記を突き合わせた</span></li>
+<li class="chk"><input type="checkbox" id="m5"><span>景表法・薬機法・ステマ（関連：<a href="nijuu-kakaku.html">nijuu-kakaku</a>／<a href="yakki-check.html">yakki-check</a>／<a href="stema-check.html">stema-check</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m6"><span>特商法・配送／返品の導線（関連：<a href="tokusho-check.html">tokusho-check</a>／<a href="ec-toiawase.html">ec-toiawase</a>）</span></li>
+</ul>
+<p id="mcount" class="muted"></p>
+
+<div class="box">
+<p class="muted">モール横断の<strong>商品ページ点検レポート</strong>（Amazon／楽天／Yahoo／公式の表記突合・誤字・禁止語・文字数）をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥8,000〜30,000／式。フィード否認は <a href="gmc-feed-check.html">gmc-feed-check</a>、Shopify CSV は <a href="catalog-check.html">catalog-check</a>。</p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページは各モールの審査結果を保証しません。文字数目安は公開情報ベースのセルフチェック用です。出品前に各モールの最新ガイドを優先してください。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s||"").replace(/\s+/g," ").trim();n=n||100;return [...s].length>n?[...s].slice(0,n).join("")+"…":s;}
+function clen(s){return [...String(s||"")].length;}
+function bytesSJISApprox(s){
+  // Approximate Shift_JIS/バイト換算: ASCII 1, else 2 (楽天の「全角換算」目安)
+  let b=0; for(const ch of String(s||"")){ b += /[\x00-\x7F]/.test(ch)?1:2; } return b;
+}
+const LIMITS={
+  amazon:{titleChars:75, titleLabel:"Amazon商品名（目安75文字）", bulletSoft:500, descSoft:2000},
+  rakuten:{titleChars:127, titleBytes:256, titleLabel:"楽天商品名（全角127／256バイト目安）", bulletSoft:174, descSoft:10000},
+  yahoo:{titleChars:75, titleLabel:"Yahoo!商品名（全角75目安）", bulletSoft:150, descSoft:5000}
+};
+const PROMO=/送料無料|セール|SALE|割引|クーポン|タイムセール|ポイント倍|最安|激安|限定価格|今だけ|爆安/i;
+const SUPER=/No\.?\s*1|ナンバーワン|日本一|世界一|業界一|最高級|絶対|必ず|完璧|100％|100%|永久保証/i;
+const DECOR=/[★☆◆◇■□●○◎※♪♡♥【】『』「」〖〗〘〙]|[\u{1F300}-\u{1FAFF}]/gu;
+const PLACE=/Lorem ipsum|TODO|FIXME|〇〇|＊＊＊|【仮】|example\.(com|jp)|商品名を入れる/i;
+const AI_TELL=/いかがでしょうか|ご活用ください|シームレスに|包括的に|多岐にわたる|最適解/;
+let lastRows=[];
+function add(rows,sev,cat,msg,ev){rows.push({sev,cat,msg,ev:snip(ev||"")});}
+function updateCount(){
+  const t=$("title").value, m=$("mall").value, lim=LIMITS[m];
+  let msg=`文字数：${clen(t)}`;
+  if(m==="rakuten") msg+=` ／ バイト目安：${bytesSJISApprox(t)}（上限目安 ${lim.titleBytes}）`;
+  else msg+=` ／ 上限目安 ${lim.titleChars}`;
+  $("tcount").textContent=msg;
+}
+function lines(s){return String(s||"").split(/\n/).map(x=>x.trim()).filter(Boolean);}
+function check(){
+  const mall=$("mall").value, lim=LIMITS[mall];
+  const title=$("title").value.trim(), bullets=$("bullets").value, desc=$("desc").value;
+  const all=[title,bullets,desc].join("\n");
+  const rows=[];
+  if(!clen(title)&&!clen(bullets)&&!clen(desc)){add(rows,"bad","入力","タイトルか説明を入力してください","");render(rows);return;}
+
+  const tc=clen(title);
+  if(!tc) add(rows,"bad","タイトル","商品名が空です","");
+  else {
+    if(mall==="rakuten"){
+      const b=bytesSJISApprox(title);
+      if(tc>lim.titleChars || b>lim.titleBytes) add(rows,"bad","タイトル",`文字数またはバイト目安超過：${tc}文字／${b}バイト（目安 ${lim.titleChars}文字・${lim.titleBytes}バイト）`,title);
+      else add(rows,"ok","タイトル",`${lim.titleLabel}内：${tc}文字／${b}バイト`,title);
+    } else {
+      if(tc>lim.titleChars) add(rows,"bad","タイトル",`${lim.titleLabel}超過：${tc}/${lim.titleChars}`,title);
+      else add(rows,"ok","タイトル",`${lim.titleLabel}内：${tc}/${lim.titleChars}`,title);
+    }
+    if(tc>0 && tc<Math.min(12, Math.floor(lim.titleChars*0.2))) add(rows,"warn","タイトル","短すぎます。ブランド・品名・容量／サイズ・色・型番など検索語を足せないか確認",title);
+  }
+
+  const decor=(title.match(DECOR)||[]).length;
+  if(decor>=3) add(rows,"warn","タイトル",`装飾記号・絵文字が${decor}個。検索語に文字数を回した方が安全なことが多いです`,title);
+  else if(decor>0 && mall==="amazon") add(rows,"warn","タイトル","Amazonでは装飾記号・絵文字はスタイルガイド上避けた方が無難です",title);
+
+  if(PROMO.test(title)) add(rows,"warn","タイトル","送料無料／セール／最安など販促語がタイトルに入っています（モール・カテゴリで制限されやすい）",title.match(PROMO)[0]);
+  if(SUPER.test(title)) add(rows,"warn","タイトル","最上級・断定に近い語があります。根拠と注釈がないと景表リスク",title.match(SUPER)[0]);
+
+  // keyword stuffing: same token 3+
+  const toks=title.split(/[\s　/／・,、|｜\-−_]+/).filter(w=>clen(w)>=2);
+  const freq={}; toks.forEach(w=>{freq[w]=(freq[w]||0)+1;});
+  const stuffed=Object.entries(freq).filter(([,n])=>n>=3).map(([w])=>w);
+  if(stuffed.length) add(rows,"warn","タイトル","同じ語句の繰り返し（詰め込み疑い）："+stuffed.map(esc).join("、"),title);
+
+  if(/^[A-Z0-9\s\-]{20,}$/.test(title)) add(rows,"warn","タイトル","ほぼ英大文字だけです。読みにくく、スタイルガイドでも避けられがちです",title);
+
+  const bl=lines(bullets);
+  if(!bl.length) add(rows,"warn","箇条書き","箇条書き／キャッチが空です（Amazonは特に重要）","");
+  else {
+    if(bl.length<3 && mall==="amazon") add(rows,"warn","箇条書き","箇条書きが少なめです。3〜5個あると比較されやすいです",bullets);
+    else add(rows,"ok","箇条書き",`項目数 ${bl.length}`,"");
+    bl.forEach((line,i)=>{
+      if(clen(line)>lim.bulletSoft) add(rows,"warn","箇条書き",`${i+1}行目が長め（目安${lim.bulletSoft}超）。要点を短く`,line);
+      if(PROMO.test(line)&&mall==="amazon") add(rows,"warn","箇条書き","販促語が箇条書きに入っています",line);
+      if(SUPER.test(line)) add(rows,"warn","箇条書き","最上級・断定語",line.match(SUPER)[0]);
+    });
+    const dups=[...new Set(bl.filter((x,i)=>bl.indexOf(x)!==i))];
+    if(dups.length) add(rows,"warn","箇条書き","同一行の重複があります",dups[0]);
+  }
+
+  if(clen(desc)){
+    if(clen(desc)>lim.descSoft) add(rows,"warn","説明",`説明が非常に長い（目安${lim.descSoft}超）。要点と注意事項を分けられないか`,"");
+    else add(rows,"ok","説明",`説明 ${clen(desc)}文字`,"");
+  } else add(rows,"warn","説明","商品説明が空です（仕様・注意・セット内容があると問い合わせが減ります）","");
+
+  const need=[
+    ["容量・サイズ・寸法",/(サイズ|寸法|容量|ml|mL|ℓ|L\b|cm|ｍｍ|mm|kg|g\b|号|\b(XS|S|M|L|XL)\b)/i],
+    ["素材・材質",/(素材|材質|原料|成分|ステンレス|綿|ポリ|アルミ|樹脂|シリコン)/],
+    ["セット内容・付属品",/(付属|セット内容|内容物|本体のみ|ケーブル|説明書|保証書)/],
+    ["注意・禁止事項",/(注意|禁止|対応|非対応|不可|しないで|お手入れ)/],
+  ];
+  if($("cloth").checked) need.push(["衣類サイズ（実寸・表記）",/(着丈|身幅|ウエスト|股下|日本サイズ|cm|号)/]);
+  if($("elec").checked) need.push(["電圧・保証・付属",/(V|ボルト|W|ワット|保証|アダプタ|ケーブル|PSE)/i]);
+  if($("food").checked) need.push(["賞味・アレルゲン等",/(賞味|消費期限|アレルゲン|原材料|内容量)/]);
+  const miss=need.filter(([,re])=>!re.test(all)).map(([n])=>n);
+  if(miss.length) add(rows,"warn","仕様抜け","書かれていないかもしれない項目："+miss.join("、"),"");
+  else add(rows,"ok","仕様","よくある仕様項目はひと通り触れています","");
+
+  if($("food").checked && /(治る|治します|糖尿病|がんが|医師も推奨|薬いらず)/.test(all))
+    add(rows,"bad","薬機っぽい","食品・サプリで医薬品的な効能表現の疑い。薬機チェックも併用",all.match(/(治る|治します|糖尿病|がんが|医師も推奨|薬いらず)/)[0]);
+
+  if(PLACE.test(all)) add(rows,"bad","プレースホルダ","仮置き文字列が残っています",all.match(PLACE)[0]);
+  if(AI_TELL.test(all)) add(rows,"warn","文体","AI定型っぽい言い回し",all.match(AI_TELL)[0]);
+  if(SUPER.test(desc)||SUPER.test(bullets)){/* already per-line */}
+
+  // title vs body contradiction soft: 新品 in title, 中古 in body
+  if(/新品|未使用/.test(title) && /(中古|使用感|傷あり|ジャンク)/.test(all))
+    add(rows,"bad","整合","タイトルは新品寄りですが、説明に中古・傷・ジャンクがあります","");
+
+  if(!rows.some(r=>r.sev==="bad") && !rows.some(r=>r.sev==="warn"))
+    add(rows,"ok","総合","大きな機械的問題は見つかりませんでした。手動チェックも確認してください","");
+
+  render(rows);
+}
+function render(rows){
+  lastRows=rows;
+  const n={ok:0,warn:0,bad:0};rows.forEach(r=>n[r.sev]++);
+  $("sum").innerHTML=`<span class="pill bad">要対応 ${n.bad}</span><span class="pill warn">注意 ${n.warn}</span><span class="pill ok">OK ${n.ok}</span>`;
+  let h=`<h2>結果</h2><table><tr><th>重要度</th><th>区分</th><th>内容</th><th>根拠</th></tr>`;
+  rows.forEach(r=>{h+=`<tr><td><span class="pill ${r.sev}">${r.sev==="bad"?"要対応":r.sev==="warn"?"注意":"OK"}</span></td><td>${esc(r.cat)}</td><td>${esc(r.msg)}</td><td>${esc(r.ev)}</td></tr>`;});
+  h+="</table>";$("res").innerHTML=h;
+}
+function fillWeak(){
+  $("mall").value="amazon";
+  $("title").value="★★★最安！送料無料★ステンレスボトル 水筒 ボトル ボトル ボトル 限定セール No.1";
+  $("bullets").value="高品質\nお得";
+  $("desc").value="いかがでしょうか。包括的にご活用ください。株式会社〇〇";
+  $("cloth").checked=false;$("food").checked=false;$("elec").checked=false;
+}
+function fillGood(){
+  $("mall").value="amazon";
+  $("title").value="サーモス 水筒 真空断熱ケータイマグ 500ml ブラック JNL-505";
+  $("bullets").value="・真空断熱で約6時間保温・約24時間保冷\n・飲み口が広いので氷ごと入れやすい\n・丸洗い可能（パッキン外して洗浄）\n・本体ステンレス／容量500ml\n・専用ボックス入り";
+  $("desc").value="素材：ステンレス鋼。セット内容：本体・中せん・取扱説明書。食洗機非対応。落下・過度な衝撃に注意。保証：購入店保証に準拠。";
+}
+function clearAll(){
+  $("title").value="";$("bullets").value="";$("desc").value="";
+  $("res").innerHTML="";$("sum").innerHTML="";lastRows=[];updateCount();
+}
+function csv(){
+  if(!lastRows.length) check();
+  const lines=["severity,category,message,evidence"].concat(lastRows.map(r=>[r.sev,r.cat,r.msg,r.ev].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")));
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mall-title-check.csv";a.click();
+}
+function manualCount(){
+  const ids=["m1","m2","m3","m4","m5","m6"];
+  $("mcount").textContent=`手動チェック ${ids.filter(id=>$(id).checked).length}/${ids.length}`;
+}
+$("run").onclick=check;$("sample").onclick=()=>{fillWeak();updateCount();check();};
+$("good").onclick=()=>{fillGood();updateCount();check();};
+$("clear").onclick=clearAll;$("csv").onclick=csv;
+$("title").addEventListener("input",updateCount);$("mall").addEventListener("change",updateCount);
+["m1","m2","m3","m4","m5","m6"].forEach(id=>$(id).addEventListener("change",manualCount));
+manualCount();updateCount();
+if(typeof window!=="undefined"){window.__mallTitleCheck={check,fillWeak,fillGood,getRows:()=>lastRows,clen,bytesSJISApprox};}
+})();
+</script>
+</body>
+</html>
