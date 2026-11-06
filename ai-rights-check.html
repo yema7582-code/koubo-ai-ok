@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI音楽・映像 権利＆開示 公開前チェッカー（Suno/Udio・声・似顔・ロゴ・フェス申告・無料）</title>
+<meta name="description" content="AI音楽・AI映像をフェス応募・YouTube公開・クライアント納品する前に、生成プランの商用可否、声・似顔・ロゴ、ストック素材、Content IDリスク、フェス用AI開示の抜けをブラウザ内だけで点検。申告文下書きとCSV保存付き。送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/ai-rights-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+</style>
+</head>
+<body>
+<h1>AI音楽・映像 権利＆開示 公開前チェッカー</h1>
+<p class="muted">Suno／Udio などで作った<strong>AI音楽</strong>や生成映像を、フェス応募・YouTube公開・クライアント納品する前に、プランの商用可否・声／似顔／ロゴ・ストック素材・Content ID・フェス用AI開示の抜けを自分で潰します。処理はブラウザ内のみ（送信なし）。各サービスの公式判定ではなく、よくある落とし穴の自己点検です。法的助言ではありません。</p>
+
+<div class="box">
+<label>作品タイトル（任意）</label>
+<input type="text" id="title" placeholder="例：潮灯りのクリスマス / Tide Lights">
+<div class="row">
+<div>
+<label>作品の種類</label>
+<select id="kind">
+<option value="music">音楽・BGM・劇伴</option>
+<option value="video">映像（サイレント寄り）</option>
+<option value="both" selected>映像＋音楽</option>
+<option value="mv">ミュージックビデオ</option>
+</select>
+</div>
+<div>
+<label>主な公開先</label>
+<select id="dest">
+<option value="festival">AI映画／音楽フェス応募</option>
+<option value="youtube">YouTube／SNS公開</option>
+<option value="client" selected>クライアント納品・受託</option>
+<option value="stock">素材販売・ライセンス販売</option>
+<option value="personal">個人・非商用のみ</option>
+</select>
+</div>
+</div>
+</div>
+
+<h2>1. 音楽生成（Suno／Udio 等）</h2>
+<div class="box">
+<div class="row">
+<div>
+<label>主な音楽生成サービス</label>
+<select id="music_svc">
+<option value="none">使っていない（自作／コード合成／Epidemic等）</option>
+<option value="suno">Suno</option>
+<option value="udio">Udio</option>
+<option value="other_ai">その他の音楽生成AI</option>
+<option value="epidemic">Epidemic Sound 等の定額ストック音源</option>
+<option value="unknown">わからない</option>
+</select>
+</div>
+<div>
+<label>契約プラン（音楽）</label>
+<select id="music_plan">
+<option value="">未選択</option>
+<option value="free">無料／Free（商用制限が多い）</option>
+<option value="paid">有料 Pro／Premier 等（商用条項あり）</option>
+<option value="na">該当なし（未使用）</option>
+<option value="unknown">わからない</option>
+</select>
+</div>
+</div>
+<div class="chk"><input type="checkbox" id="m_download"><span>WAV／MP3 を自分の端末にダウンロードでき、納品ファイルとして渡せる</span></div>
+<div class="chk"><input type="checkbox" id="m_terms"><span>利用規約の「Commercial use／Ownership」条項を、納品日時点の文言で確認した</span></div>
+<div class="chk"><input type="checkbox" id="m_nocopyright"><span>クライアントや応募先に「著作権を完全譲渡できる／著作権登録できる」と約束していない</span></div>
+<div class="chk"><input type="checkbox" id="m_promptlog"><span>プロンプト・生成日時・プロジェクトURL／IDの記録を残している</span></div>
+</div>
+
+<h2>2. 声・似顔・ロゴ・商標</h2>
+<div class="box">
+<label>声の扱い</label>
+<select id="voice">
+<option value="none">歌声・ナレなし／自分の声のみ</option>
+<option value="synth_ok">合成声（実在人物を真似していない）</option>
+<option value="clone_consent">実在人物の声クローン（本人の書面同意あり）</option>
+<option value="clone_no">実在人物の声クローン（同意なし／不明）</option>
+<option value="celeb">有名人・声優の声に寄せた指示</option>
+<option value="stock_voice">ストック／市販のボイス素材（ライセンス確認済）</option>
+<option value="unknown">わからない</option>
+</select>
+<label>似顔・顔・ロゴ</label>
+<select id="likeness">
+<option value="none">実在人物の顔・有名ロゴなし</option>
+<option value="self">自分／撮影許可のある人物のみ</option>
+<option value="release">実在人物の似顔あり（肖像・リリース取得済）</option>
+<option value="celeb">有名人・キャラクターの似顔／そっくり生成</option>
+<option value="logo">企業ロゴ・商標・ゲーム／映画のIPが映る</option>
+<option value="unknown">わからない</option>
+</select>
+<div class="chk"><input type="checkbox" id="v_nofaceprompt"><span>プロンプトに実在の有名人名・ブランド名・「〜風」の作家指定を入れていない（または削除済み）</span></div>
+<div class="chk"><input type="checkbox" id="v_logo_clear"><span>画面に残るロゴ・看板・パッケージは権利クリア、またはぼかし／差し替え済</span></div>
+</div>
+
+<h2>3. 映像・ストック素材</h2>
+<div class="box">
+<label>映像の作り方（主）</label>
+<select id="video_src">
+<option value="na">映像なし</option>
+<option value="gen">生成AI動画（Runway／Kling／Luma／Seedance 等）</option>
+<option value="code">コード／手続き的レンダリング</option>
+<option value="stock">ストック映像＋編集</option>
+<option value="live">実写＋AI加工</option>
+<option value="mix" selected>複数の併用</option>
+</select>
+<div class="chk"><input type="checkbox" id="s_stockok"><span>ストック素材は商用プラン／ライセンス範囲内（エディトリアル限定を納品に使っていない）</span></div>
+<div class="chk"><input type="checkbox" id="s_edit"><span>人間が最終編集した（未編集の単一AIクリップだけではない）</span></div>
+<div class="chk"><input type="checkbox" id="s_subs"><span>英語以外の台詞がある場合、英語字幕を用意した（または台詞なし）</span></div>
+</div>
+
+<h2>4. 公開・フェス開示</h2>
+<div class="box">
+<label>フェス／プラットフォームが求めるAI開示</label>
+<select id="disclose">
+<option value="ready">プロセス文・使用ツール一覧を用意済</option>
+<option value="draft">下書きのみ</option>
+<option value="none">まだ書いていない</option>
+<option value="na">求められない公開先</option>
+</select>
+<div class="chk"><input type="checkbox" id="d_yt"><span>YouTube／SNSでAI生成である旨の表示方針を決めた（必要な場合）</span></div>
+<div class="chk"><input type="checkbox" id="d_cid"><span>Content ID／著作権主張で「完全オリジナル保証」をクライアントに約束していない</span></div>
+<div class="chk"><input type="checkbox" id="d_festival"><span>フェス規約の権利確認（音楽・声・似顔・ロゴ）チェックボックス内容を読んだ</span></div>
+<label>補足メモ（任意）</label>
+<textarea id="memo" rows="3" placeholder="例：Cue Xmas 用。音楽はコード合成、映像は手続き的レンダリング。"></textarea>
+</div>
+
+<p>
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">CSV保存</button>
+</p>
+<div id="out" class="box" style="min-height:40px"></div>
+
+<div class="box note">
+<strong>有料の続き（エージェントがやる範囲）</strong>：案件ごとの権利マトリクス（ツール×プラン×用途）、フェス用プロセス文の仕上げ、クライアント向け「何を約束しないか」注記つき納品書セット。目安 ¥8,000〜20,000／作品または案件。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="ai-fest-check.html">AIフェス応募前チェッカー</a> ・ <a href="ai-disclosure.html">AI利用申告文メーカー</a> ・ <a href="steam-ai-check.html">Steam AI開示チェッカー</a></p>
+<p>入力は端末内のみ。各生成AIサービスの最新規約・著作権法・肖像権の公式判断ではありません。契約書の作成は行いません。</p>
+<p>作成：中崎 慎二（フリーランス翻訳者）。依頼：shinji-work@mail.grokbot.com</p>
+</footer>
+<script>
+(function(){
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]))}
+function pill(sev){return '<span class="pill '+sev+'">'+(sev==='bad'?'必須':sev==='warn'?'注意':'OK')+'</span>'}
+
+function runCheck(){
+  const title=($("title").value||"").trim();
+  const kind=$("kind").value;
+  const dest=$("dest").value;
+  const music=$("music_svc").value;
+  const plan=$("music_plan").value;
+  const voice=$("voice").value;
+  const likeness=$("likeness").value;
+  const video=$("video_src").value;
+  const disclose=$("disclose").value;
+  const rows=[];
+  function push(sev,code,msg){rows.push({sev,code,msg})}
+
+  // Music plan commercial
+  const commercialDest = dest==="client"||dest==="stock"||dest==="festival"||dest==="youtube";
+  if(music==="udio" && commercialDest){
+    push("bad","udio_client","Udio はダウンロード／クライアント納品の可否がプラン・時期で大きく変わります。納品前に『ダウンロードできるか』と商用条項を規約原文で再確認してください。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && plan==="free" && commercialDest){
+    push("bad","free_plan","無料プランの音楽生成を、クライアント納品・素材販売・多くのフェス公開に使うと規約違反になりやすいです。有料の商用プランへ上げるか、別ソースに差し替えてください。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && plan==="unknown" && commercialDest){
+    push("bad","plan_unknown","音楽生成のプランが不明なまま公開・納品すると、後から商用不可と判明するリスクがあります。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && plan==="paid" && commercialDest){
+    push("ok","paid_plan","有料プランを選択済み。ただし『譲渡』『著作権登録』『独占』までは規約で保証されないことが多いです。");
+  }
+  if(music==="none"||music==="epidemic"){
+    push("ok","music_alt","音楽生成AI以外（自作／コード合成／定額ストック）を選択。ストックはライセンス範囲を別途確認。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && !$("m_download").checked && (dest==="client"||dest==="stock"||dest==="festival")){
+    push("bad","no_download","納品・応募用の音源ファイルをダウンロードできない状態です。提出形式を満たせません。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && !$("m_terms").checked && commercialDest){
+    push("warn","terms_unread","利用規約の商用条項を未確認です。納品日時点の文言で確認してください（過去の記憶に頼らない）。");
+  }
+  if(!$("m_nocopyright").checked && commercialDest){
+    push("bad","copyright_promise","『著作権を完全に渡せる／登録できる』と約束するとトラブルになりやすいです。約束していないことを確認してください。");
+  } else if(commercialDest){
+    push("ok","no_false_copyright","著作権の過度な約束をしていない、と自己申告。");
+  }
+  if((music==="suno"||music==="udio"||music==="other_ai") && !$("m_promptlog").checked){
+    push("warn","no_log","生成ログ（プロンプト・日時・ID）が無いと、フェスやクライアントの追加照会に答えられません。");
+  }
+
+  // Voice
+  if(voice==="clone_no"||voice==="celeb"){
+    push("bad","voice_risk","実在人物の声クローンや有名声に寄せた指示は、同意・パブリシティ権の面で高リスクです。差し替えを推奨します。");
+  } else if(voice==="clone_consent"){
+    push("warn","voice_consent","同意ありのクローンでも、用途・期間・二次利用を書面で固定してください。");
+  } else if(voice==="stock_voice"){
+    push($("s_stockok").checked?"ok":"warn","stock_voice",$("s_stockok").checked?"ストックボイス＋ライセンス確認済。":"ストックボイスのライセンス確認チェックが未です。");
+  } else if(voice==="unknown"){
+    push("warn","voice_unknown","声の扱いが不明です。");
+  } else {
+    push("ok","voice_ok","声まわりは比較的低リスクな選択です。");
+  }
+
+  // Likeness / logo
+  if(likeness==="celeb"||likeness==="logo"){
+    push("bad","likeness_ip","有名人の似顔・キャラクター・企業ロゴ／IPが含まれる選択です。許可または削除がないと応募却下・削除請求の典型パターンです。");
+  } else if(likeness==="release"){
+    push("ok","likeness_release","肖像・リリース取得済と自己申告。");
+  } else if(likeness==="unknown"){
+    push("warn","likeness_unknown","似顔・ロゴの扱いが不明です。");
+  } else {
+    push("ok","likeness_ok","実在有名顔・ロゴなし／許可済み寄りの選択。");
+  }
+  if(!$("v_nofaceprompt").checked && (kind==="video"||kind==="both"||kind==="mv")){
+    push("warn","face_prompt","有名人名・ブランド・作家『〜風』指定がプロンプトに残っていないか未確認です。");
+  }
+  if(!$("v_logo_clear").checked && (kind==="video"||kind==="both"||kind==="mv")){
+    push("warn","logo_screen","画面内ロゴ・看板のクリア／ぼかしが未確認です。");
+  }
+
+  // Video edit / stock
+  if(video!=="na" && (dest==="festival") && !$("s_edit").checked){
+    push("bad","single_clip","多くのAI映画フェスは『未編集の単一AIクリップ』を却下します。人間の最終編集が必要です。");
+  } else if(video!=="na" && $("s_edit").checked){
+    push("ok","human_edit","人間による最終編集あり、と自己申告。");
+  }
+  if((video==="stock"||video==="mix") && !$("s_stockok").checked && commercialDest){
+    push("warn","stock_unclear","ストック素材の商用ライセンス確認が未です（エディトリアル限定に注意）。");
+  }
+  if(dest==="festival" && !$("s_subs").checked){
+    push("warn","subs","英語以外の台詞がある場合、英語字幕が無いと失格になるフェスがあります。台詞なしならOK。");
+  }
+
+  // Disclosure
+  if(dest==="festival" && (disclose==="none"||disclose==="draft")){
+    push(disclose==="none"?"bad":"warn","fest_disclose",disclose==="none"?"フェス用のAIプロセス文・ツール一覧が未作成です。":"プロセス文は下書きのみ。語数・必須項目を応募前に確定してください。");
+  } else if(disclose==="ready"){
+    push("ok","disclose_ready","AI開示・プロセス文を用意済、と自己申告。");
+  }
+  if((dest==="youtube"||dest==="client") && !$("d_yt").checked){
+    push("warn","platform_label","プラットフォーム側のAI表示方針が未決定です（求められる場合に備える）。");
+  }
+  if(!$("d_cid").checked && commercialDest){
+    push("warn","cid","Content ID／著作権主張への『完全オリジナル保証』を避けてください。チェックを入れて自己確認を。");
+  }
+  if(dest==="festival" && !$("d_festival").checked){
+    push("warn","fest_rights","フェス規約の権利確認項目を未読の可能性があります。");
+  }
+
+  if(!title) push("warn","title","タイトルが空です（任意だが記録用に入れると便利）。");
+
+  // Summary counts
+  const nBad=rows.filter(r=>r.sev==="bad").length;
+  const nWarn=rows.filter(r=>r.sev==="warn").length;
+  const nOk=rows.filter(r=>r.sev==="ok").length;
+
+  // Draft disclosure JA/EN
+  const tools=[];
+  if(music==="suno") tools.push("Suno");
+  if(music==="udio") tools.push("Udio");
+  if(music==="other_ai") tools.push("音楽生成AI");
+  if(music==="epidemic") tools.push("Epidemic Sound等のライセンス音源");
+  if(music==="none") tools.push("音楽生成AIなし（自作またはコード合成等）");
+  if(video==="gen") tools.push("生成AI動画ツール");
+  if(video==="code") tools.push("手続き的／コードレンダリング");
+  if(video==="stock") tools.push("ストック映像");
+  if(video==="live") tools.push("実写＋AI加工");
+  if(video==="mix") tools.push("複数手法の映像制作");
+  const toolStr=tools.join("、")||"（ツール未記入）";
+  const jaDraft=(
+    "作品「"+(title||"（無題）")+"」について。使用した主な制作手段："+toolStr+"。"
+    +(plan==="paid"?" 音楽生成は有料プランの範囲で利用しました。":plan==="free"?" 音楽生成は無料プランのため、商用・納品用途では使わない方針です。":"")
+    +" 人は企画・選定・最終編集・権利確認を担当しました。"
+    +(voice==="none"||voice==="synth_ok"?" 実在人物の声クローンは用いていません。":" 声の扱いは別途同意・ライセンスを確認しています。")
+    +(likeness==="none"||likeness==="self"?" 有名人の似顔や無断の企業ロゴは含めていません。":" 肖像・ロゴは許可または除去済みです。")
+    +" 生成ログ（プロンプト・日時）を保管しています。著作権の完全譲渡や Content ID 無敵を保証するものではありません。"
+  );
+  const enDraft=(
+    'Work "'+(title||"(untitled)")+'". Primary tools/methods: '+toolStr+'.'
+    +(plan==="paid"?" Music generation used under a paid plan's commercial terms.":plan==="free"?" Free-tier music generation is not used for commercial delivery.":"")
+    +" A human handled concept, selection, final edit, and rights checks."
+    +" No unauthorized celebrity voice clones or brand logos are included (or releases/removals are in place)."
+    +" Generation logs are retained. This is not a warranty of full copyright assignment or Content ID immunity."
+  );
+
+  let html='<p><strong>結果</strong>：'+pill("bad")+"必須 "+nBad+" ／ "+pill("warn")+"注意 "+nWarn+" ／ "+pill("ok")+"OK "+nOk+"</p>";
+  if(nBad===0 && nWarn===0) html+='<p class="ok">大きな赤旗は見つかりませんでした。規約原文の最終確認だけ残しています。</p>';
+  else if(nBad===0) html+='<p class="warn">公開・納品前に注意項目を潰してください。</p>';
+  else html+='<p class="bad">必須項目があります。このまま納品・応募すると却下や規約違反のリスクが高いです。</p>';
+  html+='<table><thead><tr><th>判定</th><th>コード</th><th>内容</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html+='<tr><td>'+pill(r.sev)+'</td><td><code>'+esc(r.code)+'</code></td><td class="'+r.sev+'">'+esc(r.msg)+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  html+='<h2>申告文下書き（要確認）</h2><p class="muted">ai-disclosure.html やフェス用プロセス文のたたき台です。規約に合わせて書き直してください。</p>';
+  html+='<label>日本語</label><textarea id="draft_ja" rows="5" readonly>'+esc(jaDraft)+'</textarea>';
+  html+='<label>English</label><textarea id="draft_en" rows="5" readonly>'+esc(enDraft)+'</textarea>';
+  $("out").innerHTML=html;
+  window.__aiRightsRows=rows;
+  window.__aiRightsMeta={title,kind,dest,music,plan,voice,likeness,video,disclose};
+  return {rows,nBad,nWarn,nOk,jaDraft,enDraft};
+}
+
+function sample(){
+  $("title").value="潮灯りのクリスマス";
+  $("kind").value="both";
+  $("dest").value="festival";
+  $("music_svc").value="none";
+  $("music_plan").value="na";
+  $("m_download").checked=true;
+  $("m_terms").checked=true;
+  $("m_nocopyright").checked=true;
+  $("m_promptlog").checked=true;
+  $("voice").value="none";
+  $("likeness").value="none";
+  $("v_nofaceprompt").checked=true;
+  $("v_logo_clear").checked=true;
+  $("video_src").value="code";
+  $("s_stockok").checked=true;
+  $("s_edit").checked=true;
+  $("s_subs").checked=true;
+  $("disclose").value="ready";
+  $("d_yt").checked=true;
+  $("d_cid").checked=true;
+  $("d_festival").checked=true;
+  $("memo").value="Cue Xmas想定。音楽はコード合成、映像は手続き的。";
+  runCheck();
+}
+
+function downloadCsv(){
+  const rows=window.__aiRightsRows||[];
+  const m=window.__aiRightsMeta||{};
+  if(!rows.length){runCheck()}
+  const lines=[["level","code","message","title","kind","dest","music","plan"].join(",")];
+  const title=(m.title||($("title").value||"")).replace(/"/g,'""');
+  (window.__aiRightsRows||[]).forEach(r=>{
+    lines.push([r.sev,r.code,'"'+String(r.msg).replace(/"/g,'""')+'"','"'+title+'"',m.kind||"",m.dest||"",m.music||"",m.plan||""].join(","));
+  });
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="ai-rights-check.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$("run").addEventListener("click",runCheck);
+$("sample").addEventListener("click",sample);
+$("csv").addEventListener("click",downloadCsv);
+window.runAiRightsCheck=runCheck;
+window.sampleAiRights=sample;
+})();
+</script>
+</body>
+</html>

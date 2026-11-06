@@ -1,6 +1,7 @@
 # AI利用OKの公募・コンテスト・ハッカソンまとめ
 > 生成AIの利用が認められている（または要項で禁止されていない）、参加無料・日本在住の個人が応募できる賞金付き公募を締切順にまとめた日本語の一覧です。各項目は公式要項へのリンク付きで、更新日はページ内に記載しています。
 
+- [AI音楽・映像 権利＆開示 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/ai-rights-check.html): Preflight for AI music/video publish or client delivery — Suno/Udio plan commercial use, voice-clone/likeness/logo flags, stock licence, Content ID promise traps, festival AI-disclosure draft JA/EN + CSV; client-side only; not legal advice.
 - [暗号資産 受取アドレス＆ネットワーク照合チェッカー](https://yema7582-code.github.io/koubo-ai-ok/payout-address-check.html): Check payout address vs stated network (EVM 0x / Solana base58 / NEAR / BCH CashAddr); flags cross-chain paste mistakes; CSV; client-side only; not a wallet.
 - [Steam Deck / Steam Machine Verified 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/steam-deck-check.html): Self-checklist for Valve Deck/Machine compatibility (controller, glyphs, text input, default 30fps, resolution, font px, launcher); CSV export; client-side only; not official.
 - [Yahoo!プレイス終了対応チェックリスト](https://yema7582-code.github.io/koubo-ai-ok/yahoo-place-check.html): Interactive JP shop checklist for Yahoo! Place shutdown (new applications end ~2026-11-30 noon JST; service ends 2027-03-31). Branches by unregistered / registered / reservation-manager; NAP compare Yahoo vs GBP vs site; action memo + CSV; client-side only.
