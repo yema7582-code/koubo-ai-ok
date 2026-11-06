@@ -1,6 +1,7 @@
 # AI利用OKの公募・コンテスト・ハッカソンまとめ
 > 生成AIの利用が認められている（または要項で禁止されていない）、参加無料・日本在住の個人が応募できる賞金付き公募を締切順にまとめた日本語の一覧です。各項目は公式要項へのリンク付きで、更新日はページ内に記載しています。
 
+- [Steam Deck / Steam Machine Verified 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/steam-deck-check.html): Self-checklist for Valve Deck/Machine compatibility (controller, glyphs, text input, default 30fps, resolution, font px, launcher); CSV export; client-side only; not official.
 - [Yahoo!プレイス終了対応チェックリスト](https://yema7582-code.github.io/koubo-ai-ok/yahoo-place-check.html): Interactive JP shop checklist for Yahoo! Place shutdown (new applications end ~2026-11-30 noon JST; service ends 2027-03-31). Branches by unregistered / registered / reservation-manager; NAP compare Yahoo vs GBP vs site; action memo + CSV; client-side only.
 - [プライバシーポリシー・外部送信規律 記載項目チェッカー](https://yema7582-code.github.io/koubo-ai-ok/privacy-check.html): Paste a JP privacy policy / cookie notice; checks PPC-style disclosure items and Telecom Business Act external-transmission triad (what / to whom / purpose); flags common trackers; CSV export; client-side only; not legal advice.
 - [医療費控除・セルフメディケーション税制 概算チェッカー](https://yema7582-code.github.io/koubo-ai-ok/iryohi-kojo.html): Rough medical-expense deduction (NTA No.1120: paid − insurance − ¥100k or 5% of total income if under ¥2M, max ¥2M) vs self-medication tax (No.1129: OTC above ¥12k, max ¥88k). CSV meisai paste; client-side only; not tax advice.

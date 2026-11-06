@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Steam Deck / Steam Machine Verified 公開前チェッカー（無料）</title>
+<meta name="description" content="Steam Deck・Steam Machine の互換性レビュー（Verified / Playable / Unsupported）公開前に、コントローラー・グリフ・文字入力・解像度・可読性・ランチャー・Proton注意を自己点検。送信なし・CSV保存。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/steam-deck-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.4em 0}
+.chk input{margin-top:4px;flex-shrink:0}
+.chk span{font-weight:400}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.score{font-size:1.2em;font-weight:700}
+</style>
+</head>
+<body>
+<h1>Steam Deck / Steam Machine Verified 公開前チェッカー</h1>
+<p class="muted">Valveの互換性レビュー（<strong>Verified / Playable / Unsupported</strong>）に向けて、公開前に自分で潰せる項目を点検します。入力はブラウザ内だけ（送信なし）。公式の最終判定は <a href="https://partner.steamgames.com/doc/steamdeck/compat" target="_blank" rel="noopener">Steamworks: Steam Deck and Steam Machine Compatibility</a> に従ってください。このページは公式ツールではありません。</p>
+
+<div class="box">
+<label>ゲーム名（任意）</label>
+<input type="text" id="title" placeholder="例：ウゴクとトマル">
+<div class="row">
+<div>
+<label>対象デバイス（自己点検の主眼）</label>
+<select id="device">
+<option value="both">Deck + Machine 共通項目を見る</option>
+<option value="deck">Steam Deck 特有（解像度・文字）も見る</option>
+<option value="machine">Steam Machine 寄り（1080p 既定）</option>
+</select>
+</div>
+<div>
+<label>ビルド／ブランチ（任意）</label>
+<input type="text" id="build" placeholder="例：default / demo-0.9.2">
+</div>
+</div>
+</div>
+
+<h2>1. 入力（コントローラー）</h2>
+<div class="chk"><input type="checkbox" id="c_support"><span>デフォルトのコントローラー設定だけで、ゲームの全機能に到達できる（設定画面で「コントローラーON」にしなくてよい）</span></div>
+<div class="chk"><input type="checkbox" id="c_glyphs"><span>画面上のボタン表示が、実際に使っている入力デバイスのグリフと一致する（Deck/Steam Controller/Xbox）。キーボード／マウス記号だけが出続けない</span></div>
+<div class="chk"><input type="checkbox" id="c_steaminput"><span>Steam Input API を使っている、または同等にデバイス別グリフを出せる</span></div>
+<div class="chk"><input type="checkbox" id="c_text"><span>名前入力・セーブ名など文字入力が必要なら、Steamのテキスト入力APIか、コントローラーだけで使える自前キーボードがある</span></div>
+<div class="chk"><input type="checkbox" id="c_no_text"><span>文字入力は一切不要（上記は該当なし）</span></div>
+
+<h2>2. パフォーマンス（既定設定）</h2>
+<div class="row">
+<div>
+<label>Deck想定：既定設定の体感FPS（800p付近）</label>
+<select id="fps_deck">
+<option value="">未計測</option>
+<option value="lt30">30未満が多い</option>
+<option value="ge30">おおむね30以上</option>
+<option value="ge40">おおむね40以上</option>
+<option value="na">Deck対象外／未リリース</option>
+</select>
+</div>
+<div>
+<label>Machine想定：既定設定の体感FPS（1080p付近）</label>
+<select id="fps_machine">
+<option value="">未計測</option>
+<option value="lt30">30未満が多い</option>
+<option value="ge30">おおむね30以上</option>
+<option value="ge40">おおむね40以上</option>
+<option value="na">未計測・対象外</option>
+</select>
+</div>
+</div>
+<p class="note">Verifiedの目安：Deckは<strong>800pで30fps</strong>、Machineは<strong>1080pで30fps</strong>を「出荷時の既定設定」で満たすこと（公式チェックリスト）。</p>
+
+<h2>3. シームレスさ・ランチャー</h2>
+<div class="chk"><input type="checkbox" id="s_nowarn"><span>「このLinux／このGPUは非対応」などのデバイス互換警告を出さない</span></div>
+<div class="chk"><input type="checkbox" id="s_nolaunch"><span>起動に外部ランチャーが不要（Steamから直接ゲーム本編へ）</span></div>
+<div class="chk"><input type="checkbox" id="s_launch_ok"><span>ランチャーがある場合：コントローラーだけで全操作でき、Verified要件を満たす</span></div>
+<div class="chk"><input type="checkbox" id="s_nolaunch_na"><span>ランチャーなし（上のランチャー項目は該当なし）</span></div>
+
+<h2>4. Steam Deck 表示（Deckを見る場合）</h2>
+<div class="chk"><input type="checkbox" id="d_res"><span>1280×800（推奨）または 1280×720 などDeckが扱う解像度で問題なく表示される</span></div>
+<div class="row">
+<div>
+<label>最小UI文字の高さ（1280×800換算の目安・px）</label>
+<input type="text" id="font_px" placeholder="例：10（公式最低9、推奨12）">
+</div>
+<div>
+<label>文字サイズ／コントラストをプレイヤーが変えられる？</label>
+<select id="font_scale">
+<option value="">未確認</option>
+<option value="yes">はい</option>
+<option value="no">いいえ</option>
+<option value="partial">一部のみ</option>
+</select>
+</div>
+</div>
+
+<h2>5. Proton / ランタイムメモ（自己申告）</h2>
+<label>既知のブロッカー（任意・カンマ区切り）</label>
+<input type="text" id="proton" placeholder="例：Easy Anti-Cheat未対応, 独自ランチャー, 特定コーデックのムービー">
+<label>メモ（任意）</label>
+<textarea id="notes" style="min-height:70px" placeholder="例：ネイティブLinuxビルドあり／Windows+Protonで検証予定"></textarea>
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">結果をCSV保存</button>
+</p>
+<div id="out"></div>
+
+<div class="box note">
+<strong>有料の続き（エージェントがやる範囲）</strong>：項目別の証拠メモ（スクショ指示・設定パス・Steam Input バインド案）＋グリフ／文字入力／既定画質の修正優先度リストをセットで納品。実機Deckが無い場合は「公開前セルフ点検レポート」としてファイルベースで渡します（Valveの公式レビュー代行ではありません）。目安 ¥8,000〜15,000／タイトル。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="steam-ai-check.html">Steam AI開示チェック</a> ・ <a href="nextfest.html">Next Fest 締切</a> ・ <a href="steam-assets.html">カプセルサイズ</a> ・ <a href="pairwise.html">ペアワイズテスト</a> ・ <a href="bug-report.html">バグレポート整形</a></p>
+<p>入力は端末内のみ。Steam／Valveの公式判定ではありません。</p>
+</footer>
+<script>
+(function(){
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function stateFromUi(){
+  return {
+    title:$("title").value.trim(),
+    device:$("device").value,
+    build:$("build").value.trim(),
+    c_support:$("c_support").checked,
+    c_glyphs:$("c_glyphs").checked,
+    c_steaminput:$("c_steaminput").checked,
+    c_text:$("c_text").checked,
+    c_no_text:$("c_no_text").checked,
+    fps_deck:$("fps_deck").value,
+    fps_machine:$("fps_machine").value,
+    s_nowarn:$("s_nowarn").checked,
+    s_nolaunch:$("s_nolaunch").checked,
+    s_launch_ok:$("s_launch_ok").checked,
+    s_nolaunch_na:$("s_nolaunch_na").checked,
+    d_res:$("d_res").checked,
+    font_px:($("font_px").value||"").trim(),
+    font_scale:$("font_scale").value,
+    proton:$("proton").value.trim(),
+    notes:$("notes").value.trim()
+  };
+}
+function analyze(s){
+  const issues=[], tips=[];
+  let bad=0, warn=0, ok=0;
+  function push(l,m){ (l==="bad"?issues:l==="warn"?issues:tips).push({l,m}); if(l==="bad")bad++; else if(l==="warn")warn++; else ok++; }
+
+  if(!s.c_support) push("bad","コントローラー：デフォルト設定で全機能に届かない／未確認です。Verified必須。");
+  else push("ok","コントローラー：デフォルト設定で到達可能と自己申告。");
+  if(!s.c_glyphs) push("bad","グリフ：デバイスと一致していない／未確認。キーボード記号のままは Playable 落ちしやすい。");
+  else push("ok","グリフ一致を自己申告。");
+  if(!s.c_steaminput) push("warn","Steam Input API 未使用（または未確認）。グリフ自動切替の公式推奨です。");
+  if(s.c_no_text) push("ok","文字入力なし → テキスト入力要件は該当なし。");
+  else if(!s.c_text) push("bad","文字入力があるのに、OSK／コントローラー入力経路が未確認です。");
+  else push("ok","文字入力経路ありと自己申告。");
+
+  const needDeck = s.device==="deck" || s.device==="both";
+  const needMachine = s.device==="machine" || s.device==="both";
+  if(needDeck){
+    if(!s.fps_deck || s.fps_deck==="") push("warn","Deckの既定FPS未計測。800p/30fpsがVerified目安。");
+    else if(s.fps_deck==="lt30") push("bad","Deck既定が30fps未満 → Verifiedは厳しい（既定プリセットを下げるか最適化）。");
+    else if(s.fps_deck==="na") push("warn","Deck対象外と記入。");
+    else push("ok","Deck既定FPSは30以上の自己申告。");
+  }
+  if(needMachine){
+    if(!s.fps_machine || s.fps_machine==="") push("warn","Machineの既定FPS未計測。1080p/30fpsが目安。");
+    else if(s.fps_machine==="lt30") push("bad","Machine既定が30fps未満。");
+    else if(s.fps_machine!=="na") push("ok","Machine既定FPSは30以上の自己申告。");
+  }
+
+  if(!s.s_nowarn) push("bad","デバイス非対応警告を出す／未確認。Verifiedでは警告禁止。");
+  else push("ok","互換警告なしと自己申告。");
+
+  const launchHandled = s.s_nolaunch || s.s_nolaunch_na || s.s_launch_ok;
+  if(!launchHandled) push("bad","ランチャー有無が未整理。ランチャーがあるならコントローラー完結が必須。");
+  else if(s.s_nolaunch || s.s_nolaunch_na) push("ok","外部ランチャーなし（または該当なし）。");
+  else push("ok","ランチャーはコントローラー完結と自己申告。");
+
+  if(needDeck || s.device==="deck"){
+    if(!s.d_res) push("warn","Deck解像度（1280×800推奨）の確認が未記入。");
+    else push("ok","Deck解像度OKと自己申告。");
+    const px=parseFloat(s.font_px);
+    if(!s.font_px) push("warn","最小文字高さ（px）未記入。公式最低9px、推奨12px。");
+    else if(isNaN(px)) push("warn","文字高さは数値（px）で書いてください。");
+    else if(px<9) push("bad","最小文字が9px未満 → Deck表示要件を満たしません。");
+    else if(px<12) push("warn","9px以上だが推奨12px未満。屋外・TV接続で読みにくいことがあります。");
+    else push("ok","文字高さは推奨帯（≥12px）の自己申告。");
+    if(s.font_scale==="no") push("warn","文字サイズ変更不可。推奨（バッジには必須ではない）。");
+  }
+
+  if(s.proton){
+    const p=s.proton.toLowerCase();
+    if(/anti-?cheat|eac|battleye|ランチャー|codec|ムービー|denuvo/i.test(s.proton) || /eac|battleye/.test(p))
+      push("warn","Proton／ミドルウェア注意あり："+s.proton+" → Unsupported や再テスト要因になりやすい。");
+    else push("warn","ブロッカーメモあり："+s.proton);
+  }
+
+  // heuristic badge
+  let badge="自己点検：要修正あり";
+  if(bad===0 && warn<=2) badge="自己点検：Verified候補（未計測項目を埋めてからレビュー申請）";
+  else if(bad===0) badge="自己点検：Playable寄り／注意あり（手動設定や計測不足）";
+  else if(bad<=2) badge="自己点検：Playableになりやすいギャップあり";
+  else badge="自己点検：Verifiedには不足（優先度高の要修正あり）";
+
+  return {issues,tips,bad,warn,ok,badge};
+}
+function render(r,s){
+  let h=`<div class="box"><span class="score">${esc(r.badge)}</span><br>
+<span class="muted">要修正 ${r.bad} ／ 注意 ${r.warn} ／ OK ${r.ok} ／ タイトル: ${esc(s.title||"（未記入）")} ／ ビルド: ${esc(s.build||"（未記入）")}</span></div>`;
+  h+=`<h2>指摘</h2><ul>`;
+  r.issues.concat(r.tips).forEach(x=>{
+    h+=`<li><span class="pill ${x.l}">${x.l==="bad"?"要修正":x.l==="warn"?"注意":"OK"}</span>${esc(x.m)}</li>`;
+  });
+  h+=`</ul>`;
+  h+=`<h2>修正優先度メモ（コピペ用）</h2><pre id="draft">${esc(`【Steam Deck / Machine 公開前セルフ点検】
+タイトル: ${s.title||"（未記入）"}
+ビルド: ${s.build||"（未記入）"}
+対象: ${s.device}
+推定: ${r.badge}
+
+優先度高（要修正 ${r.bad}）:
+${r.issues.filter(i=>i.l==="bad").map(i=>"- "+i.m).join("\n")||"- （なし）"}
+
+注意:
+${r.issues.filter(i=>i.l==="warn").map(i=>"- "+i.m).join("\n")||"- （なし）"}
+
+Protonメモ: ${s.proton||"（なし）"}
+その他: ${s.notes||"（なし）"}
+
+※Valve公式レビュー結果ではありません。partner.steamgames.com/doc/steamdeck/compat を正としてください。
+`)}</pre>
+<button type="button" class="sec" id="cpDraft">メモをコピー</button>`;
+  $("out").innerHTML=h;
+  const b=$("cpDraft");
+  if(b) b.onclick=()=>{navigator.clipboard.writeText($("draft").textContent).catch(()=>{});};
+}
+function run(){ const s=stateFromUi(); render(analyze(s),s); window.__last={s,r:analyze(s)}; }
+$("run").onclick=run;
+$("sample").onclick=function(){
+  $("title").value="サンプル・パズルRPG";
+  $("device").value="deck";
+  $("build").value="demo-0.9.1";
+  $("c_support").checked=true; $("c_glyphs").checked=true; $("c_steaminput").checked=true;
+  $("c_text").checked=true; $("c_no_text").checked=false;
+  $("fps_deck").value="ge30"; $("fps_machine").value="ge30";
+  $("s_nowarn").checked=true; $("s_nolaunch").checked=true; $("s_launch_ok").checked=false; $("s_nolaunch_na").checked=true;
+  $("d_res").checked=true; $("font_px").value="11"; $("font_scale").value="partial";
+  $("proton").value=""; $("notes").value="Steam Input 既定テンプレあり。セーブ名はSteamのフローティングキーボード。";
+  run();
+};
+$("csv").onclick=function(){
+  const s=stateFromUi(); const r=analyze(s);
+  const rows=[["level","message"]].concat(r.issues.concat(r.tips).map(x=>[x.l,x.m]));
+  rows.unshift(["meta","title="+s.title+";build="+s.build+";badge="+r.badge]);
+  const csv=rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="steam-deck-check.csv"; a.click();
+};
+})();
+</script>
+</body>
+</html>
