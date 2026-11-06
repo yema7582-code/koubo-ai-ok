@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LP・キャンペーンページ ワイヤー／文案 公開前チェッカー（ヒーロー・CTA・信頼・FAQ／無料）</title>
+<meta name="description" content="店舗・個人事業のLPやキャンペーンページのワイヤー／文案を貼るだけ。ヒーロー長すぎ・CTAなし・価格や連絡先なし・社会的証明なし・FAQ抜け・プレースホルダ・ですます混在・弱い締めをブラウザ内だけで点検。CSV保存・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/lp-wire-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+textarea,input[type=text]{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:88px;font-size:14px}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.grid{display:grid;gap:10px}
+@media(min-width:700px){.grid-2{grid-template-columns:1fr 1fr}}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+label{font-weight:600;display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>LP・キャンペーンページ ワイヤー／文案 公開前チェッカー</h1>
+<p class="muted">小さなお店・士業・個人事業の<strong>ランディングページやキャンペーン特設ページ</strong>を公開する前に、ファーストビュー・オファー・CTA・信頼材料・FAQの抜けを自分で潰します。ワイヤーの見出し／本文を貼るだけで動きます（デザイン画像の審査ではありません）。処理はブラウザ内のみ・送信なし。</p>
+
+<div class="box grid">
+<div class="grid grid-2">
+<div>
+<label for="hero">1. ヒーロー（キャッチ＋サブ）</label>
+<textarea id="hero" placeholder="例：加古川の◯◯専門店&#10;初めてでも当日予約OK。駅から徒歩3分。"></textarea>
+</div>
+<div>
+<label for="offer">2. オファー／価格・特典</label>
+<textarea id="offer" placeholder="例：初回カウンセリング無料／60分 ¥6,600（税込）&#10;11月末まで体験セットあり"></textarea>
+</div>
+</div>
+<div class="grid grid-2">
+<div>
+<label for="benefits">3. メリット・特徴（箇条書き可）</label>
+<textarea id="benefits" placeholder="・実績◯年&#10;・土日も対応&#10;・駐車場あり"></textarea>
+</div>
+<div>
+<label for="cta">4. CTAボタン／次の一手の文案</label>
+<textarea id="cta" placeholder="例：空き状況を見る／LINEで予約する／資料をダウンロード"></textarea>
+</div>
+</div>
+<div class="grid grid-2">
+<div>
+<label for="trust">5. 信頼・社会的証明（口コミ／実績／資格／メディア）</label>
+<textarea id="trust" placeholder="例：Google口コミ★4.8（128件）／国家資格◯◯&#10;近隣クリニックからの紹介あり"></textarea>
+</div>
+<div>
+<label for="faq">6. FAQ（任意・あれば）</label>
+<textarea id="faq" placeholder="Q. 予約は必要ですか？&#10;A. …&#10;Q. キャンセルは？"></textarea>
+</div>
+</div>
+<div>
+<label for="extra">7. その他ブロック（フッター・特商法リンク・注意書きなど／任意）</label>
+<textarea id="extra" placeholder="特定商取引法に基づく表記／プライバシーポリシー／営業時間 10–19時 水曜定休"></textarea>
+</div>
+<p>
+<button type="button" id="run">チェックする</button>
+<button type="button" id="sample" class="sec">弱いサンプルを入れる</button>
+<button type="button" id="good" class="sec">良いサンプル</button>
+<button type="button" id="clear" class="sec">消す</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+</p>
+<div id="sum" role="status" aria-live="polite"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul id="manual" style="list-style:none;padding:0">
+<li class="chk"><input type="checkbox" id="m1"><span>スマホ幅でファーストビューにキャッチと主CTAが両方見える（スクロールなし）</span></li>
+<li class="chk"><input type="checkbox" id="m2"><span>写真・イラストの権利が商用OKで、人物の写り込みに問題がない</span></li>
+<li class="chk"><input type="checkbox" id="m3"><span>価格・期間・在庫・営業時間の数字が最新で、注釈と矛盾しない</span></li>
+<li class="chk"><input type="checkbox" id="m4"><span>予約／決済／問い合わせの最後まで自分で通した（テスト送信含む）</span></li>
+<li class="chk"><input type="checkbox" id="m5"><span>薬機法・景表法・ステマ表記が業種ルールに合う（関連：<a href="yakki-check.html">yakki-check</a>／<a href="nijuu-kakaku.html">nijuu-kakaku</a>／<a href="stema-check.html">stema-check</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m6"><span>特商法・プラポリへの導線がある（関連：<a href="tokusho-check.html">tokusho-check</a>／<a href="privacy-check.html">privacy-check</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m7"><span>OGP・タイトルがSNSシェアで意図どおり（関連：<a href="ogp-maker.html">ogp-maker</a>）</span></li>
+<li class="chk"><input type="checkbox" id="m8"><span>競合LPと見比べて、独自の約束（誰向け・何が違うか）が一文で言える</span></li>
+</ul>
+<p id="mcount" class="muted"></p>
+
+<div class="box">
+<p class="muted">小さなお店・事務所向けの<strong>LP／キャンペーンページ ワイヤー＋文案階層点検レポート</strong>（ヒーロー／オファー／CTA／信頼／FAQの抜け＋書き換え案）をお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥8,000〜25,000。デザイン入稿の塗り足しは <a href="print-check.html">print-check</a>、SNSサイズは <a href="sns-size-check.html">sns-size-check</a>。</p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページは広告・薬機・景表の適合証明ではありません。業種の表現ルールは所管・専門家の確認を優先してください。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s).replace(/\s+/g," ").trim();n=n||120;return s.length>n?s.slice(0,n)+"…":s;}
+function chars(s){return String(s||"").replace(/\s+/g,"").length;}
+function lines(s){return String(s||"").split(/\n/).map(x=>x.trim()).filter(Boolean);}
+const CTA_RE=/(予約|申込|申し込み|問い合わせ|お問い合わせ|相談|資料|ダウンロード|カート|購入|買う|試す|始める|登録|LINE|空き|見る|詳細|無料体験|カウンセリング|今すぐ|こちら)/i;
+const PRICE_RE=/(¥|円|税込|税抜|無料|０円|0円|料金|価格|コース|セット|月額|年額)/;
+const CONTACT_RE=/(電話|TEL|Tel|mail|メール|@|LINE|住所|営業時間|定休|予約フォーム|Googleフォーム|forms\.gle)/i;
+const TRUST_RE=/(口コミ|レビュー|★|☆|件|実績|年|資格|認定|メディア|新聞|テレビ|紹介|お客様の声|before|after|症例|受賞)/i;
+const PLACE_RE=[
+  {re:/Lorem ipsum/i,label:"Lorem ipsum"},
+  {re:/TODO|FIXME|XXX/,label:"TODO／FIXME"},
+  {re:/株式会社〇〇|（会社名）|\[会社名\]|貴社名|店舗名を入れる/,label:"会社・店名プレースホルダ"},
+  {re:/000-0000-0000|00-0000-0000/,label:"電話プレースホルダ"},
+  {re:/example\.(com|jp)|test@example/i,label:"仮ドメイン／仮メール"},
+  {re:/Coming soon|工事中|準備中です/i,label:"Coming soon／工事中"},
+  {re:/〇〇|＊＊＊|【仮】/,label:"仮置き記号"},
+];
+const AI_TELL=/いかがでしょうか|ご活用ください|ぜひお試しくださいませ|最適解|シームレスに|包括的に|多岐にわたる|ご不明点がございましたら/;
+let lastRows=[];
+function add(rows,sev,cat,msg,ev){rows.push({sev,cat,msg,ev:snip(ev||"")});}
+function check(){
+  const hero=$("hero").value, offer=$("offer").value, benefits=$("benefits").value;
+  const cta=$("cta").value, trust=$("trust").value, faq=$("faq").value, extra=$("extra").value;
+  const all=[hero,offer,benefits,cta,trust,faq,extra].join("\n");
+  const rows=[];
+  if(!chars(all)){add(rows,"bad","入力","どれか1つは入力してください","");render(rows);return;}
+
+  const hc=chars(hero);
+  if(!hc) add(rows,"bad","ヒーロー","ヒーロー（キャッチ＋サブ）が空です","");
+  else if(hc<12) add(rows,"bad","ヒーロー","ヒーローが短すぎます（誰向け・何が得られるかが伝わりにくい）",hero);
+  else if(hc>120) add(rows,"warn","ヒーロー","ヒーローが長めです（スマホ1画面に収まらない可能性）",hero);
+  else add(rows,"ok","ヒーロー","ヒーロー文量はおおよそ妥当です",hero);
+  if(hc && !/[。．！？!?\n]/.test(hero) && hc>40) add(rows,"warn","ヒーロー","一文が長く続く印象です。キャッチとサブを改行で分けると読みやすいです",hero);
+  if(/私たち|弊社|当社|当店/.test(hero) && !/(あなた|あなた様|お客様|向け|のための)/.test(hero))
+    add(rows,"warn","ヒーロー","主語が自社寄りです。読み手（誰の悩みを解くか）を先に出すと刺さりやすいです",hero);
+
+  if(!chars(offer)) add(rows,"warn","オファー","価格・特典・期間の欄が空です（無料相談でも「無料」と書いた方が安心）","");
+  else {
+    if(!PRICE_RE.test(offer)) add(rows,"warn","オファー","価格／無料／税込などの手がかりが見つかりません",offer);
+    else add(rows,"ok","オファー","価格・特典の手がかりがあります",offer);
+    if(/(今だけ|限定|キャンペーン)/.test(offer) && !/(〜|まで|末日|月|日|期間)/.test(offer))
+      add(rows,"warn","オファー","「限定／キャンペーン」とあるのに終了時期が見えません（景表上も期間明示が安全）",offer);
+  }
+
+  const bl=lines(benefits);
+  if(!bl.length) add(rows,"warn","メリット","メリット・特徴が空です。3つ前後あると比較しやすいです","");
+  else if(bl.length===1) add(rows,"warn","メリット","メリットが1つだけです。差別化が弱い印象になりやすいです",benefits);
+  else if(bl.length>=3) add(rows,"ok","メリット","メリットが複数あります",benefits);
+  else add(rows,"ok","メリット","メリットがあります（もう1つあると安定）",benefits);
+  if(bl.some(x=>x.length>80)) add(rows,"warn","メリット","1項目が長すぎる行があります。見出し＋短い説明に分けるとスキャンしやすいです",benefits);
+
+  if(!chars(cta)) add(rows,"bad","CTA","次の一手（ボタン／リンク文）が空です","");
+  else if(!CTA_RE.test(cta)) add(rows,"warn","CTA","行動を促す語（予約・問い合わせ・LINE・資料など）が見えにくいです",cta);
+  else add(rows,"ok","CTA","行動を促す文案があります",cta);
+  if(chars(cta)>40) add(rows,"warn","CTA","ボタン文が長めです（短く動詞始まりが押しやすい）",cta);
+
+  if(!chars(trust)) add(rows,"warn","信頼","口コミ・実績・資格などの信頼材料が空です","");
+  else if(!TRUST_RE.test(trust)) add(rows,"warn","信頼","信頼欄に数字・口コミ・資格などの手がかりが弱いです",trust);
+  else add(rows,"ok","信頼","信頼・社会的証明の手がかりがあります",trust);
+
+  if(!chars(faq)) add(rows,"warn","FAQ","FAQが空です（予約の要否・所要時間・キャンセルはよく聞かれます）","");
+  else {
+    const qs=(faq.match(/Q[\.．、\s]|？|\?/g)||[]).length;
+    if(qs<2) add(rows,"warn","FAQ","質問が少なめです。最低2〜3個あると離脱が減りやすいです",faq);
+    else add(rows,"ok","FAQ","FAQらしき質問があります",faq);
+  }
+
+  if(!CONTACT_RE.test(all) && !CONTACT_RE.test(extra))
+    add(rows,"warn","導線","電話・メール・LINE・住所・営業時間などの連絡手がかりが弱いです",extra||cta);
+  else add(rows,"ok","導線","連絡・営業の手がかりがあります","");
+
+  if(!/(特商法|特定商取引|プライバシー|個人情報)/.test(all+extra) && chars(extra)<8)
+    add(rows,"warn","法令導線","特商法／プラポリへの言及が文案上見えません（ページフッターでも可）",extra);
+
+  PLACE_RE.forEach(p=>{if(p.re.test(all)) add(rows,"bad","プレースホルダ",p.label+" が残っています",all.match(p.re)[0]);});
+  if(AI_TELL.test(all)) add(rows,"warn","文体","AIっぽい定型（「いかがでしょうか」「包括的に」等）が混ざっています",all.match(AI_TELL)[0]);
+
+  const desu=/です|ます|ください/.test(all), dearu=/である|だ。|だろう/.test(all);
+  if(desu && dearu) add(rows,"warn","文体","ですます調とだ・である調が混在しています","");
+
+  if(/最高|絶対|必ず治|完璧|No\.?\s*1|日本一|世界一/.test(all))
+    add(rows,"warn","表現","断定・最上級に近い表現があります。根拠と注釈があるか確認してください",all.match(/最高|絶対|必ず治|完璧|No\.?\s*1|日本一|世界一/)[0]);
+
+  if(!rows.some(r=>r.sev==="bad") && !rows.some(r=>r.sev==="warn"))
+    add(rows,"ok","総合","大きな抜けは見つかりませんでした。手動チェックリストも確認してください","");
+
+  render(rows);
+}
+function render(rows){
+  lastRows=rows;
+  const n={ok:0,warn:0,bad:0};rows.forEach(r=>n[r.sev]++);
+  $("sum").innerHTML=`<span class="pill bad">要対応 ${n.bad}</span><span class="pill warn">注意 ${n.warn}</span><span class="pill ok">OK ${n.ok}</span>`;
+  let h=`<h2>結果</h2><table><tr><th>重要度</th><th>区分</th><th>内容</th><th>根拠</th></tr>`;
+  rows.forEach(r=>{h+=`<tr><td><span class="pill ${r.sev}">${r.sev==="bad"?"要対応":r.sev==="warn"?"注意":"OK"}</span></td><td>${esc(r.cat)}</td><td>${esc(r.msg)}</td><td>${esc(r.ev)}</td></tr>`;});
+  h+="</table>";$("res").innerHTML=h;
+}
+function fillWeak(){
+  $("hero").value="私たちのこだわりをご紹介します";
+  $("offer").value="お得なキャンペーン実施中";
+  $("benefits").value="・高品質\n・丁寧な対応";
+  $("cta").value="詳細はこちら";
+  $("trust").value="";
+  $("faq").value="";
+  $("extra").value="株式会社〇〇";
+}
+function fillGood(){
+  $("hero").value="加古川で初めての◯◯相談\n駅徒歩3分。当日予約OK。";
+  $("offer").value="初回カウンセリング無料／60分 税込¥6,600\n11月30日までの体験セットあり";
+  $("benefits").value="・地域で12年\n・土日祝も受付\n・キッズスペースあり";
+  $("cta").value="LINEで空きを確認する";
+  $("trust").value="Google口コミ★4.8（128件）／国家資格保持者が担当";
+  $("faq").value="Q. 予約は必要ですか？\nA. 当日枠もありますが、予約優先です。\nQ. キャンセルは？\nA. 前日20時まで無料です。";
+  $("extra").value="営業時間 10–19時 水曜定休／特定商取引法に基づく表記／プライバシーポリシー";
+}
+function clearAll(){["hero","offer","benefits","cta","trust","faq","extra"].forEach(id=>$(id).value="");$("res").innerHTML="";$("sum").innerHTML="";lastRows=[];}
+function csv(){
+  if(!lastRows.length){check();}
+  const lines=["severity,category,message,evidence"].concat(lastRows.map(r=>[r.sev,r.cat,r.msg,r.ev].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")));
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="lp-wire-check.csv";a.click();
+}
+function manualCount(){
+  const ids=["m1","m2","m3","m4","m5","m6","m7","m8"];
+  const n=ids.filter(id=>$(id).checked).length;
+  $("mcount").textContent=`手動チェック ${n}/${ids.length}`;
+}
+$("run").onclick=check;$("sample").onclick=()=>{fillWeak();check();};$("good").onclick=()=>{fillGood();check();};
+$("clear").onclick=clearAll;$("csv").onclick=csv;
+["m1","m2","m3","m4","m5","m6","m7","m8"].forEach(id=>$(id).addEventListener("change",manualCount));
+manualCount();
+if(typeof window!=="undefined"){window.__lpWireCheck={check,fillWeak,fillGood,getRows:()=>lastRows};}
+})();
+</script>
+</body>
+</html>
