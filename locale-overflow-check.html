@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI翻訳 はみ出し・プレースホルダ チェッカー（CSV/JSON/PO）｜無料</title>
+<meta name="description" content="原文＋訳文のUI文字列をCSV/JSON/POで貼るだけ。日中の表示幅はみ出し（全角≈半角2）、{0}/%s/{{name}}/ICU pluralの欠落、末尾空白、省略記号・句読点のゆれ、空訳・重複キーをブラウザ内で点検。CSV保存・送信なし。string freeze / LQA向け。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/locale-overflow-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:960px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,select,input[type=number]{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+textarea{min-height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row2{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.9em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top;word-break:break-word}
+th{background:#f0f0f2}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+code.s{display:block;white-space:pre-wrap;word-break:break-all;background:#f5f5f5;padding:2px 4px;font-size:12px;margin:2px 0}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+label.inline{display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-weight:500;font-size:.92em}
+</style>
+</head>
+<body>
+<main id="main">
+<h1>UI翻訳 はみ出し・プレースホルダ チェッカー</h1>
+<p class="muted">アプリ／ゲーム／SaaSの<strong>string freeze 前 LQA</strong>向け。<code>key,source,translation</code> のCSV、または JSON／gettext .po を貼ると、日中訳の<strong>表示幅はみ出し</strong>（全角≈半角2）、プレースホルダ欠落（<code>{0}</code> <code>%s</code> <code>{{name}}</code> ICU plural）、末尾空白、省略記号・句読点のゆれ、空訳・重複キーをヒューリスティックで点検します。処理はブラウザ内のみ（送信なし）。ファイル単位のキー突合は <a href="i18n-check.html">i18n-check</a>、Android/iOS固有は <a href="mobile-strings-check.html">mobile-strings-check</a>、用語集は <a href="yougo-check.html">yougo-check</a> を使ってください（本ツールは<strong>UIはみ出し＋プレースホルダ＋句読点ゆれ</strong>専用）。</p>
+
+<div class="box">
+<label for="fmt">入力形式</label>
+<select id="fmt">
+<option value="auto">自動判定（CSV / JSON / PO）</option>
+<option value="csv">CSV（key,source,translation または source,translation）</option>
+<option value="json">JSON（入れ子可・原文キーと訳を別ペースト）</option>
+<option value="po">gettext .po（msgid/msgstr）</option>
+</select>
+<div class="row2" id="jsonPair" style="display:none;margin-top:8px">
+<div>
+<label for="srcJson">原文 JSON（例: en）</label>
+<textarea id="srcJson" placeholder='{"btn.save":"Save","hello":"Hello, {name}!"}'></textarea>
+</div>
+<div>
+<label for="tgtJson">訳文 JSON（例: ja / zh）</label>
+<textarea id="tgtJson" placeholder='{"btn.save":"保存する","hello":"こんにちは、{name}さん！"}'></textarea>
+</div>
+</div>
+<label for="raw" id="rawLab">貼り付け（CSV / PO / 単一JSON）</label>
+<textarea id="raw" aria-label="貼り付け" placeholder="key,source,translation&#10;btn.save,Save,保存する&#10;hello,&quot;Hello, {name}!&quot;,&quot;こんにちは、{name}さん！&quot;&#10;overflow,OK,これは非常に長いボタンラベルでUIからはみ出します"></textarea>
+<div class="row2">
+<div>
+<label for="ratio">はみ出し警告：訳の表示幅 ÷ 原文表示幅</label>
+<input id="ratio" type="number" value="1.8" min="1" max="5" step="0.1">
+</div>
+<div>
+<label for="maxW">絶対幅上限（0=無視／半角単位）</label>
+<input id="maxW" type="number" value="0" min="0" max="500" step="1">
+</div>
+</div>
+<p style="margin:8px 0 0">
+<label class="inline"><input type="checkbox" id="optEmpty" checked> 空訳をエラー</label>
+<label class="inline"><input type="checkbox" id="optSame" checked> 原文と同じ訳を警告</label>
+<label class="inline"><input type="checkbox" id="optTrail" checked> 先頭・末尾空白</label>
+<label class="inline"><input type="checkbox" id="optPunct" checked> 句読点・省略記号のゆれ</label>
+</p>
+<p style="margin:10px 0 0">
+<button type="button" id="run">点検</button>
+<button type="button" id="csv" class="sec">CSV保存</button>
+<button type="button" id="clear" class="sec">クリア</button>
+<button type="button" id="sampleWeak" class="sec">弱いサンプル</button>
+<button type="button" id="sampleGood" class="sec">良いサンプル</button>
+</p>
+<div id="sum" role="status" aria-live="polite" style="margin-top:10px"></div>
+</div>
+
+<div id="res"></div>
+
+<h2>人が確認する項目（ツールでは分からない）</h2>
+<ul style="list-style:none;padding:0">
+<li class="muted">□ ボタン／タブ実機で折り返し・切欠きがない（フォント・kerningは実機依存）</li>
+<li class="muted">□ 敬語・トーンがプロダクトガイドと一致（ですます／だ・である／命令形）</li>
+<li class="muted">□ 用語集・ブランド名の表記が統一されている</li>
+<li class="muted">□ App Store 30/30/100 文字制限などストア固有上限は別途確認</li>
+<li class="muted">□ 複数形・性別・序数の ICU 分岐がロケール規則に合う</li>
+</ul>
+
+<div class="box">
+<p class="muted">日英中の<strong>AI下書き＋母語 LQA（UI文字列＋アプリストア文言）</strong>と string freeze レビューをお手伝いします：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）／目安 ¥15,000〜45,000／パック</p>
+<p class="muted">関連：<a href="i18n-check.html">i18n JSON/PO</a> ／ <a href="mobile-strings-check.html">Android/iOS strings</a> ／ <a href="yougo-check.html">用語集</a> ／ <a href="ja-aso-check.html">JA ASO</a> ／ <a href="store-shots.html">ストアキャプション</a> ／ <a href="honyakucho-check.html">翻訳調</a></p>
+</div>
+<p><a href="./">← 無料ツール一覧</a></p>
+</main>
+<footer>このページは翻訳品質証明書ではありません。最終的な文言・レイアウト・ストア審査はご自身（またはクライアント）で行ってください。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function snip(s,n){s=String(s).replace(/\s+/g," ").trim();n=n||100;return s.length>n?s.slice(0,n)+"…":s;}
+function widthUnits(t){
+  let w=0; for(const ch of String(t)){
+    const cp=ch.codePointAt(0);
+    if(cp<=0x1f || (cp>=0x7f && cp<=0x9f)) continue;
+    // CJK / fullwidth / kana / hangul ≈ 2
+    if((cp>=0x1100&&cp<=0x11FF)||(cp>=0x2E80&&cp<=0x9FFF)||(cp>=0xA960&&cp<=0xA97F)||
+       (cp>=0xAC00&&cp<=0xD7AF)||(cp>=0xF900&&cp<=0xFAFF)||(cp>=0xFE10&&cp<=0xFE6F)||
+       (cp>=0xFF01&&cp<=0xFF60)||(cp>=0xFFE0&&cp<=0xFFE6)||(cp>=0x3000&&cp<=0x303F)||
+       (cp>=0x3040&&cp<=0x30FF)||(cp>=0x31F0&&cp<=0x31FF)||(cp>=0x3400&&cp<=0x4DBF)||
+       (cp>=0x20000&&cp<=0x2FA1F)) w+=2;
+    else w+=1;
+  }
+  return w;
+}
+function flatJSON(o,p,out){
+  out=out||{};
+  if(o!==null&&typeof o==="object"){
+    if(Array.isArray(o)) o.forEach((v,i)=>flatJSON(v,p+"["+i+"]",out));
+    else for(const k in o) flatJSON(o[k],p?p+"."+k:k,out);
+  } else out[p]=o==null?"":String(o);
+  return out;
+}
+function unq(s){return s.replace(/\\(n|t|"|\\)/g,(m,c)=>({n:"\n",t:"\t",'"':'"',"\\":"\\"}[c]));}
+function parsePO(t){
+  const ents=[]; let cur=null, field=null;
+  const lines=t.replace(/\r/g,"").split("\n");
+  function push(){ if(cur&&cur.msgid!=null) ents.push(cur); cur=null; }
+  for(const L of lines){
+    const l=L.trim();
+    if(!l){ push(); continue; }
+    if(l.startsWith("#")) continue;
+    let m;
+    if((m=l.match(/^msgctxt\s+"(.*)"$/))){ if(cur&&cur.msgid!=null) push(); cur={ctx:unq(m[1])}; field="ctx"; continue; }
+    if((m=l.match(/^msgid\s+"(.*)"$/))){ if(cur&&cur.msgid!=null) push(); cur=cur||{}; cur.msgid=unq(m[1]); field="msgid"; continue; }
+    if((m=l.match(/^msgid_plural\s+"(.*)"$/))){ cur.plural=unq(m[1]); field="plural"; continue; }
+    if((m=l.match(/^msgstr(?:\[(\d+)\])?\s+"(.*)"$/))){ cur.strs=cur.strs||[]; const i=m[1]?+m[1]:0; cur.strs[i]=unq(m[2]); field="s"+i; continue; }
+    if((m=l.match(/^"(.*)"$/))&&cur){
+      const v=unq(m[1]);
+      if(field==="msgid") cur.msgid+=v;
+      else if(field==="plural") cur.plural+=v;
+      else if(field==="ctx") cur.ctx+=v;
+      else if(field&&field[0]==="s"){ const i=+field.slice(1); cur.strs[i]=(cur.strs[i]||"")+v; }
+    }
+  }
+  push();
+  return ents.filter(e=>e.msgid!=="").map(e=>{
+    const key=(e.ctx?e.ctx+"\u0004":"")+e.msgid;
+    const tr=(e.strs&&e.strs.length)?(e.strs.length>1?e.strs.join(" | "):e.strs[0]):"";
+    return {key, source:e.msgid, translation:tr, plural:!!e.plural};
+  });
+}
+function parseCSV(t){
+  const rows=[]; let i=0, field="", row=[], inQ=false;
+  const pushF=()=>{row.push(field); field="";};
+  const pushR=()=>{ if(row.length&&row.some(c=>c!=="")) rows.push(row); row=[]; };
+  const s=t.replace(/^\uFEFF/,"");
+  while(i<s.length){
+    const c=s[i];
+    if(inQ){
+      if(c==='"'){ if(s[i+1]==='"'){ field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field+=c; i++; continue;
+    }
+    if(c==='"'){ inQ=true; i++; continue; }
+    if(c===','||c==='\t'){ pushF(); i++; continue; }
+    if(c==='\n'){ pushF(); pushR(); i++; continue; }
+    if(c==='\r'){ i++; continue; }
+    field+=c; i++;
+  }
+  pushF(); pushR();
+  if(!rows.length) return [];
+  const head=rows[0].map(h=>h.trim().toLowerCase());
+  let ki=-1, si=-1, ti=-1, start=0;
+  const looksHeader=head.some(h=>/^(key|id|source|src|en|translation|target|tgt|ja|zh|msgstr|msgid)$/.test(h));
+  if(looksHeader){
+    head.forEach((h,idx)=>{
+      if(/^(key|id)$/.test(h)) ki=idx;
+      if(/^(source|src|en|msgid)$/.test(h)) si=idx;
+      if(/^(translation|target|tgt|ja|zh|msgstr)$/.test(h)) ti=idx;
+    });
+    start=1;
+  }
+  if(si<0||ti<0){
+    if(rows[0].length>=3){ ki=0; si=1; ti=2; }
+    else if(rows[0].length===2){ si=0; ti=1; }
+    else return [];
+    if(looksHeader) start=1;
+  }
+  const out=[];
+  for(let r=start;r<rows.length;r++){
+    const cols=rows[r];
+    const source=(cols[si]||"").trim();
+    const translation=cols[ti]==null?"":String(cols[ti]);
+    const key=ki>=0?(cols[ki]||"").trim():("row"+(r+1));
+    if(!source && !translation && !key) continue;
+    out.push({key, source, translation});
+  }
+  return out;
+}
+function detectFmt(raw, fmt){
+  if(fmt!=="auto") return fmt;
+  const t=raw.trim();
+  if(/^\s*msgid\s+"/m.test(t)) return "po";
+  if(/^\s*[\[{]/.test(t)) return "json";
+  return "csv";
+}
+function extractPlaceholders(s){
+  const out=[];
+  let t=String(s);
+  // {{name}} mustache
+  t=t.replace(/\{\{\s*[\w.\-]+\s*\}\}/g,m=>{ out.push(m.replace(/\s/g,"")); return "\0"; });
+  // ${name}
+  t=t.replace(/\$\{[\w.]+\}/g,m=>{ out.push(m); return "\0"; });
+  // ICU / {name} / {0} / {count, plural, ...}
+  t=t.replace(/\{\s*([\w.\-]+)\s*(?:,[^{}]*(?:\{[^{}]*\}[^{}]*)*)?\}/g,(m,n)=>{
+    if(/plural|select|selectordinal/i.test(m)) out.push("{ICU:"+n+"}");
+    else out.push("{"+n+"}");
+    return "\0";
+  });
+  // printf %1$s %s %d
+  t=t.replace(/%(\d+\$)?[-+ #0]*\d*(?:\.\d+)?[sdifuxXeEgGcp@]/g,m=>{
+    if(m==="%%") return m;
+    out.push(m.replace(/[-+ #0]*\d*(?:\.\d+)?(?=[a-zA-Z@]$)/,""));
+    return "\0";
+  });
+  // %@ iOS
+  t=t.replace(/%@/g,m=>{ out.push(m); return "\0"; });
+  return out.sort();
+}
+function punctProfile(s){
+  return {
+    ellipsis: /(\.\.\.|…|･･･)/.test(s),
+    periodHalf: /\./.test(s.replace(/\.\.\./g,"")),
+    periodFull: /。/.test(s),
+    exclHalf: /!/.test(s),
+    exclFull: /！/.test(s),
+    questHalf: /\?/.test(s),
+    questFull: /？/.test(s),
+    colonHalf: /:/.test(s),
+    colonFull: /：/.test(s)
+  };
+}
+let lastRows=[];
+function add(rows,sev,key,cat,msg,ev){ rows.push({sev,key,cat,msg,ev:snip(ev||"")}); }
+
+function parseRows(){
+  const fmtSel=$("fmt").value;
+  if(fmtSel==="json" || (fmtSel==="auto" && $("srcJson").value.trim() && $("tgtJson").value.trim())){
+    if($("srcJson").value.trim() && $("tgtJson").value.trim()){
+      const a=flatJSON(JSON.parse($("srcJson").value));
+      const b=flatJSON(JSON.parse($("tgtJson").value));
+      const keys=new Set([...Object.keys(a),...Object.keys(b)]);
+      return [...keys].map(k=>({key:k, source:a[k]==null?"":String(a[k]), translation:b[k]==null?"":String(b[k])}));
+    }
+  }
+  const raw=$("raw").value;
+  const fmt=detectFmt(raw, fmtSel==="json"?"csv":fmtSel);
+  if(fmt==="po") return parsePO(raw);
+  if(fmt==="json"){
+    const map=flatJSON(JSON.parse(raw));
+    // single map treated as key->translation without source — require pair
+    throw new Error("単一JSONの場合は「原文JSON」と「訳文JSON」の両方を貼るか、CSV形式を使ってください。");
+  }
+  return parseCSV(raw);
+}
+
+function run(){
+  const rows=[];
+  let items;
+  try{ items=parseRows(); }
+  catch(e){
+    $("sum").innerHTML='<span class="bad">パースエラー: '+esc(e.message||e)+'</span>';
+    $("res").innerHTML=""; lastRows=[]; return;
+  }
+  if(!items.length){
+    $("sum").innerHTML='<span class="warn">行がありません。CSV/POを貼るか、JSONペアを入力してください。</span>';
+    $("res").innerHTML=""; lastRows=[]; return;
+  }
+  const ratio=Math.max(1, +$("ratio").value||1.8);
+  const maxW=Math.max(0, +$("maxW").value||0);
+  const keyCount={};
+  items.forEach(it=>{ const k=it.key||""; keyCount[k]=(keyCount[k]||0)+1; });
+  const seenDup=new Set();
+  items.forEach(it=>{
+    const key=it.key||"(no-key)";
+    const src=it.source==null?"":String(it.source);
+    const tr=it.translation==null?"":String(it.translation);
+    if(keyCount[it.key]>1 && !seenDup.has(it.key)){
+      seenDup.add(it.key);
+      add(rows,"bad",key,"重複キー","同じキーが"+keyCount[it.key]+"回出現しています",key);
+    }
+    if($("optEmpty").checked && !tr.trim()){
+      add(rows,"bad",key,"空訳","訳文が空です",src);
+    }
+    if($("optSame").checked && tr.trim() && src.trim() && tr.trim()===src.trim() && /[A-Za-z]{3,}/.test(src)){
+      add(rows,"warn",key,"未翻訳の疑い","訳文が原文と同一です",tr);
+    }
+    if($("optTrail").checked){
+      if(/^[ \t\u3000]/.test(tr) || /[ \t\u3000]$/.test(tr)) add(rows,"warn",key,"空白","訳文の先頭または末尾に空白があります",JSON.stringify(tr));
+      if(/^[ \t\u3000]/.test(src) || /[ \t\u3000]$/.test(src)) add(rows,"warn",key,"空白","原文の先頭または末尾に空白があります",JSON.stringify(src));
+      if(/\n$/.test(tr)!==/\n$/.test(src) && (src||tr)) add(rows,"warn",key,"改行","末尾改行の有無が原文と違います",snip(tr,60));
+    }
+    const phS=extractPlaceholders(src);
+    const phT=extractPlaceholders(tr);
+    const miss=phS.filter(p=>!phT.includes(p));
+    const extra=phT.filter(p=>!phS.includes(p));
+    if(miss.length) add(rows,"bad",key,"プレースホルダ","訳に無いプレースホルダ: "+miss.join(" "),src+" → "+tr);
+    if(extra.length) add(rows,"warn",key,"プレースホルダ","原文に無いプレースホルダ: "+extra.join(" "),tr);
+    if(/ICU:/.test(phS.join("")) && !/ICU:/.test(phT.join("")) && tr.trim()){
+      add(rows,"bad",key,"ICU","原文に ICU plural/select があるのに訳に分岐が見当たりません",src);
+    }
+    if(src.trim() && tr.trim()){
+      const ws=widthUnits(src), wt=widthUnits(tr);
+      const r=ws?wt/ws:0;
+      if(ws>0 && r>ratio) add(rows,"warn",key,"はみ出し","表示幅 "+wt+" / 原文 "+ws+" = "+r.toFixed(2)+"倍（閾値 "+ratio+"）",tr);
+      if(maxW>0 && wt>maxW) add(rows,"bad",key,"はみ出し","表示幅 "+wt+" が上限 "+maxW+" を超えています",tr);
+    }
+    if($("optPunct").checked && src.trim() && tr.trim()){
+      const ps=punctProfile(src), pt=punctProfile(tr);
+      if(ps.ellipsis && !pt.ellipsis) add(rows,"warn",key,"省略記号","原文に省略（…/…）があるのに訳にありません",tr);
+      if(!ps.ellipsis && pt.ellipsis) add(rows,"warn",key,"省略記号","原文に無い省略記号が訳にあります",tr);
+      if((ps.exclHalf||ps.exclFull) && !(pt.exclHalf||pt.exclFull)) add(rows,"warn",key,"句読点","原文の感嘆符が訳にありません",tr);
+      if((ps.questHalf||ps.questFull) && !(pt.questHalf||pt.questFull)) add(rows,"warn",key,"句読点","原文の疑問符が訳にありません",tr);
+      if(pt.exclHalf && pt.exclFull) add(rows,"warn",key,"句読点","訳で半角!と全角！が混在",tr);
+      if(pt.questHalf && pt.questFull) add(rows,"warn",key,"句読点","訳で半角?と全角？が混在",tr);
+      if(pt.periodHalf && pt.periodFull && /[\u3040-\u30ff\u4e00-\u9fff]/.test(tr)) add(rows,"warn",key,"句読点","日本語・中国語訳で半角.と全角。が混在",tr);
+    }
+  });
+  lastRows=rows;
+  const bad=rows.filter(r=>r.sev==="bad").length;
+  const warn=rows.filter(r=>r.sev==="warn").length;
+  const ok=bad===0&&warn===0;
+  $("sum").innerHTML=(ok?'<span class="pill ok">問題なし</span>':'')+
+    (bad?'<span class="pill bad">エラー '+bad+'</span>':'')+
+    (warn?'<span class="pill warn">注意 '+warn+'</span>':'')+
+    '<span class="muted"> 点検行数 '+items.length+'／指摘 '+rows.length+'</span>';
+  if(!rows.length){ $("res").innerHTML='<p class="ok">指摘はありません（ヒューリスティック範囲）。実機・用語集は別途確認してください。</p>'; return; }
+  let html='<table><thead><tr><th>重要度</th><th>キー</th><th>種別</th><th>内容</th><th>根拠</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html+='<tr><td><span class="pill '+r.sev+'">'+(r.sev==="bad"?"エラー":"注意")+'</span></td><td><code>'+esc(r.key)+'</code></td><td>'+esc(r.cat)+'</td><td>'+esc(r.msg)+'</td><td><code class="s">'+esc(r.ev)+'</code></td></tr>';
+  });
+  html+='</tbody></table>';
+  $("res").innerHTML=html;
+}
+
+function downloadCSV(){
+  if(!lastRows.length){ run(); if(!lastRows.length) return; }
+  const lines=["severity,key,category,message,evidence"];
+  lastRows.forEach(r=>lines.push([r.sev,r.key,r.cat,r.msg,r.ev].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")));
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="locale-overflow-check.csv"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+
+const WEAK=`key,source,translation
+btn.save,Save,保存するボタンのラベルがとても長くてはみ出します
+hello,"Hello, {name}!","こんにちは！"
+count,"{count, plural, one {# item} other {# items}}",アイテム
+empty,Settings,
+same,Cancel,Cancel
+trail,OK," OK"
+punct,Really?!,"本当ですか."
+dup,A,あ
+dup,B,い`;
+
+const GOOD=`key,source,translation
+btn.save,Save,保存
+hello,"Hello, {name}!","こんにちは、{name}さん！"
+count,"{count, plural, one {# item} other {# items}}","{count, plural, other {#件}}"
+settings,Settings,設定
+cancel,Cancel,キャンセル
+ok,OK,OK
+ask,Delete?,削除しますか？
+more,See more…,続きを見る…`;
+
+function syncFmt(){
+  const f=$("fmt").value;
+  const pair=f==="json";
+  $("jsonPair").style.display=pair?"grid":"none";
+  $("raw").style.display=pair?"none":"block";
+  $("rawLab").style.display=pair?"none":"block";
+}
+
+$("fmt").addEventListener("change",syncFmt);
+$("run").onclick=run;
+$("csv").onclick=downloadCSV;
+$("clear").onclick=()=>{ $("raw").value=""; $("srcJson").value=""; $("tgtJson").value=""; $("sum").innerHTML=""; $("res").innerHTML=""; lastRows=[]; };
+$("sampleWeak").onclick=()=>{ $("fmt").value="csv"; syncFmt(); $("raw").value=WEAK; run(); };
+$("sampleGood").onclick=()=>{ $("fmt").value="csv"; syncFmt(); $("raw").value=GOOD; run(); };
+syncFmt();
+})();
+</script>
+</body>
+</html>
