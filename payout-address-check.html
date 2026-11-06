@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>暗号資産 受取アドレス＆ネットワーク照合チェッカー（無料・USDC/Base/Solana）</title>
+<meta name="description" content="フリーランスのUSDC等の受取前に、アドレス形式（EVM 0x・Solana base58・NEAR）と指定ネットワークの不一致、EIP-55チェックサム、よくある誤送金パターンをブラウザ内だけで点検。送信なし・CSV保存。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/payout-address-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.ok{color:#0a7a32}.warn{color:#9a6700}.bad{color:#b42318}.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;font-size:.92em;margin:8px 0}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f0f2}
+.note{font-size:.9em;color:#444}
+a{color:#0b57d0}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+</style>
+</head>
+<body>
+<h1>暗号資産 受取アドレス＆ネットワーク照合チェッカー</h1>
+<p class="muted">海外ギグ・ハッカソン・エージェント市場の<strong>USDC等の入金前</strong>に、相手が書く「ネットワーク」と、あなたが渡す「アドレス」の食い違いを自分で潰します。処理はブラウザ内のみ（送信なし）。このページはウォレット公式の判定ではなく、形式とよくある誤送金パターンの自己点検です。残高照会や送金はしません。</p>
+
+<div class="box">
+<label>案件／依頼名（任意）</label>
+<input type="text" id="job" placeholder="例：Taskmarket Base 報酬 / Superteam Earn / クライアント名">
+<div class="row">
+<div>
+<label>相手が指定した受取ネットワーク</label>
+<select id="net">
+<option value="">未選択</option>
+<option value="base">Base（EVM・USDCよく使う）</option>
+<option value="ethereum">Ethereum メインネット（EVM）</option>
+<option value="arbitrum">Arbitrum One（EVM）</option>
+<option value="optimism">Optimism（EVM）</option>
+<option value="polygon">Polygon（EVM）</option>
+<option value="tempo">Tempo（EVM互換・OUSD等）</option>
+<option value="bsc">BNB Smart Chain（EVM）</option>
+<option value="solana">Solana（USDC等）</option>
+<option value="near">NEAR</option>
+<option value="bitcoin">Bitcoin / BCH（レガシー・CashAddr）</option>
+<option value="other">その他／不明</option>
+</select>
+</div>
+<div>
+<label>トークン（任意・メモ用）</label>
+<select id="token">
+<option value="usdc">USDC</option>
+<option value="ousd">OUSD / その他ステーブル</option>
+<option value="sol">SOL / SPL</option>
+<option value="eth">ETH / ネイティブ</option>
+<option value="near">NEAR</option>
+<option value="other">その他</option>
+</select>
+</div>
+</div>
+<label>渡す予定の受取アドレス（1件）</label>
+<input type="text" id="addr" placeholder="例：0x… または Solana の base58、xxx.near" autocomplete="off" spellcheck="false">
+<label>相手フォーム／メールに書いてあるネットワーク表記（任意・原文）</label>
+<input type="text" id="net_raw" placeholder="例：BASE / Solana Mainnet / ERC-20 / BSC / Tempo">
+</div>
+
+<h2>追加の自己確認（任意）</h2>
+<div class="chk"><input type="checkbox" id="c_testsend"><span>少額テスト送金（または既知の少額入金）で、同じネットワーク・同じアドレスに着金することを確認した／する予定</span></div>
+<div class="chk"><input type="checkbox" id="c_cex"><span>取引所の入金タグ／メモ（XRP・一部CEX）が必要な場合、別途メモ欄を相手に渡した（または不要）</span></div>
+<div class="chk"><input type="checkbox" id="c_contract"><span>コントラクトアドレスやトークンコントラクトを「受取アドレス」として渡していない</span></div>
+<div class="chk"><input type="checkbox" id="c_screenshot"><span>相手に渡す前に、ウォレット画面のネットワーク名とアドレスを自分で再確認した</span></div>
+
+<p style="margin-top:16px">
+<button type="button" id="run">チェックする</button>
+<button type="button" class="sec" id="sample">サンプルを入れる</button>
+<button type="button" class="sec" id="csv">CSV保存</button>
+</p>
+<div id="out" class="box" style="min-height:40px"></div>
+
+<div class="box note">
+<strong>有料の続き（エージェントがやる範囲）</strong>：案件ごとの「指定ネットワーク ↔ 受取アドレス」照合表、誤送金リスクの優先度メモ、相手への英文／日文の訂正テンプレをセットで納品。目安 ¥5,000〜15,000／案件群。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>
+</div>
+
+<footer>
+<p><a href="index.html">無料ツール一覧</a> ／ 関連：<a href="sign-check.html">ウォレット署名・承認チェッカー</a> ・ <a href="x402-check.html">x402 公開前チェッカー</a> ・ <a href="crypto-tax-calc.html">暗号資産の所得計算</a></p>
+<p>入力は端末内のみ。各チェーン／ウォレット／取引所の公式案内ではありません。投資・税務・送金の助言ではありません。</p>
+<p>作成：中崎 慎二（フリーランス翻訳者）。依頼：shinji-work@mail.grokbot.com</p>
+</footer>
+<script>
+(function(){
+const HEX="0123456789abcdef";
+const B58="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function pill(sev){return `<span class="pill ${sev}">${sev==='bad'?'必須':sev==='warn'?'注意':'OK'}</span>`}
+
+function softChecksum(addr40){
+  // No keccak in-browser: treat mixed EIP-55-looking case as "present", all-same-case as "unchecked".
+  const body=addr40;
+  const mixed=/[a-f]/.test(body)&&/[A-F]/.test(body);
+  const allLower=body===body.toLowerCase();
+  const allUpper=body===body.toUpperCase();
+  if(mixed) return {checksum:'present',mixed:true,allLower:false,allUpper:false};
+  if(allLower||allUpper) return {checksum:'no_case',mixed:false,allLower,allUpper};
+  return {checksum:'skip',mixed:false,allLower,allUpper};
+}
+
+function isBase58(s){for(const c of s) if(!B58.includes(c)) return false; return s.length>0;}
+function looksEvm(s){return /^0x[0-9a-fA-F]{40}$/.test(s);}
+function looksSol(s){return !s.startsWith('0x') && isBase58(s) && s.length>=32 && s.length<=44;}
+function looksNear(s){return /^[a-z0-9._-]{2,64}\.near$/i.test(s) || /^[a-f0-9]{64}$/i.test(s);}
+function looksBtcLegacy(s){return /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(s);}
+function looksCashAddr(s){return /^(bitcoincash:)?(q|p)[a-z0-9]{41}$/i.test(s) || /^(bchtest:)?(q|p)[a-z0-9]{41}$/i.test(s);}
+
+const EVM_NETS=new Set(['base','ethereum','arbitrum','optimism','polygon','tempo','bsc']);
+const FAMILY={base:'evm',ethereum:'evm',arbitrum:'evm',optimism:'evm',polygon:'evm',tempo:'evm',bsc:'evm',solana:'solana',near:'near',bitcoin:'btc',other:'unknown'};
+
+function detect(addr){
+  const a=(addr||'').trim();
+  if(!a) return {kind:'empty'};
+  if(/^0x[0-9a-fA-F]+$/.test(a) && a.length!==42) return {kind:'evm_badlen',len:a.length};
+  if(looksEvm(a)){
+    const body=a.slice(2);
+    const sc=softChecksum(body);
+    return {kind:'evm',checksum:sc.checksum,expected:null,allLower:sc.allLower,allUpper:sc.allUpper,mixed:sc.mixed};
+  }
+  if(looksNear(a)) return {kind:'near'};
+  if(looksCashAddr(a)) return {kind:'bch_cashaddr'};
+  if(looksBtcLegacy(a)) return {kind:'btc_legacy'};
+  if(looksSol(a)) return {kind:'solana',len:a.length};
+  if(/\.eth$/i.test(a)) return {kind:'ens'};
+  if(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(a)) return {kind:'exchange_memo_like'};
+  return {kind:'unknown'};
+}
+
+function guessNetFromRaw(raw){
+  const t=(raw||'').toLowerCase();
+  if(!t) return null;
+  if(/\bbase\b|ベース/.test(t)) return 'base';
+  if(/solana|ソル/.test(t)) return 'solana';
+  if(/arbitrum|arb\b/.test(t)) return 'arbitrum';
+  if(/optimism|op mainnet/.test(t)) return 'optimism';
+  if(/polygon|matic/.test(t)) return 'polygon';
+  if(/\btempo\b/.test(t)) return 'tempo';
+  if(/\bbsc\b|bnb smart|binance smart/.test(t)) return 'bsc';
+  if(/ethereum|erc-?20|eth mainnet|イーサ/.test(t)) return 'ethereum';
+  if(/\bnear\b/.test(t)) return 'near';
+  if(/bitcoin cash|\bbch\b|cashaddr/.test(t)) return 'bitcoin';
+  if(/\bbtc\b|bitcoin\b/.test(t)) return 'bitcoin';
+  return null;
+}
+
+function analyze(input){
+  const job=(input.job||'').trim();
+  const net=input.net||'';
+  const token=input.token||'usdc';
+  const addr=(input.addr||'').trim();
+  const netRaw=(input.net_raw||'').trim();
+  const flags=input.flags||{};
+  const rows=[];
+  const push=(sev,cat,title,detail)=>rows.push({sev,cat,title,detail});
+  const det=detect(addr);
+  const guessed=guessNetFromRaw(netRaw);
+  const effNet=net||guessed||'';
+
+  if(!addr) push('bad','入力','アドレスが空','相手に渡す前にウォレットからコピーしてください。');
+  if(!effNet) push('bad','入力','ネットワーク未選択','相手の募集文・フォームの「Network / Chain」を確認して選ぶ。');
+  if(netRaw && guessed && net && guessed!==net) push('warn','表記','原文の推測ネットワークと選択が違う',`原文「${netRaw}」→推測 ${guessed}／選択 ${net}。どちらが正しいか相手に確認。`);
+  if(netRaw && !guessed && net) push('warn','表記','原文からネットワークを自動判定できなかった',`原文「${netRaw}」。略語や独自名の可能性。`);
+
+  if(det.kind==='ens') push('bad','形式','ENS（.eth）名','多くのギグ支払いは生アドレス必須。解決済みの 0x を渡す。');
+  if(det.kind==='exchange_memo_like') push('warn','形式','取引所のメモ／タグっぽい文字列','アドレス本体とメモを取り違えていないか確認。');
+  if(det.kind==='evm_badlen') push('bad','形式','EVMアドレスの桁が不正',`0x＋40桁が必要（今 ${det.len} 文字）。コピー欠けが多い。`);
+  if(det.kind==='unknown' && addr) push('bad','形式','形式を判定できない','空白・改行・URL混入、または非対応チェーンの可能性。');
+
+  if(det.kind==='evm'){
+    if(det.checksum==='present') push('ok','チェックサム','混合表記あり（EIP-55形式）','ウォレット画面の表示と1文字ずつ一致するか目視してください（このページではハッシュ再計算しません）。');
+    if(det.checksum==='no_case') push('warn','チェックサム','大文字小文字がすべて同じ','打ち間違いに気づきにくいです。ウォレットの混合表記コピーに差し替えて再チェック推奨。');
+    if(effNet && !EVM_NETS.has(effNet) && FAMILY[effNet]!=='evm'){
+      push('bad','ネットワーク不一致','EVMアドレスなのに非EVMネットワーク指定',`${effNet} 向けに 0x アドレスを渡すと資金が消える典型パターン。`);
+    }
+    if(effNet==='solana') push('bad','ネットワーク不一致','Solana指定なのにEVMアドレス','Solana用の base58 アドレスが必要。');
+    if(effNet==='near') push('bad','ネットワーク不一致','NEAR指定なのにEVMアドレス','xxx.near か implicit hex が必要。');
+    if(effNet==='bitcoin') push('bad','ネットワーク不一致','Bitcoin/BCH指定なのにEVMアドレス','CashAddr / レガシーBTCアドレスが必要。');
+    if(token==='sol' && EVM_NETS.has(effNet||'')) push('warn','トークン','SOLをEVMネットで受け取ろうとしている','ラップ資産や橋の話なら別。通常はSolanaアドレス。');
+  }
+
+  if(det.kind==='solana'){
+    if(effNet && EVM_NETS.has(effNet)) push('bad','ネットワーク不一致','EVMネットワーク指定なのにSolanaアドレス',`${effNet} のフォームに Solana を貼ると着金しない／消失のリスク。`);
+    if(effNet==='near'||effNet==='bitcoin') push('bad','ネットワーク不一致',`${effNet} 指定なのにSolanaアドレス`,'チェーンが違う。');
+    if(effNet==='solana'||!effNet) push('ok','形式','Solanaらしい base58',`長さ ${det.len}。公式ウォレット表示と一致するか目視を。`);
+    if(token==='usdc' && effNet==='solana') push('ok','トークン','Solana上のUSDC想定','相手が「USDC (Solana)」と明記しているか再確認。');
+  }
+
+  if(det.kind==='near'){
+    if(effNet && effNet!=='near' && effNet!=='other') push('bad','ネットワーク不一致','NEAR形式なのに別ネットワーク指定',`${effNet} では使えないことが多い。`);
+    if(effNet==='near'||!effNet) push('ok','形式','NEARらしいアドレス','');
+  }
+
+  if(det.kind==='btc_legacy'||det.kind==='bch_cashaddr'){
+    if(effNet && effNet!=='bitcoin' && effNet!=='other') push('bad','ネットワーク不一致','BTC/BCH形式なのに別ネット指定','');
+    if(det.kind==='bch_cashaddr') push('ok','形式','Bitcoin Cash CashAddrらしい','BCH BLAZE等はCashAddrが多い。');
+    if(det.kind==='btc_legacy') push('warn','形式','レガシーBitcoin形式','BCHのCashAddrと取り違えないこと。');
+  }
+
+  if(addr.includes(' ')||addr.includes('\n')||addr.includes('\t')) push('bad','形式','空白・改行が混入','コピー時のゴミ。削除して再チェック。');
+  if(/[\u3000\uFF01-\uFF5E]/.test(addr)) push('bad','形式','全角文字が混入','半角で貼り直す。');
+
+  if(!flags.c_testsend) push('warn','運用','少額テスト未確認','可能なら少額で着金確認してから本番額。');
+  if(!flags.c_contract) push('warn','運用','コントラクト混同の自己確認がOFF','トークン契約アドレスを受取欄に書かない。');
+  if(!flags.c_screenshot) push('warn','運用','画面の再確認がOFF','送信直前にウォレット画面を見る。');
+  if(!flags.c_cex) push('warn','運用','メモ／タグ確認がOFF','CEX入金ならタグ必須のチェーンあり。');
+
+  // Positive summary when clean
+  if(det.kind==='evm' && EVM_NETS.has(effNet) && det.checksum!=='invalid' && !rows.some(r=>r.sev==='bad')){
+    push('ok','総合',`${effNet} × EVMアドレス`,'形式上の大失敗パターンは見当たりません。あとは相手表記の最終確認。');
+  }
+  if(det.kind==='solana' && effNet==='solana' && !rows.some(r=>r.sev==='bad')){
+    push('ok','総合','Solana × Solanaアドレス','形式上の大失敗パターンは見当たりません。');
+  }
+
+  const score={bad:0,warn:0,ok:0};
+  rows.forEach(r=>score[r.sev]++);
+  return {rows,score,meta:{job,net:effNet,netSelected:net,netGuessed:guessed,token,addr,det}};
+}
+
+function render(a){
+  let h=`<p>結果：<span class="bad"><b>${a.score.bad}</b> 必須</span> ／ <span class="warn"><b>${a.score.warn}</b> 注意</span> ／ <span class="ok"><b>${a.score.ok}</b> OK</span></p>`;
+  h+=`<p class="muted">判定：アドレス種別 <code>${esc(a.meta.det.kind)}</code> ／ 実効ネットワーク <code>${esc(a.meta.net||'—')}</code></p>`;
+  if(a.score.bad===0 && a.score.warn<=2) h+=`<p class="ok">最低限の形式チェックは通過です。少額テストと相手フォーム表記の最終確認を。</p>`;
+  if(a.score.bad>0) h+=`<p class="bad">このまま渡すと着金しない／消失しやすいパターンがあります。修正してから送ってください。</p>`;
+  h+='<table><tr><th>重要度</th><th>区分</th><th>項目</th><th>メモ</th></tr>';
+  a.rows.forEach(r=>{h+=`<tr><td>${pill(r.sev)}</td><td>${esc(r.cat)}</td><td>${esc(r.title)}</td><td>${esc(r.detail)}</td></tr>`;});
+  h+='</table>';
+  $('out').innerHTML=h;
+  window._last=a;
+}
+
+function toCsv(a){
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const lines=[['severity','category','item','detail'].map(q).join(',')].concat(a.rows.map(r=>[r.sev,r.cat,r.title,r.detail].map(q).join(',')));
+  return '\ufeff'+lines.join('\r\n');
+}
+
+function readInput(){
+  return {
+    job:$('job').value, net:$('net').value, token:$('token').value,
+    addr:$('addr').value, net_raw:$('net_raw').value,
+    flags:{
+      c_testsend:$('c_testsend').checked,
+      c_cex:$('c_cex').checked,
+      c_contract:$('c_contract').checked,
+      c_screenshot:$('c_screenshot').checked
+    }
+  };
+}
+
+$('sample').onclick=()=>{
+  $('job').value='海外ギグ USDC on Base';
+  $('net').value='base';
+  $('token').value='usdc';
+  $('addr').value='0x4C4860b980a3AE0c91aa69e8eff48009C5469fEe';
+  $('net_raw').value='BASE (USDC)';
+  $('c_contract').checked=true; $('c_screenshot').checked=true; $('c_cex').checked=true;
+};
+$('run').onclick=()=>render(analyze(readInput()));
+$('csv').onclick=()=>{const a=window._last||analyze(readInput());const b=new Blob([toCsv(a)],{type:'text/csv'});const x=document.createElement('a');x.href=URL.createObjectURL(b);x.download='payout-address-check.csv';x.click();};
+
+// Export for Node tests
+window.PayoutAddressCheck={analyze,detect,softChecksum,guessNetFromRaw};
+})();
+</script>
+</body>
+</html>
