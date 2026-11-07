@@ -70,3 +70,4 @@
 - [アプリ翻訳ファイル チェッカー（Android strings.xml / iOS .strings / .xcstrings / XLIFF）](https://yema7582-code.github.io/koubo-ai-ok/mobile-strings-check.html): キー過不足・プレースホルダ崩れ・アポストロフィ・needs_review・plural抜けを点検
 - [GBP週次投稿カレンダー](https://yema7582-code.github.io/koubo-ai-ok/gbp-post-week.html): 業種×季節で4週間分のGBP投稿案
 - [バイブコーディング／AI生成サイト 公開前チェッカー](https://yema7582-code.github.io/koubo-ai-ok/vibe-ship-check.html): Cursor/v0/Bolt等のHTMLを貼り、秘密鍵・localhost・混在・プレースホルダ・フォーム到達・CDN SRI・Vite残骸を点検（CSV・送信なし）
+- [許認可の更新期限 管理台帳＆カレンダー](https://yema7582-code.github.io/koubo-ai-ok/kyoninka-kigen.html): 建設業・宅建・産廃・派遣・職業紹介・警備・旅行業などの満了日・更新申請締切・準備開始日を一覧化し .ics/CSV 出力。ブラウザ内処理。

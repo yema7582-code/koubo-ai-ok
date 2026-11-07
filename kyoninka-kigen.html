@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>許認可の更新期限 管理台帳＆カレンダー作成（建設業・宅建・産廃・派遣・職業紹介・警備・旅行業／.ics・CSV）｜無料</title>
+<meta name="description" content="建設業許可・宅建業免許・産廃収集運搬・労働者派遣・有料職業紹介・警備業・旅行業・建築士事務所・飲食店営業許可などの満了日と「更新申請の締切（満了の30日前・90日前・3か月前など）」を一覧にし、準備開始日つきでGoogleカレンダー等に取り込める.icsとCSVを作る無料ツール。入力はブラウザ内だけで処理します。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/kyoninka-kigen.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:1040px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:.93em}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top}
+input,select{font-size:.93em}input.s{width:4.2em}input.m{width:11em}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+.red{background:#fde8e8}.yel{background:#fff6d6}.grn{background:#eaf7ea}.gry{color:#777}
+button{font-size:.95em;margin:4px 4px 4px 0;padding:4px 10px}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>許認可の更新期限 管理台帳＆カレンダー作成</h1>
+<p>建設業許可は「満了日の30日前まで」、宅建業免許は「満了の90日前から30日前まで」、労働者派遣や有料職業紹介は「満了の3か月前まで」に更新申請が必要です。うっかり過ぎると許可が切れて新規取り直しになることもあります。許可ごとに種類と許可日（または満了日）を入れると、<b>満了日・更新申請の締切・準備を始める日</b>を一覧にし、カレンダーに取り込める <b>.ics</b> と <b>CSV</b> を作ります。入力はこのブラウザの中だけで処理し、どこにも送信しません（保存はこの端末のブラウザ内だけ）。</p>
+
+<div class="box">
+<h2>許認可の一覧</h2>
+<p><small>種類を選ぶと有効期間と締切の<b>一般的な目安</b>が入ります。自治体・許可の種類で違うことがあるので、許可証（許可通知書）と申請先の手引きで必ず確かめて、必要なら数字を直してください。満了日が許可証に書いてあれば「満了日」欄に入れるのがいちばん確実です。</small></p>
+<div style="overflow-x:auto">
+<table id="tbl">
+<thead><tr><th>名称・メモ<br><small>(例：本店 建設業 般-6 第1234号)</small></th><th>種類</th><th>許可日</th><th>有効期間<br>(年)</th><th>満了日<br><small>(直接入力・優先)</small></th><th>申請締切<br>(満了の何日前)</th><th>準備開始<br>(締切の何日前)</th><th></th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<button id="add">＋ 許認可を追加</button><button id="sample">例を入れる</button><button id="clear">全部消す</button>
+<p>基準日 <input type="date" id="today"> <small>（ふつうは今日のまま）</small></p>
+</div>
+
+<div class="box">
+<h2>結果（申請締切が近い順）</h2>
+<div id="out"></div>
+<button id="ics">カレンダー用 .ics をダウンロード</button><button id="csv">CSVをダウンロード</button>
+</div>
+
+<div class="note">
+<b>目安の出どころと注意</b>
+<ul>
+<li>建設業許可：有効期間5年、更新は満了日の30日前まで（建設業法施行規則）。宅地建物取引業免許：5年、満了の90日前から30日前まで。警備業の認定・建築士事務所登録：5年、満了の30日前まで。旅行業登録：5年、満了の2か月前まで。労働者派遣事業・有料職業紹介事業：初回3年・更新後5年、満了の3か月前まで。</li>
+<li>産業廃棄物収集運搬業：5年（優良認定は7年）。受付期間は都道府県ごとに違い、2〜3か月前の申請を勧めるところが多いので、ここでは60日前を目安にしています。飲食店営業許可は自治体が期間を決めるので、許可証の満了日を入れてください。</li>
+<li>古物商許可・酒類販売業免許のように更新のない許可もありますが、役員や所在地が変わったときの<b>変更届</b>には期限があります。「種類＝その他」で変更届のメモ用に使えます。</li>
+<li>このツールは日付の計算と管理だけです。許可の要否や申請書の作成・提出は、ご本人か行政書士が行ってください（行政書士法）。日付は満了日から暦の日数で数えています。締切日が土日祝の場合の扱いは申請先に確認してください。</li>
+</ul>
+複数拠点・複数許可の台帳づくり（Excel／スプレッドシート化、リマインド設定、英語・中国語での社内説明資料）は <a href="mailto:shinji-work@mail.grokbot.com?subject=許認可の期限台帳について">shinji-work@mail.grokbot.com</a> で受け付けています（書類の作成・申請代行は行いません）。
+</div>
+
+<p><a href="keiyaku-kigen.html">契約の自動更新・解約通知期限 カレンダー</a> ・ <a href="freelance-terms-check.html">フリーランス法 取引条件チェック</a> ・ <a href="index.html">ツール一覧</a></p>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY='kyoninka-kigen-v1';
+const P={
+ kensetsu:{n:'建設業許可',y:5,d:30,p:90},
+ takken:{n:'宅地建物取引業免許',y:5,d:30,p:60,open:90},
+ sanpai:{n:'産業廃棄物収集運搬業許可',y:5,d:60,p:60},
+ haken:{n:'労働者派遣事業許可',y:5,d:90,p:60,first:3},
+ shokai:{n:'有料職業紹介事業許可',y:5,d:90,p:60,first:3},
+ keibi:{n:'警備業の認定',y:5,d:30,p:60},
+ ryoko:{n:'旅行業登録',y:5,d:60,p:60},
+ kenchiku:{n:'建築士事務所登録',y:5,d:30,p:60},
+ inshoku:{n:'飲食店営業許可（自治体ごと）',y:0,d:30,p:30},
+ other:{n:'その他',y:0,d:30,p:30}
+};
+function pad(n){return String(n).padStart(2,'0')}
+function fmt(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function parse(s){if(!s)return null;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?new Date(+m[1],+m[2]-1,+m[3]):null}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function expiryFrom(start,years){ // 許可日からY年後の前日
+ const r=new Date(start.getFullYear()+years,start.getMonth(),start.getDate());
+ if(r.getMonth()!==start.getMonth())r.setDate(0);
+ r.setDate(r.getDate()-1);return r}
+function row(v={}){
+ const tr=document.createElement('tr');
+ const opts=Object.entries(P).map(([k,o])=>`<option value="${k}"${v.k===k?' selected':''}>${o.n}</option>`).join('');
+ tr.innerHTML=`<td><input class="m nm" value="${(v.nm||'').replace(/"/g,'&quot;')}"></td><td><select class="k">${opts}</select></td><td><input type="date" class="st" value="${v.st||''}"></td><td><input type="number" class="s y" min="0" value="${v.y??''}"></td><td><input type="date" class="ex" value="${v.ex||''}"></td><td><input type="number" class="s d" min="0" value="${v.d??''}"></td><td><input type="number" class="s p" min="0" value="${v.p??''}"></td><td><button class="del">×</button></td>`;
+ tr.querySelector('.k').addEventListener('change',e=>{const o=P[e.target.value];tr.querySelector('.y').value=o.y||'';tr.querySelector('.d').value=o.d;tr.querySelector('.p').value=o.p;calc()});
+ tr.querySelector('.del').onclick=()=>{tr.remove();calc()};
+ tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));
+ $('#tbl tbody').appendChild(tr);
+ if(v.k===undefined){tr.querySelector('.k').dispatchEvent(new Event('change'))}
+}
+function rows(){return[...document.querySelectorAll('#tbl tbody tr')].map(tr=>({nm:tr.querySelector('.nm').value.trim(),k:tr.querySelector('.k').value,st:tr.querySelector('.st').value,y:tr.querySelector('.y').value===''?'':+tr.querySelector('.y').value,ex:tr.querySelector('.ex').value,d:tr.querySelector('.d').value===''?'':+tr.querySelector('.d').value,p:tr.querySelector('.p').value===''?'':+tr.querySelector('.p').value}))}
+function compute(list,today){
+ return list.map(r=>{
+  const o=P[r.k]||P.other;let ex=parse(r.ex),why='';
+  if(!ex){const st=parse(r.st);if(st&&r.y>0){ex=expiryFrom(st,r.y);why='許可日から'+r.y+'年'}}
+  else why='満了日を直接入力';
+  if(!ex)return{...r,o,err:'許可日と有効期間、または満了日を入れてください'};
+  const dl=addDays(ex,-(r.d||0)),prep=addDays(dl,-(r.p||0));
+  const open=o.open?addDays(ex,-o.open):null;
+  const left=Math.round((dl-today)/864e5);
+  let stat='';
+  if(today>ex)stat='満了日を過ぎています（失効の可能性。すぐ申請先へ確認）';
+  else if(today>dl)stat='申請締切を過ぎています（受付可否を申請先へ確認）';
+  else if(today>=prep)stat='準備期間中（締切まで'+left+'日）';
+  else stat='まだ先（準備開始 '+fmt(prep)+'）';
+  const warn=[];
+  if(o.first&&r.y===o.y&&!r.ex)warn.push('初回許可は有効期間3年です。初回なら3に直してください');
+  if((r.k==='inshoku'||r.k==='other')&&!r.ex&&!(r.y>0))warn.push('有効期間か満了日が必要');
+  if(open&&today<open&&today>=prep)warn.push('更新申請の受付開始は '+fmt(open)+'（満了の'+o.open+'日前）から');
+  return{...r,o,ex,dl,prep,open,left,stat,why,warn}
+ }).sort((a,b)=>(a.dl||8.64e15)-(b.dl||8.64e15))
+}
+let last=[];
+function calc(){
+ const list=rows();localStorage.setItem(KEY,JSON.stringify(list));
+ const today=parse($('#today').value)||new Date(new Date().toDateString());
+ last=compute(list,today);
+ if(!last.length){$('#out').innerHTML='<p class="gry">まだ入力がありません。</p>';return}
+ $('#out').innerHTML='<table><tr><th>名称</th><th>種類</th><th>満了日</th><th>申請締切</th><th>準備開始</th><th>状態</th></tr>'+last.map(r=>r.err?`<tr class="yel"><td>${esc(r.nm)}</td><td>${r.o.n}</td><td colspan="4">${r.err}</td></tr>`:`<tr class="${r.stat.startsWith('満了')||r.stat.startsWith('申請締切')?'red':r.stat.startsWith('準備')?'yel':'grn'}"><td>${esc(r.nm)||'<span class=gry>(無題)</span>'}</td><td>${r.o.n}</td><td>${fmt(r.ex)}<br><small>${r.why}</small></td><td><b>${fmt(r.dl)}</b><br><small>満了の${r.d||0}日前</small></td><td>${fmt(r.prep)}</td><td>${r.stat}${r.warn.length?'<br><small>⚠ '+r.warn.join('<br>⚠ ')+'</small>':''}</td></tr>`).join('')+'</table>';
+}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function icsEsc(s){return s.replace(/[\\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n')}
+function ics(){
+ const ok=last.filter(r=>!r.err);if(!ok.length)return alert('出力できる行がありません');
+ const st=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+ const ev=[];ok.forEach((r,i)=>{const t=(r.nm?r.nm+' ':'')+r.o.n;
+  [[r.prep,'準備開始：'],[r.dl,'更新申請締切：'],[r.ex,'満了日：']].forEach(([d,l],j)=>{const n=addDays(d,1);
+   ev.push(['BEGIN:VEVENT','UID:kyoninka-'+i+'-'+j+'-'+fmt(d)+'@koubo-ai-ok','DTSTAMP:'+st,'DTSTART;VALUE=DATE:'+fmt(d).replace(/-/g,''),'DTEND;VALUE=DATE:'+fmt(n).replace(/-/g,''),'SUMMARY:'+icsEsc(l+t),'DESCRIPTION:'+icsEsc('満了 '+fmt(r.ex)+' / 締切 '+fmt(r.dl)+'（満了の'+(r.d||0)+'日前）。許可証と申請先の手引きで確認してください。'),'END:VEVENT'].join('\r\n'))})});
+ dl('kyoninka-kigen.ics',['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//koubo-ai-ok//kyoninka-kigen//JA','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n'),'text/calendar')
+}
+function csv(){
+ const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+ const lines=[['名称','種類','許可日','有効期間(年)','満了日','申請締切','準備開始','状態','注意'].map(q).join(',')];
+ last.forEach(r=>lines.push([r.nm,r.o.n,r.st,r.y,r.ex?fmt(r.ex):'',r.dl?fmt(r.dl):'',r.prep?fmt(r.prep):'',r.err||r.stat,(r.warn||[]).join(' / ')].map(q).join(',')));
+ dl('kyoninka-kigen.csv','\ufeff'+lines.join('\r\n'),'text/csv')
+}
+$('#add').onclick=()=>{row();calc()};
+$('#clear').onclick=()=>{if(confirm('全部消しますか？')){$('#tbl tbody').innerHTML='';calc()}};
+$('#sample').onclick=()=>{[{nm:'本店 建設業（般）',k:'kensetsu',st:'2022-01-20',y:5,d:30,p:90},{nm:'宅建 知事免許',k:'takken',st:'2022-03-01',y:5,d:30,p:60},{nm:'派遣 初回',k:'haken',st:'2024-04-01',y:3,d:90,p:60},{nm:'1号店 飲食店',k:'inshoku',ex:'2027-06-30',d:30,p:30}].forEach(row);calc()};
+$('#ics').onclick=ics;$('#csv').onclick=csv;$('#today').value=fmt(new Date());$('#today').oninput=calc;
+try{(JSON.parse(localStorage.getItem(KEY))||[]).forEach(row)}catch(e){}
+calc();
+if(typeof window!=='undefined')window.__kk={compute,expiryFrom,parse,fmt,addDays};
+</script>
+</body>
+</html>
