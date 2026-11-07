@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>青色申告特別控除 判定（令和8年分：65/55/10万・令和9年分：75/65/10万・紙提出は10万／e-Tax・優良電子帳簿）｜無料・送信なし</title>
+<meta name="description" content="個人事業主・フリーランス向け。青色申告特別控除がいくらかをチェックリストで判定します。令和8年分は65/55/10万円、令和9年分以後は75/65/10万円（書面提出は複式簿記でも10万円）。e-Tax・優良な電子帳簿保存の不足も表示。国税庁No.2072・令和8年度税制改正の目安で、税務相談ではありません。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/aoiro-kojo.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:900px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.3em}label{display:block;margin:6px 0}
+.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:12px 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92em}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:5px 7px;vertical-align:top}
+th{background:#f3f3f3}td.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:#e8f5e9;font-weight:bold}.ng{color:#b00;font-weight:bold}.warn{color:#a60}.ok{color:#080}
+button{padding:6px 14px;margin:8px 6px 0 0}
+.big{font-size:1.45em;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>青色申告特別控除 判定チェッカー</h1>
+<p>令和8年分（2026年分・令和9年3月申告）と、改正後の<strong>令和9年分以後</strong>（最高<strong>75万円</strong>、書面提出は複式でも<strong>10万円</strong>）のどちらで見るかを選べます。チェックはブラウザの中だけ、どこにも送信しません。</p>
+
+<div class="box">
+<strong>1. 年分</strong>
+<label>対象年分
+<select id="year">
+<option value="8" selected>令和8年分（現行：65 / 55 / 10万円）</option>
+<option value="9">令和9年分以後（改正：75 / 65 / 10万円・55万区分なし）</option>
+</select></label>
+</div>
+
+<div class="box">
+<strong>2. 前提</strong>
+<label><input type="checkbox" id="aoiro" checked> 青色申告の承認を受けている（開業・白色からの切替で期限内に承認申請済み）</label>
+<label>所得の種類
+<select id="shotoku">
+<option value="jigyo" selected>事業所得がある（フリーランス・個人事業）</option>
+<option value="fudo_jigyo">不動産所得が事業的規模（いわゆる5棟10室など）</option>
+<option value="fudo_gyomu">不動産所得が業務的規模のみ（事業的規模未満）</option>
+<option value="none">事業・不動産（事業的規模）がない</option>
+</select></label>
+<label><input type="checkbox" id="cash"> 現金主義による所得計算の特例を選択している</label>
+</div>
+
+<div class="box">
+<strong>3. 記帳・申告のしかた</strong>
+<label><input type="checkbox" id="fukushiki" checked> 正規の簿記の原則（複式簿記）で記帳している</label>
+<label><input type="checkbox" id="bspl" checked> 貸借対照表・損益計算書などを確定申告書に添付（または e-Tax で送信）する</label>
+<label><input type="checkbox" id="kigen" checked> その年分の確定申告期限（原則翌年3月15日）までに提出する</label>
+<label>提出方法
+<select id="teishutsu">
+<option value="etax" selected>e-Tax で確定申告書・決算書等を送信する</option>
+<option value="paper">書面（紙）で提出する</option>
+</select></label>
+<label><input type="checkbox" id="yuryo"> 仕訳帳・総勘定元帳について「優良な電子帳簿」の要件を満たし、必要な届出をしている（または継続適用）</label>
+</div>
+
+<div class="box">
+<strong>4. 所得の金額（任意・上限の検算）</strong>
+<label>事業所得＋不動産所得の黒字合計（損益通算前・特別控除前の目安）
+<input type="number" id="shotokuAmt" min="0" step="1" value="3200000"> 円</label>
+<p style="font-size:.9em;margin:4px 0 0">控除額は所得の合計が上限です。空欄や0でも「区分」の判定はできます。</p>
+</div>
+
+<button id="go">判定する</button><button id="csv">結果をCSVで保存</button>
+<div id="sum"></div>
+<h2>区分の早見</h2>
+<div id="hyo"></div>
+
+<div class="note">
+<p><strong>根拠の目安</strong></p>
+<ul>
+<li>現行（令和8年分まで）：国税庁タックスアンサー <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/2072.htm" target="_blank" rel="noopener">No.2072 青色申告特別控除</a> — 複式＋期限内申告で<strong>55万円</strong>、さらに e-Tax 送信または優良な電子帳簿保存等で<strong>65万円</strong>。簡易帳簿などは<strong>10万円</strong>。現金主義特例は55/65万円の対象外。</li>
+<li>令和9年分以後：令和8年度税制改正により、55万円区分はなくなり、<strong>75万円</strong>（複式＋e-Tax＋優良な電子帳簿保存等）／<strong>65万円</strong>（複式＋e-Tax）／<strong>10万円</strong>（それ以外。書面提出は複式でも10万円）に再編。所得税は令和9年分から、個人住民税は令和10年度分から。</li>
+<li>不動産所得は事業的規模でないと高額控除の対象外（10万円側）になりがちです。</li>
+</ul>
+<p><strong>この判定は目安であり、税務相談ではありません。</strong>実際の適用・個別の可否は国税庁の資料または税理士にご確認ください。</p>
+<p>青色控除の最大化チェック・令和9年に向けた e-Tax／電子帳簿の準備リストの代行：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎 慎二）／<a href="index.html">ほかの無料ツール</a> ／関連：<a href="kojin-jigyouzei.html">個人事業税</a>・<a href="keihi-check.html">経費CSV</a>・<a href="iryohi-kojo.html">医療費控除</a>・<a href="shoukyaku-hantei.html">少額減価償却</a></p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const yen=n=>{const x=Math.max(0,n|0);return x.toLocaleString('ja-JP')+' 円';};
+
+function judge(){
+  const y=+$('year').value;
+  const ao=$('aoiro').checked;
+  const sh=$('shotoku').value;
+  const cash=$('cash').checked;
+  const fuku=$('fukushiki').checked;
+  const bspl=$('bspl').checked;
+  const kigen=$('kigen').checked;
+  const tei=$('teishutsu').value;
+  const yuryo=$('yuryo').checked;
+  const amt=Math.max(0,+$('shotokuAmt').value||0);
+  const gaps=[], tips=[];
+  let band=0, label='', why=[];
+
+  if(!ao){
+    band=0; label='0円（白色／未承認）';
+    why.push('青色申告の承認がないと特別控除は使えません。');
+    tips.push('開業から2か月以内、または白色から切り替える年の3月15日までに「青色申告承認申請書」を出します。');
+  }else if(sh==='none'){
+    band=0; label='0円（対象所得なし）';
+    why.push('事業所得または事業的規模の不動産所得がないと、高額控除の前提を満たしません。');
+  }else if(sh==='fudo_gyomu'){
+    band=10; label='10万円（業務的規模の不動産所得のみ）';
+    why.push('不動産所得が事業的規模未満のときは、複式簿記でも高額控除の対象外になり、10万円側です。');
+    tips.push('いわゆる5棟10室などの事業的規模かどうかは実態で判断されます。');
+  }else if(cash){
+    band=10; label='10万円（現金主義特例）';
+    why.push('現金主義による所得計算の特例を選択していると、55/65（および改正後の65/75）万円の対象外です。');
+  }else if(!fuku||!bspl||!kigen){
+    band=10; label='10万円（複式・添付・期限内の不足）';
+    if(!fuku){gaps.push('複式簿記での記帳'); why.push('正規の簿記（複式）でないと高額控除になりません。');}
+    if(!bspl){gaps.push('貸借対照表・損益計算書の添付／送信'); why.push('決算書の添付（または e-Tax 送信）が必要です。');}
+    if(!kigen){gaps.push('期限内申告'); why.push('還付申告でも、55/65/75万円を取るには確定申告期限までの提出が必要です。');}
+  }else if(y===8){
+    // R8: 65 if etax OR yuryo; else 55 if paper ok
+    if(tei==='etax'||yuryo){
+      band=65; label='65万円';
+      why.push('複式＋期限内＋（e-Tax または 優良な電子帳簿保存等）のため、令和8年分の最高区分です。');
+      if(tei!=='etax'&&yuryo)tips.push('紙提出でも優良電子帳簿等で65万円になるケースがありますが、手続き・要件の確認が必要です。');
+      if(tei==='etax'&&!yuryo)tips.push('令和9年分では、さらに優良な電子帳簿等があると75万円まで上がります。今年からソフトの電子帳簿設定を整えておくと楽です。');
+    }else{
+      band=55; label='55万円（書面提出）';
+      why.push('複式＋期限内の書面提出なら、令和8年分は55万円です。');
+      gaps.push('e-Tax送信（または優良な電子帳簿）');
+      tips.push('e-Tax で送れば同じ年分でも65万円になります（＋10万円）。');
+      tips.push('注意：令和9年分以後は55万円区分がなく、同じ「紙提出＋複式」だと10万円に落ちます。');
+    }
+  }else{
+    // R9+: paper => 10; etax+yuryo => 75; etax => 65
+    if(tei==='paper'){
+      band=10; label='10万円（書面提出）';
+      why.push('令和9年分以後は、複式簿記でも書面提出だと10万円です（55万円区分の廃止）。');
+      gaps.push('e-Tax での期限内送信');
+      tips.push('e-Tax に切り替えるだけで65万円（＋55万円の差）になります。');
+      if(!yuryo)tips.push('さらに優良な電子帳簿保存等を満たすと75万円です。');
+    }else if(yuryo){
+      band=75; label='75万円';
+      why.push('複式＋e-Tax＋優良な電子帳簿保存等のため、令和9年分以後の最高区分です。');
+    }else{
+      band=65; label='65万円';
+      why.push('複式＋e-Tax のため65万円です。優良な電子帳簿等があれば75万円です。');
+      gaps.push('優良な電子帳簿の要件＋必要な届出');
+      tips.push('会計ソフトの「優良な電子帳簿」設定と届出の要否を、申告期限までに確認してください。');
+    }
+  }
+
+  const capped=amt>0?Math.min(band,amt):band;
+  const yearLabel=y===8?'令和8年分':'令和9年分以後';
+  let html='<div class="box"><p class="big '+(band>=65?'ok':band===0?'ng':'warn')+'">'+e(yearLabel)+'の目安：'+e(label)+'</p>';
+  if(amt>0&&capped<band)html+='<p class="warn">所得の合計が '+yen(amt)+' のため、実際に差し引けるのは最大 '+yen(capped)+' です。</p>';
+  if(why.length)html+='<ul>'+why.map(w=>'<li>'+e(w)+'</li>').join('')+'</ul>';
+  if(gaps.length)html+='<p><strong>足りないもの：</strong>'+gaps.map(g=>e(g)).join('／')+'</p>';
+  if(tips.length)html+='<p><strong>次の一手：</strong></p><ul>'+tips.map(t=>'<li>'+e(t)+'</li>').join('')+'</ul>';
+  html+='</div>';
+  $('sum').innerHTML=html;
+
+  const rows=y===8?[
+    ['65万円','複式＋期限内＋（e-Tax または 優良電子帳簿等）',band===65],
+    ['55万円','複式＋期限内＋書面提出',band===55],
+    ['10万円','簡易帳簿／現金主義／要件不足／業務的規模の不動産のみ',band===10],
+    ['0円','白色・未承認・対象所得なし',band===0]
+  ]:[
+    ['75万円','複式＋e-Tax＋優良な電子帳簿保存等',band===75],
+    ['65万円','複式＋e-Tax（優良電子帳簿なし）',band===65],
+    ['10万円','書面提出（複式でも）／簡易帳簿／現金主義／要件不足',band===10],
+    ['0円','白色・未承認・対象所得なし',band===0]
+  ];
+  let t='<table><tr><th>控除額</th><th>ざっくり要件</th><th>今の判定</th></tr>';
+  rows.forEach(r=>{t+='<tr class="'+(r[2]?'best':'')+'"><td class="n">'+e(r[0])+'</td><td>'+e(r[1])+'</td><td>'+(r[2]?'◀ ここ':'')+'</td></tr>';});
+  t+='</table>';
+  $('hyo').innerHTML=t;
+
+  window.__last={year:yearLabel,band,label,capped,gaps:gaps.join('|'),tips:tips.join('|')};
+}
+
+function saveCsv(){
+  judge();
+  const L=window.__last||{};
+  const lines=['項目,値','年分,'+JSON.stringify(L.year||''),'区分ラベル,'+JSON.stringify(L.label||''),'控除額円,'+(L.band|0),'所得上限考慮後円,'+(L.capped|0),'足りないもの,'+JSON.stringify(L.gaps||''),'次の一手,'+JSON.stringify(L.tips||'')];
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='aoiro-kojo.csv';a.click();
+}
+
+$('go').onclick=judge;$('csv').onclick=saveCsv;
+['year','aoiro','shotoku','cash','fukushiki','bspl','kigen','teishutsu','yuryo','shotokuAmt'].forEach(id=>$(id).addEventListener('change',judge));
+judge();
+</script>
+</body>
+</html>
