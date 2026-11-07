@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>誤答パターン分析＆復習プリント設計チェッカー（塾・家庭教師：正答と生徒答えから習慣仮説をまとめ、復習5問のテーマ案／CSV・送信なし）｜無料</title>
+<meta name="description" content="正答と生徒の答えを1問1行で貼ると、符号・桁ずれ・繰上り繰下り・分数・単位・選択の隣・空欄・写しミスなどの誤答パターンを集計し、多い習慣から復習プリントのテーマ案を出します。ブラウザ内のみ・送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/fukushu-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:980px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em}label{display:inline-block;margin:4px 14px 4px 0}
+textarea{width:100%;font-family:inherit;font-size:14px;height:280px}
+button{padding:6px 14px;margin:8px 6px 0 0}.note{background:#fff8e1;padding:10px 12px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+th{background:#f3f3f3}.ng{color:#b00;font-weight:bold}.warn{color:#a60}.ok{color:#080}code{background:#f3f3f3;padding:0 4px}
+.bar{display:inline-block;height:12px;background:#7aa7e0;vertical-align:middle;margin-right:6px}
+.pill{display:inline-block;background:#eef3fb;border-radius:999px;padding:1px 10px;margin:2px 4px 2px 0;font-size:.92em}
+</style>
+</head>
+<body>
+<h1>誤答パターン分析＆復習プリント設計</h1>
+<p>塾・家庭教師向け。採点済みの答案から「どの習慣が崩れているか」を先にまとめ、その習慣だけを狙った復習5問のテーマ案を出します。ブラウザの中だけで動き、入力はどこにも送信・保存されません。</p>
+<p class="note">書き方：<code>番号 ｜ 正答 ｜ 生徒の答え ｜ メモ（任意）</code>。区切りは「｜」「|」タブ、カンマ。空欄の答えは「空」や「-」でもOK。<code>#</code>行と空行は無視。正答と生徒答えが一致（全角半角・空白ゆれを吸収）すると正解扱いです。</p>
+<textarea id="src"># 例（架空の小5算数・一部英語）
+1｜-12｜12｜符号
+2｜3.5｜35｜小数点
+3｜1/2｜2/1｜分数の逆
+4｜240｜24｜桁
+5｜15｜14｜繰下がり疑い
+6｜ア｜イ｜隣の選択肢
+7｜水｜みず｜表記
+8｜16｜｜空欄
+9｜100cm｜1m｜単位換算の方向
+10｜48｜84｜数字の入れ替え
+11｜-3｜-3｜正解
+12｜7/8｜6/8｜分子だけずらし
+13｜0.25｜1/4｜表記ちがいで正解扱いしたい場合はメモに「同値」と書くだけでは判定しません（数値同値のみ自動）
+14｜A｜C｜選択飛び
+15｜360｜36.0｜小数点位置</textarea>
+<div>
+<label>復習テーマ案の上限 <input id="nmax" type="number" value="5" min="1" max="10" style="width:4em">個</label>
+<label><input type="checkbox" id="strict" checked> 数値は同値なら正解（分数・小数を比較）</label>
+</div>
+<button id="go">分析する</button><button id="csv">結果をCSVで保存</button>
+<div id="sum"></div>
+<h2>習慣（誤答パターン）の集計</h2><div id="habits"></div>
+<h2>復習プリントのテーマ案</h2><div id="plan"></div>
+<h2>問題ごとの判定</h2><div id="out"></div>
+<p style="margin-top:2em;font-size:.9em">メモ：パターンは機械的な手がかりです。授業で見たつまずきと食い違うときは授業側を優先してください。誤答パターン診断→復習5問パックの代行は <a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a> へ。<a href="index.html">ほかの無料ツール</a> ／関連：<a href="test-check.html">配点バランス</a>・<a href="kotae-quiz.html">自動採点小テスト</a>・<a href="keisan-drill.html">計算ドリル</a></p>
+<script>
+const $=id=>document.getElementById(id);let last=null;
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const z2h=s=>String(s).replace(/[０-９Ａ-Ｚａ-ｚ．／−－]/g,c=>{const m={'．':'.','／':'/','−':'-','－':'-'};return m[c]||String.fromCharCode(c.charCodeAt(0)-0xFEE0)});
+const normTxt=s=>z2h(s).replace(/\s+/g,'').replace(/[。．]/g,'.').toLowerCase();
+const CHOICE=[['ア','イ','ウ','エ','オ'],['A','B','C','D','E'],['a','b','c','d','e'],['1','2','3','4','5'],['①','②','③','④','⑤']];
+function parseFrac(s){s=z2h(s).trim();const m=s.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);if(!m)return null;const a=+m[1],b=+m[2];if(!b)return null;return a/b}
+function parseNum(s){s=z2h(String(s)).trim().replace(/,/g,'');if(!s)return null;const f=parseFrac(s);if(f!=null)return f;const u=s.match(/^([+-]?\d*\.?\d+)\s*(cm|mm|m|km|g|kg|ml|l|円|%|℃)?$/i);if(u)return +u[1];if(/^[+-]?\d*\.?\d+$/.test(s))return +s;return null}
+function sameAns(a,b,strict){const na=normTxt(a),nb=normTxt(b);if(na&&na===nb)return true;if(!strict)return false;const xa=parseNum(a),xb=parseNum(b);return xa!=null&&xb!=null&&Math.abs(xa-xb)<1e-9}
+function choiceIdx(v){v=z2h(v).trim();for(const set of CHOICE){const i=set.indexOf(v);if(i>=0)return{set,i}}return null}
+function digits(s){return z2h(s).replace(/[^0-9]/g,'')}
+function habitOf(correct,student){
+  const c=z2h(correct).trim(),s=z2h(student).trim();
+  if(!s||s==='-'||s==='ー'||/^空/.test(s)||s==='×'||s.toLowerCase()==='blank')return{id:'blank',label:'空欄・無解答',hint:'まず「書いて出す」習慣。穴埋めから再開'};
+  if(sameAns(c,s,true))return null;
+  const cc=choiceIdx(c),ss=choiceIdx(s);
+  if(cc&&ss&&cc.set===ss.set){
+    if(Math.abs(cc.i-ss.i)===1)return{id:'choice_near',label:'選択肢の隣を選ぶ',hint:'選択肢を読む前に問題文の条件を○で囲む練習'};
+    return{id:'choice_jump',label:'選択肢の取り違え',hint:'消去法の手順を固定（明らかに違う→残りで比較）'};
+  }
+  const nc=parseNum(c),ns=parseNum(s);
+  if(nc!=null&&ns!=null){
+    if(Math.abs(nc+ns)<1e-9&&nc!==0)return{id:'sign',label:'符号の取り違え',hint:'正負の導入問題→数直線で「向き」を言わせる'};
+    if(nc!==0&&Math.abs(Math.abs(ns/nc)-10)<1e-6||Math.abs(Math.abs(ns/nc)-0.1)<1e-6||Math.abs(Math.abs(ns/nc)-100)<1e-6||Math.abs(Math.abs(ns/nc)-0.01)<1e-6)
+      return{id:'place',label:'桁・小数点のずれ',hint:'位取り表に書いてから計算。答えの「だいたい」見積もりを先に'};
+    if(Number.isInteger(nc)&&Number.isInteger(ns)&&Math.abs(nc-ns)===1)
+      return{id:'off_by_one',label:'±1のずれ（繰上り・繰下がり疑い）',hint:'繰上り／繰下がりだけを切り出したドリル'};
+    const fc=parseFrac(c),fs=s.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);
+    if(c.includes('/')&&fs){
+      const a=c.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);
+      if(a&&+a[1]===+fs[2]&&+a[2]===+fs[1])return{id:'frac_flip',label:'分数の逆数化',hint:'「÷分数＝×逆数」の前に、図で部分と全体'};
+      if(a&&+a[2]===+fs[2]&&Math.abs(+a[1]-+fs[1])===1)return{id:'frac_num',label:'分子だけのずらし',hint:'通分・約分の手順カード'};
+    }
+    const dc=digits(c),ds=digits(s);
+    if(dc&&ds&&dc.length===ds.length&&dc.split('').sort().join('')===ds.split('').sort().join('')&&dc!==ds)
+      return{id:'digit_swap',label:'数字の入れ替え',hint:'位ごとに色分けして書き写す'};
+  }
+  const uc=c.match(/(cm|mm|m|km|g|kg|ml|l|円|%)/i),us=s.match(/(cm|mm|m|km|g|kg|ml|l|円|%)/i);
+  if(uc||us){
+    if(uc&&us&&uc[1].toLowerCase()!==us[1].toLowerCase())return{id:'unit_mix',label:'単位の取り違え',hint:'単位換算表を見ながら「大きい単位↔小さい単位」を往復'};
+    if((uc&&!us)||(!uc&&us))return{id:'unit_drop',label:'単位の付け忘れ／余計な単位',hint:'答えの単位を問題文から写すステップを固定'};
+  }
+  const kana=/^[\u3040-\u30ff]+$/,kan=/^[\u4e00-\u9fff]+$/;
+  if(kana.test(normTxt(c).replace(/[ぁ-ん]/g,ch=>String.fromCharCode(ch.charCodeAt(0)+0x60)))||kan.test(c)||kana.test(c)){
+    if(normTxt(c)!==normTxt(s)&&c.length<=8&&s.length<=8)return{id:'script',label:'表記・読みのゆれ（漢字かな等）',hint:'許容表記リストを先に共有。採点基準を1行で明示'};
+  }
+  if(c.length<=3&&s.length<=3)return{id:'short_mismatch',label:'短答の食い違い',hint:'キーワードを問題文から抜き出してから答える'};
+  return{id:'other',label:'その他・要目視',hint:'答案を見て計算過程か読み違いかを切り分け'};
+}
+const PLAN={
+  blank:{theme:'「まず書く」ミニ課題（穴埋め3→記述2）',ex:'空欄になりやすい大問の穴埋め版を5問'},
+  sign:{theme:'正負・符号だけのミニドリル',ex:'「−(−a)」と数直線の向きを数直線つきで5問'},
+  place:{theme:'位取り・小数点位置の見積もり',ex:'計算前に概算→位取り表→本計算の3段を5問'},
+  off_by_one:{theme:'繰上り・繰下がり特化',ex:'繰下がりが2回続く引き算を中心に5問'},
+  frac_flip:{theme:'分数÷分数＝×逆数の図解確認',ex:'逆数化ミスが出た型だけを5問'},
+  frac_num:{theme:'通分・約分の手順カード',ex:'分母そろえ→分子操作のチェック欄つき5問'},
+  digit_swap:{theme:'書き写し精度（位の色分け）',ex:'写し→計算の2段式を5問'},
+  choice_near:{theme:'選択肢の隣トラップ回避',ex:'似た選択肢を並べた問題で消去法を5問'},
+  choice_jump:{theme:'消去法の手順固定',ex:'「明らかに違う→残り比較」欄つき5問'},
+  unit_mix:{theme:'単位換算の往復',ex:'cm↔m、g↔kg を混在させた5問'},
+  unit_drop:{theme:'単位を写すステップ',ex:'答え欄に単位枠を先に印刷した5問'},
+  script:{theme:'許容表記の明示→同値判定',ex:'漢字／かな両方可の語彙ミニテスト5問'},
+  short_mismatch:{theme:'キーワード抜き出し→解答',ex:'問題文に線を引いてから答える5問'},
+  other:{theme:'過程を書かせる診断問題',ex:'途中式必須の同型問題3問＋口述説明2問'}
+};
+function parse(t){return t.split(/\r?\n/).map((l,i)=>[l,i+1]).filter(([l])=>l.trim()&&!l.trim().startsWith('#')).map(([l,ln])=>{const c=l.split(/[｜|\t,，]/).map(x=>x.trim());return{ln,id:c[0]||'',ok:c[1]||'',st:c[2]||'',memo:c[3]||''}})}
+function run(){
+  const rows=parse($('src').value),strict=$('strict').checked,nmax=+$('nmax').value||5;
+  const res=rows.map(r=>{
+    const issues=[];
+    if(!r.id)issues.push(['ng','番号がありません']);
+    if(!r.ok)issues.push(['ng','正答が空です']);
+    const correct=sameAns(r.ok,r.st,strict);
+    let h=null;
+    if(!r.ok){/*skip*/}
+    else if(correct){/*ok*/}
+    else h=habitOf(r.ok,r.st);
+    return{...r,correct,h,issues};
+  });
+  const total=res.length,okN=res.filter(r=>r.correct).length,ngN=total-okN;
+  const counts={};res.forEach(r=>{if(r.h)counts[r.h.id]=(counts[r.h.id]||0)+1});
+  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  last={res,ranked,okN,ngN,total};
+  $('sum').innerHTML=`<p>全${total}問／正解 <span class="ok">${okN}</span>／誤答・未判定 <span class="ng">${ngN}</span>（正答率 ${total?Math.round(okN/total*100):0}%）</p>`;
+  if(!ranked.length){$('habits').innerHTML='<p class="ok">誤答パターンは検出されませんでした（全問正解、または同値判定）。</p>';$('plan').innerHTML='<p>復習テーマは不要そうです。定着確認のミニテストだけ出してもよいです。</p>'}
+  else{
+    const max=ranked[0][1];
+    $('habits').innerHTML='<table><tr><th>習慣</th><th>件数</th><th>目安</th></tr>'+ranked.map(([id,n])=>{
+      const label=(res.find(r=>r.h&&r.h.id===id)||{}).h.label||id;
+      const w=Math.max(8,Math.round(n/max*160));
+      return`<tr><td>${e(label)}</td><td>${n}</td><td><span class="bar" style="width:${w}px"></span>${Math.round(n/ngN*100)}%</td></tr>`}).join('')+'</table>';
+    const themes=ranked.slice(0,nmax).map(([id,n],i)=>{
+      const p=PLAN[id]||PLAN.other;const label=(res.find(r=>r.h&&r.h.id===id)||{}).h;
+      return`<div style="margin:.6em 0;padding:10px;border:1px solid #ddd;border-radius:8px"><b>${i+1}. ${e(p.theme)}</b> <span class="pill">${e(label?label.label:id)} ×${n}</span><br>ヒント：${e(label?label.hint:p.theme)}<br>具体例：${e(p.ex)}</div>`});
+    $('plan').innerHTML=themes.join('')+`<p class="note">印刷用に「テーマごとに5問」を別紙へ。答え合わせは大人（講師）が最終確認してください。</p>`;
+  }
+  $('out').innerHTML='<table><tr><th>番号</th><th>正答</th><th>生徒</th><th>判定</th><th>パターン</th></tr>'+res.map(r=>{
+    const st=r.correct?'<span class="ok">正解</span>':(r.h?`<span class="ng">${e(r.h.label)}</span>`:'<span class="warn">要確認</span>');
+    const iss=r.issues.map(x=>`<div class="${x[0]}">${e(x[1])}</div>`).join('');
+    return`<tr><td>${e(r.id)}</td><td>${e(r.ok)}</td><td>${e(r.st)}</td><td>${st}${iss}</td><td>${r.h?e(r.h.hint):''}${r.memo?' / '+e(r.memo):''}</td></tr>`}).join('')+'</table>';
+}
+function saveCsv(){if(!last)return;const lines=['番号,正答,生徒の答え,判定,パターンID,パターン名,メモ'];
+last.res.forEach(r=>{const j=r.correct?'正解':(r.h?r.h.id:'other');const n=r.correct?'':(r.h?r.h.label:'');lines.push([r.id,r.ok,r.st,r.correct?'OK':'NG',j,n,r.memo].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(','))});
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));a.download='fukushu-check.csv';a.click()}
+$('go').onclick=run;$('csv').onclick=saveCsv;run();
+</script>
+</body>
+</html>
