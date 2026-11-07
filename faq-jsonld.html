@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FAQPage 構造化データ（JSON-LD）作成＆AI引用向け点検｜無料</title>
+<meta name="description" content="よくある質問を貼るだけで FAQPage の JSON-LD と表示用HTMLを作成。答えの一文独立性・あいまい語・文字数・質問型の抜けをブラウザ内で点検。店舗のLocalBusiness用 tenpo-jsonld やショップ返品FAQの ec-toiawase とは別用途。送信なし。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/faq-jsonld.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:0 auto;padding:16px;line-height:1.7;color:#222}
+h1{font-size:1.35em}h2{font-size:1.12em;border-left:5px solid #246;padding-left:8px;margin-top:28px}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font-family:inherit;font-size:14px}
+textarea{height:220px}button{padding:6px 14px;margin:8px 6px 0 0}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.92rem}
+.ok{color:#075}.ng{color:#b00}.mid{color:#a60}
+table{border-collapse:collapse;width:100%;font-size:13.5px}td,th{border:1px solid #ccc;padding:4px 6px;vertical-align:top}
+pre{background:#f4f6f8;padding:10px;overflow:auto;font-size:12.5px;border-radius:6px;white-space:pre-wrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;margin-right:3px}
+.badge.ok{background:#e7f6ec}.badge.ng{background:#fde8e8}.badge.mid{background:#fff3d6}
+label{display:block;margin-top:8px;font-weight:600}
+.muted{color:#555;font-size:.9rem;font-weight:400}
+</style>
+</head>
+<body>
+<h1>FAQPage 構造化データ作成＆AI引用向け点検</h1>
+<p>サービスページやブログの「よくある質問」を、<a href="https://schema.org/FAQPage" rel="noopener" target="_blank">schema.org/FAQPage</a> の JSON-LD と、そのまま貼れる表示用HTMLにします。あわせて、ChatGPT・Perplexity・GoogleのAIによる概要などで<strong>答えの一文だけが抜き出されても意味が通るか</strong>を点検します。処理はブラウザ内のみ・送信なし。</p>
+<p class="note">Googleは生成AI専用の特別マークアップは不要としていますが、FAQのリッチリザルト用 JSON-LD は従来どおり有用です（対象ページ・業種は<a href="https://developers.google.com/search/docs/appearance/structured-data/faqpage?hl=ja" rel="noopener" target="_blank">公式ドキュメント</a>を確認）。店舗の営業時間は <a href="tenpo-jsonld.html">tenpo-jsonld</a>、ネットショップの返品FAQは <a href="ec-toiawase.html">ec-toiawase</a>、記事本文の引用向きは <a href="ai-inyou-check.html">ai-inyou-check</a> を使ってください。</p>
+
+<h2>1. 質問と答えを貼る</h2>
+<label>ページの主な対象（任意）<input type="text" id="topic" placeholder="例）加古川市の整体院・初回料金と予約"></label>
+<label>入力形式
+<select id="fmt">
+<option value="qa">1行＝質問｜答え（縦棒区切り）</option>
+<option value="pair">質問と答えを交互（空行で次の組）</option>
+<option value="md">Markdown（## 質問 / 次の段落が答え）</option>
+</select>
+</label>
+<label>FAQ本文<textarea id="src" placeholder="初回の料金はいくらですか｜税込5,500円です。施術40分＋カウンセリング込みです。&#10;予約は当日でもできますか｜空きがあれば当日予約も可能です。電話かLINEでご確認ください。&#10;駐車場はありますか｜医院前に無料3台分あります。"></textarea></label>
+<button type="button" id="run">作る・点検する</button>
+<button type="button" id="sample">サンプルを入れる</button>
+<button type="button" id="copyLd" disabled>JSON-LDをコピー</button>
+<button type="button" id="copyHtml" disabled>表示用HTMLをコピー</button>
+<button type="button" id="dl" disabled>点検CSVを保存</button>
+<div id="res"></div>
+
+<h2>2. 生成結果</h2>
+<label>JSON-LD（&lt;script type="application/ld+json"&gt; の中身）</label>
+<pre id="outLd">（まだありません）</pre>
+<label>表示用HTML（details/summary）</label>
+<pre id="outHtml">（まだありません）</pre>
+
+<h2>3. 使い方の目安</h2>
+<ol>
+<li>Search Consoleやキーワード調査で「〜とは」「料金」「予約」「どこ」など質問型クエリを拾う。</li>
+<li>このツールで答えを<strong>最初の1文で言い切る</strong>形に直し、JSON-LDとHTMLをページに載せる。</li>
+<li>数週間後、GSCの検索パフォーマンスと（あれば）生成AIレポートで表示・クリックの変化を見る。</li>
+</ol>
+<p>有料の目安：「質問型クエリ向け FAQ構造化＋答え先出し改稿パック」¥8,000〜25,000／式（ページ数による）。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）</p>
+<p><a href="./">← 公募・ツール一覧へ戻る</a></p>
+<footer class="muted">FAQリッチリザルトの表示やAI検索への引用を保証するものではありません。医療・法律・金融などYMYLは専門家監修を優先してください。データは送信されません。</footer>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nk=s=>(s||"").normalize("NFKC").replace(/\s+/g," ").trim();
+const clen=s=>[...String(s||"")].length;
+const VAGUE=/様々な|さまざまな|と言われています|一般的に|などがあります|ことが大切です|おすすめです$|場合によります|お問い合わせください$|詳細は(?:公式|こちら)|various|it depends|contact us for (?:more|details)/i;
+const DEMO=/^(これは|それは|同社は|当社は|当店は|彼は|彼女は|They |It |This |That |We |Our )/i;
+const NEED_NUM=/(いくら|料金|費用|価格|何円|何％|何%|いつ|何日|何時間|何分|何歳|何人|how much|how many|when|price|cost|fee)/i;
+let LAST={pairs:[],ld:"",html:"",rows:[]};
+
+function parseQA(text,fmt){
+  text=(text||"").replace(/^\uFEFF/,"").trim();
+  if(!text)return [];
+  const pairs=[];
+  if(fmt==="qa"){
+    text.split(/\r?\n/).forEach(line=>{
+      line=line.trim();if(!line)return;
+      const i=line.indexOf("|");
+      if(i<0){const i2=line.indexOf("｜");if(i2<0)return;pairs.push({q:nk(line.slice(0,i2)),a:nk(line.slice(i2+1))});}
+      else pairs.push({q:nk(line.slice(0,i)),a:nk(line.slice(i+1))});
+    });
+  }else if(fmt==="pair"){
+    const blocks=text.split(/\n\s*\n+/);
+    blocks.forEach(b=>{
+      const lines=b.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      if(lines.length>=2)pairs.push({q:nk(lines[0].replace(/^Q[:：]\s*/i,"")),a:nk(lines.slice(1).join(" ").replace(/^A[:：]\s*/i,""))});
+      else if(lines.length===1){
+        const m=lines[0].match(/^(.+?)[：:]\s*(.+)$/);
+        if(m)pairs.push({q:nk(m[1]),a:nk(m[2])});
+      }
+    });
+  }else{
+    const lines=text.split(/\r?\n/);
+    let q=null,acc=[];
+    const flush=()=>{if(q&&acc.length)pairs.push({q:nk(q),a:nk(acc.join(" "))});q=null;acc=[];};
+    lines.forEach(L=>{
+      const m=L.match(/^#{1,3}\s+(.+)/)||L.match(/^\*\*(.+?)\*\*\s*$/);
+      if(m){flush();q=m[1];return;}
+      if(/^Q[:：]/i.test(L)){flush();q=L.replace(/^Q[:：]\s*/i,"");return;}
+      if(/^A[:：]/i.test(L)){acc.push(L.replace(/^A[:：]\s*/i,""));return;}
+      if(q)acc.push(L);
+    });
+    flush();
+  }
+  return pairs.filter(p=>p.q&&p.a);
+}
+
+function firstSent(a){
+  const m=String(a).match(/^(.+?[。．.!?！？])(?:\s|$)/);
+  return m?m[1]:a;
+}
+
+function checkPair(p,i){
+  const tags=[],todo=[];
+  const q=p.q,a=p.a,fs=firstSent(a);
+  const ql=clen(q),al=clen(a),fl=clen(fs);
+  if(ql<6){tags.push("質問短すぎ");todo.push("検索されそうな言い回しに伸ばす");}
+  if(ql>80){tags.push("質問長すぎ");todo.push("質問は1つに絞り、80字以内を目安に");}
+  if(al<15){tags.push("答え短すぎ");todo.push("条件・単位・例外を1文足す");}
+  if(al>350){tags.push("答え長すぎ");todo.push("最初の2文で結論、詳細は本文へ");}
+  if(DEMO.test(fs)){tags.push("指示語始まり");todo.push("「これは／同社は」ではなく主語と結論を先に書く");}
+  if(VAGUE.test(fs)||VAGUE.test(a)){tags.push("あいまい");todo.push("数字・固有名・条件で具体化する");}
+  if(NEED_NUM.test(q)&&!/[0-9０-９¥￥%％円時間分日週間月歳人台]/.test(a)){
+    tags.push("数字不足");todo.push("質問が量や時期を聞いているので、答えに数字を入れる");
+  }
+  if(!/[。．.!?！？]/.test(a)&&al>40){tags.push("句点なし");todo.push("読み上げやすいよう句点で区切る");}
+  if(fl>90){tags.push("一文が長い");todo.push("最初の文を60〜80字程度で言い切る");}
+  if(/(治る|完治|絶対|必ず儲か|No\.?1|世界一|医師が推薦)/i.test(a)){tags.push("断定注意");todo.push("薬機法・景表法に触れうる断定を弱める");}
+  const ok=!tags.some(t=>/指示語|あいまい|数字不足|断定/.test(t));
+  return {i:i+1,q,a,fs,tags:tags.length?tags:["おおむねOK"],todo:todo.length?todo.join("／"):"そのままJSON-LD化可",sev:ok?"ok":(tags.includes("断定注意")?"ng":"mid")};
+}
+
+function buildLd(pairs){
+  const main=pairs.map(p=>({
+    "@type":"Question",
+    "name":p.q,
+    "acceptedAnswer":{"@type":"Answer","text":p.a}
+  }));
+  return JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":main},null,2);
+}
+
+function buildHtml(pairs,topic){
+  const h=topic?`<h2>${esc(topic)} よくある質問</h2>\n`:"";
+  const body=pairs.map(p=>`<details>\n<summary>${esc(p.q)}</summary>\n<p>${esc(p.a)}</p>\n</details>`).join("\n");
+  return h+body;
+}
+
+function render(pairs,rows){
+  const bad=rows.filter(r=>r.sev!=="ok").length;
+  let h=`<p>組数：<b>${pairs.length}</b> ／ 要修正目安：<b class="${bad?"ng":"ok"}">${bad}</b></p>`;
+  if(!pairs.length){h+='<p class="ng">質問と答えが読めませんでした。形式を確認してください。</p>';$("res").innerHTML=h;return;}
+  h+='<table><tr><th>#</th><th>質問</th><th>答えの先頭文</th><th>指摘</th><th>やること</th></tr>';
+  rows.forEach(r=>{
+    h+=`<tr><td>${r.i}</td><td>${esc(r.q)}</td><td>${esc(r.fs)}</td><td>${r.tags.map(t=>`<span class="badge ${r.sev}">${esc(t)}</span>`).join("")}</td><td>${esc(r.todo)}</td></tr>`;
+  });
+  h+='</table>';
+  $("res").innerHTML=h;
+}
+
+$("sample").onclick=()=>{
+  $("fmt").value="qa";
+  $("topic").value="加古川の整体・初回案内";
+  $("src").value=[
+    "初回の料金はいくらですか｜税込5,500円です。施術約40分とカウンセリングを含みます。",
+    "予約は当日でもできますか｜空きがあれば当日予約も可能です。電話またはLINEで空きを確認してください。",
+    "駐車場はありますか｜医院前に無料駐車場が3台分あります。満車のときは近隣の有料Pをご案内します。",
+    "健康保険は使えますか｜自費診療のみです。医療費控除の対象になるかは税務署または税理士にご確認ください。",
+    "整体とは何ですか｜これは様々な手技で体の不調を整える施術です。"
+  ].join("\n");
+};
+
+$("run").onclick=()=>{
+  const pairs=parseQA($("src").value,$("fmt").value);
+  const rows=pairs.map(checkPair);
+  const ld=pairs.length?buildLd(pairs):"";
+  const html=pairs.length?buildHtml(pairs,$("topic").value):"";
+  LAST={pairs,ld,html,rows};
+  $("outLd").textContent=ld||"（まだありません）";
+  $("outHtml").textContent=html||"（まだありません）";
+  $("copyLd").disabled=!ld;
+  $("copyHtml").disabled=!html;
+  $("dl").disabled=!rows.length;
+  render(pairs,rows);
+};
+
+$("copyLd").onclick=async()=>{
+  if(!LAST.ld)return;
+  const wrap=`<script type="application/ld+json">\n${LAST.ld}\n<\/script>`;
+  try{await navigator.clipboard.writeText(wrap);$("copyLd").textContent="コピーしました";setTimeout(()=>$("copyLd").textContent="JSON-LDをコピー",1500);}
+  catch(e){prompt("コピーできない場合は手動で選んでください",wrap);}
+};
+$("copyHtml").onclick=async()=>{
+  if(!LAST.html)return;
+  try{await navigator.clipboard.writeText(LAST.html);$("copyHtml").textContent="コピーしました";setTimeout(()=>$("copyHtml").textContent="表示用HTMLをコピー",1500);}
+  catch(e){prompt("コピーできない場合は手動で選んでください",LAST.html);}
+};
+$("dl").onclick=()=>{
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const L=[["#","質問","答え","先頭文","指摘","やること","重要度"].map(q).join(",")];
+  LAST.rows.forEach(r=>L.push([r.i,r.q,r.a,r.fs,r.tags.join("・"),r.todo,r.sev].map(q).join(",")));
+  const b=new Blob(["\uFEFF"+L.join("\r\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="faq_jsonld_check.csv";a.click();
+};
+})();
+</script>
+</body>
+</html>
