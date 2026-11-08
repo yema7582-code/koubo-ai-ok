@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ゲーム向けアクセシビリティ（Xboxガイドライン）公開前チェッカー｜無料</title>
+<meta name="description" content="Xbox Accessibility Guidelines（XAG）に沿って、文字サイズ・コントラスト・字幕・リマップ・点滅・色だけに頼らない合図・ストア掲載情報を公開前に自己点検。送信なし・CSV保存。Web用a11y-checkやSteam Deck用steam-deck-checkとは別用途。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/game-a11y-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;max-width:920px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.4em 0}
+.chk input{margin-top:4px;flex-shrink:0}
+.chk span{font-weight:400}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+.score{font-size:1.15em;font-weight:700}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+a{color:#0b57d0}
+pre{white-space:pre-wrap;background:#f4f6f8;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>ゲーム向けアクセシビリティ（Xboxガイドライン）公開前チェッカー</h1>
+<p class="muted">Xbox Accessibility Guidelines（<a href="https://learn.microsoft.com/en-us/xbox/accessibility/guidelines" target="_blank" rel="noopener">XAG</a>、公開版 v3.2）のうち、インディーが公開前に自分で潰せる項目を点検します。入力はブラウザ内だけ（送信なし）。これは公式の認証でも、欧州アクセシビリティ法（EAA）などの法的適合証明でもありません。Webページ用の <a href="a11y-check.html">a11y-check</a> や Steam Deck 互換の <a href="steam-deck-check.html">steam-deck-check</a> とは別用途です。</p>
+
+<div class="box">
+<label>ゲーム名（任意）</label>
+<input type="text" id="title" placeholder="例：ウゴクとトマル">
+<div class="row">
+<div>
+<label>主なプラットフォーム</label>
+<select id="platform">
+<option value="pc">PC / Steam</option>
+<option value="console">据え置き / 携帯ゲーム機</option>
+<option value="mobile">スマートフォン</option>
+<option value="multi">複数</option>
+</select>
+</div>
+<div>
+<label>ビルド／ブランチ（任意）</label>
+<input type="text" id="build" placeholder="例：demo-0.9.2">
+</div>
+</div>
+<div class="row">
+<div>
+<label>台詞・ボイスの量</label>
+<select id="voice">
+<option value="unknown">未確認</option>
+<option value="none">ほぼない（UI音とBGM中心）</option>
+<option value="some">重要な台詞やチュートリアルがある</option>
+<option value="lots">ストーリー音声が多い</option>
+</select>
+</div>
+<div>
+<label>オンラインの通話・チャット</label>
+<select id="chat">
+<option value="unknown">未確認</option>
+<option value="none">オンライン通信なし</option>
+<option value="text">文字チャットのみ</option>
+<option value="voice">ボイスチャットのみ</option>
+<option value="both">文字とボイスの両方</option>
+</select>
+</div>
+</div>
+</div>
+
+<h2>1. 視覚（XAG 101 / 102 / 109 / 117 / 118）</h2>
+<div class="chk"><input type="checkbox" id="x101_size"><span>本文テキストの高さが目安以上（PC 1080p で約18px以上、据え置きテレビ 1080p で約26px）。メニュー・HUD・通知・エラーも含む</span></div>
+<div class="chk"><input type="checkbox" id="x101_scale"><span>テキストを最大200%まで拡大でき、はみ出しても読める（一方向のスクロールは可。縦横同時スクロールは不可）</span></div>
+<div class="chk"><input type="checkbox" id="x101_font"><span>装飾フォント以外に、サンセリフ（ゴシック体）の選択肢がある</span></div>
+<div class="chk"><input type="checkbox" id="x102_contrast"><span>文字と背景のコントラストがおおむね 4.5:1 以上（重要なHUDも含む）</span></div>
+<div class="chk"><input type="checkbox" id="x102_color"><span>色だけに頼らない（色覚サポート、または形・アイコン・テキストの併用）</span></div>
+<div class="chk"><input type="checkbox" id="x109_clarity"><span>敵・拾う物・目標など重要なオブジェクトが背景から見分けられる</span></div>
+<div class="chk"><input type="checkbox" id="x117_motion"><span>カメラシェイク・モーションブラー・強い画面揺れをオフまたは弱められる</span></div>
+<div class="chk"><input type="checkbox" id="x118_flash"><span>点滅がおおむね秒間3回を超えない。強い点滅があるなら注意表示と低減オプションがある</span></div>
+
+<h2>2. 聴覚（XAG 103 / 104 / 105 / 106）</h2>
+<div class="chk"><input type="checkbox" id="x103_cues"><span>重要な合図が音だけに依存しない（画面効果やアイコンでも伝わる）</span></div>
+<div class="chk"><input type="checkbox" id="x104_subs"><span>重要な台詞に字幕がある</span></div>
+<div class="chk"><input type="checkbox" id="x104_caps"><span>重要な効果音・話者名・方向の手がかりを字幕やキャプションで示せる</span></div>
+<div class="chk"><input type="checkbox" id="x104_cfg"><span>字幕の大きさや背景（不透明度）を変えられる</span></div>
+<div class="chk"><input type="checkbox" id="x105_vol"><span>BGM / ボイス / SE（／チャット）を別々に音量調整できる</span></div>
+<div class="chk"><input type="checkbox" id="x106_narr"><span>メニューを読み上げできる、またはOSのスクリーンリーダーと両立する</span></div>
+<div class="chk"><input type="checkbox" id="x106_na"><span>メニュー読み上げは対象外（文字が大きく、色とアイコンだけで辿れる単純なUI）</span></div>
+
+<h2>3. 入力とメニュー（XAG 107 / 110 / 112 / 113）</h2>
+<div class="chk"><input type="checkbox" id="x107_remap"><span>主要な操作をゲーム内でリマップできる（ボタン入れ替えだけでなく、行動への割り当てが理想）</span></div>
+<div class="chk"><input type="checkbox" id="x107_hold"><span>長押し必須の操作に、トグルや自動ホールドの代替がある（または長押しなし）</span></div>
+<div class="chk"><input type="checkbox" id="x107_combo"><span>同時押しや高速連打が必須の箇所に代替がある（または該当なし）</span></div>
+<div class="chk"><input type="checkbox" id="x112_nav"><span>メニューを十字キーや1ボタンずつで辿れる（同時押し不要）</span></div>
+<div class="chk"><input type="checkbox" id="x113_focus"><span>今選んでいる項目がはっきり見える</span></div>
+<div class="chk"><input type="checkbox" id="x110_haptic"><span>振動をオフにできる</span></div>
+<div class="chk"><input type="checkbox" id="x110_na"><span>振動フィードバックは使っていない（上記は該当なし）</span></div>
+
+<h2>4. コミュニケーションと公開情報（EAA隣接・認証ではない）</h2>
+<div class="chk"><input type="checkbox" id="eaa_chat_alt"><span>ボイスチャットしかない場合でも、文字チャットまたは自動字幕の代替がある</span></div>
+<div class="chk"><input type="checkbox" id="eaa_doc"><span>ストアページかゲーム内に、字幕・リマップ・色覚・点滅注意などのアクセシビリティ情報が書いてある</span></div>
+
+<label>メモ（任意）</label>
+<input type="text" id="notes" placeholder="未確認の実機、既知の例外など">
+
+<p>
+<button type="button" id="run">点検する</button>
+<button type="button" id="sample" class="sec">サンプルを入れる</button>
+<button type="button" id="csv" class="sec">CSVを保存</button>
+</p>
+<div id="out"></div>
+
+<p>有料の目安：「ゲーム向けアクセシビリティ（XAG準拠）公開前点検パック」¥8,000〜20,000／タイトル（項目の証拠メモと修正優先度つき。公式認証の代行ではありません）。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）</p>
+<footer>Xbox Accessibility Guidelines の公式適合や、欧州アクセシビリティ法その他の法令適合を証明するものではありません。実機と公式ドキュメントを正としてください。データは送信されません。</footer>
+<script>
+(function(){
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
+function stateFromUi(){
+  return {
+    title:$("title").value.trim(),
+    platform:$("platform").value,
+    build:$("build").value.trim(),
+    voice:$("voice").value,
+    chat:$("chat").value,
+    x101_size:$("x101_size").checked,
+    x101_scale:$("x101_scale").checked,
+    x101_font:$("x101_font").checked,
+    x102_contrast:$("x102_contrast").checked,
+    x102_color:$("x102_color").checked,
+    x109_clarity:$("x109_clarity").checked,
+    x117_motion:$("x117_motion").checked,
+    x118_flash:$("x118_flash").checked,
+    x103_cues:$("x103_cues").checked,
+    x104_subs:$("x104_subs").checked,
+    x104_caps:$("x104_caps").checked,
+    x104_cfg:$("x104_cfg").checked,
+    x105_vol:$("x105_vol").checked,
+    x106_narr:$("x106_narr").checked,
+    x106_na:$("x106_na").checked,
+    x107_remap:$("x107_remap").checked,
+    x107_hold:$("x107_hold").checked,
+    x107_combo:$("x107_combo").checked,
+    x112_nav:$("x112_nav").checked,
+    x113_focus:$("x113_focus").checked,
+    x110_haptic:$("x110_haptic").checked,
+    x110_na:$("x110_na").checked,
+    eaa_chat_alt:$("eaa_chat_alt").checked,
+    eaa_doc:$("eaa_doc").checked,
+    notes:$("notes").value.trim()
+  };
+}
+function analyze(s){
+  const issues=[], tips=[];
+  let bad=0, warn=0, ok=0;
+  function push(l,m){ (l==="ok"?tips:issues).push({l,m}); if(l==="bad")bad++; else if(l==="warn")warn++; else ok++; }
+
+  if(!s.x101_size) push("bad","文字サイズ（XAG 101）：本文・HUD・通知が最低目安を満たしていない／未確認です。");
+  else push("ok","文字サイズは目安以上と自己申告。");
+  if(!s.x101_scale) push("warn","文字の拡大（最大200%）が未確認。拡大ではみ出すUIは読み上げやスクロール経路が必要です。");
+  else push("ok","テキスト拡大の自己申告あり。");
+  if(!s.x101_font) push("warn","サンセリフ（ゴシック）の代替フォントが未確認。装飾フォントだけだと読みにくい場合があります。");
+  else push("ok","読みやすいフォント選択肢あり。");
+
+  if(!s.x102_contrast) push("bad","コントラスト（XAG 102）：文字と背景が 4.5:1 相当を満たしていない／未確認です。");
+  else push("ok","コントラストは目安以上と自己申告。");
+  if(!s.x102_color) push("bad","色だけに頼っている／未確認です。状態やチーム、危険表示は形やテキストでも伝えてください。");
+  else push("ok","色以外の手がかりありと自己申告。");
+  if(!s.x109_clarity) push("warn","重要オブジェクトの見分け（XAG 109）が未確認です。");
+  else push("ok","オブジェクトの見分けを自己申告。");
+  if(!s.x117_motion) push("warn","画面揺れ・モーションの低減（XAG 117）が未確認です。");
+  else push("ok","モーション低減ありと自己申告。");
+  if(!s.x118_flash) push("bad","点滅（XAG 118）：秒間3回超の点滅や低減オプションが未確認です。光感受性の優先度は高いです。");
+  else push("ok","点滅は安全側と自己申告。");
+
+  if(!s.x103_cues) push("bad","合図が音だけ（XAG 103）：視覚や触覚の代替が未確認です。");
+  else push("ok","重要な合図に音以外の手がかりあり。");
+
+  const voiced = s.voice==="some" || s.voice==="lots";
+  if(voiced && !s.x104_subs) push("bad","字幕（XAG 104）：台詞やチュートリアル音声があるのに字幕が未確認です。");
+  else if(s.voice==="unknown" && !s.x104_subs) push("warn","字幕：台詞の有無が未確認です。音声があるなら字幕が必要です。");
+  else if(s.voice==="none") push("ok","ほぼ無音声のため、台詞字幕は該当なし。");
+  else if(s.x104_subs) push("ok","重要な台詞に字幕ありと自己申告。");
+
+  if(voiced && !s.x104_caps) push("warn","キャプション：効果音・話者名・方向の手がかりが未確認です。");
+  if((voiced || s.x104_subs) && !s.x104_cfg) push("warn","字幕の大きさや背景を変える設定が未確認です。");
+  if(!s.x105_vol) push("warn","音量の分離（BGM / ボイス / SE）が未確認です。");
+  else push("ok","音量スライダーの分離あり。");
+
+  if(s.x106_na) push("ok","メニュー読み上げは対象外（単純UI）と自己申告。");
+  else if(!s.x106_narr) push("warn","メニューの読み上げ（XAG 106）が未確認です。複雑な設定画面ほど優先度が上がります。");
+  else push("ok","メニュー読み上げ、またはスクリーンリーダー両立あり。");
+
+  if(!s.x107_remap) push("bad","リマップ（XAG 107）：主要な操作をゲーム内で割り当て直せるか未確認です。");
+  else push("ok","ゲーム内リマップありと自己申告。");
+  if(!s.x107_hold) push("warn","長押しの代替（トグル／自動ホールド）が未確認です。");
+  else push("ok","長押しの代替、または長押しなし。");
+  if(!s.x107_combo) push("warn","同時押し・連打の代替が未確認です。");
+  else push("ok","同時押し・連打の代替、または該当なし。");
+  if(!s.x112_nav) push("bad","メニュー移動（XAG 112）：十字キーや1ボタンずつで辿れない／未確認です。");
+  else push("ok","メニューは単入力で辿れると自己申告。");
+  if(!s.x113_focus) push("warn","選択中の項目が見えにくい／未確認です（XAG 113）。");
+  else push("ok","フォーカス表示あり。");
+
+  if(s.x110_na) push("ok","振動なし → 振動オフ要件は該当なし。");
+  else if(!s.x110_haptic) push("warn","振動をオフにできるか未確認です（XAG 110）。");
+  else push("ok","振動オフあり。");
+
+  if(s.chat==="voice" && !s.eaa_chat_alt) push("bad","ボイスチャットのみで、文字チャットや自動字幕の代替が未確認です。通信機能は欧州などの説明責任で聞かれることがあります。");
+  else if(s.chat==="unknown" && !s.eaa_chat_alt) push("warn","オンライン通話の有無が未確認です。ボイスのみなら文字の代替を用意してください。");
+  else if(s.chat==="none" || s.chat==="text" || s.chat==="both" || s.eaa_chat_alt) push("ok","オンライン通信の文字代替、または通信なし。");
+
+  if(!s.eaa_doc) push("warn","ストアやゲーム内にアクセシビリティ情報（字幕・リマップ・色覚・点滅）が書いていない／未確認です。チェックリストの公開は認証ではありませんが、購入前の判断材料になります。");
+  else push("ok","公開情報にアクセシビリティの記載あり。");
+
+  let badge="自己点検：要修正が多い（公開前に詰める）";
+  if(bad===0 && warn<=3) badge="自己点検：公開前の有力候補（実機確認してからリリース）";
+  else if(bad===0) badge="自己点検：注意あり（推奨項目の穴）";
+  else if(bad<=3) badge="自己点検：要修正あり（優先度高を先に）";
+  return {issues,tips,bad,warn,ok,badge};
+}
+function render(r,s){
+  let h=`<div class="box"><span class="score">${esc(r.badge)}</span><br>
+<span class="muted">要修正 ${r.bad} ／ 注意 ${r.warn} ／ OK ${r.ok} ／ タイトル: ${esc(s.title||"（未記入）")} ／ ビルド: ${esc(s.build||"（未記入）")}</span></div>`;
+  h+=`<h2>指摘</h2><ul>`;
+  r.issues.concat(r.tips).forEach(x=>{
+    h+=`<li><span class="pill ${x.l}">${x.l==="bad"?"要修正":x.l==="warn"?"注意":"OK"}</span>${esc(x.m)}</li>`;
+  });
+  h+=`</ul>`;
+  h+=`<h2>修正優先度メモ（コピペ用）</h2><pre id="draft">${esc(`【ゲーム向けアクセシビリティ 公開前セルフ点検】
+タイトル: ${s.title||"（未記入）"}
+ビルド: ${s.build||"（未記入）"}
+プラットフォーム: ${s.platform} ／ 台詞: ${s.voice} ／ 通信: ${s.chat}
+推定: ${r.badge}
+
+優先度高（要修正 ${r.bad}）:
+${r.issues.filter(i=>i.l==="bad").map(i=>"- "+i.m).join("\\n")||"- （なし）"}
+
+注意:
+${r.issues.filter(i=>i.l==="warn").map(i=>"- "+i.m).join("\\n")||"- （なし）"}
+
+その他: ${s.notes||"（なし）"}
+
+※Xbox公式認証や法令適合の証明ではありません。learn.microsoft.com の XAG を正としてください。
+`)}</pre>
+<button type="button" class="sec" id="cpDraft">メモをコピー</button>`;
+  $("out").innerHTML=h;
+  const b=$("cpDraft");
+  if(b) b.onclick=function(){navigator.clipboard.writeText($("draft").textContent).catch(function(){});};
+}
+function run(){ const s=stateFromUi(); const r=analyze(s); render(r,s); window.__last={s,r}; }
+$("run").onclick=run;
+$("sample").onclick=function(){
+  $("title").value="サンプル・協力アクション";
+  $("platform").value="pc";
+  $("build").value="demo-0.8.0";
+  $("voice").value="some";
+  $("chat").value="none";
+  ["x101_size","x101_scale","x101_font","x102_contrast","x102_color","x109_clarity","x117_motion","x103_cues","x105_vol","x106_na","x107_remap","x107_hold","x107_combo","x112_nav","x113_focus","x110_na","eaa_doc"].forEach(function(id){$(id).checked=true;});
+  ["x118_flash","x104_subs","x104_caps","x104_cfg","x106_narr","x110_haptic","eaa_chat_alt"].forEach(function(id){$(id).checked=false;});
+  $("notes").value="サンプル：台詞があるのに字幕なし、点滅未確認。";
+  run();
+};
+$("csv").onclick=function(){
+  const s=stateFromUi(); const r=analyze(s);
+  const rows=[["level","message"]].concat(r.issues.concat(r.tips).map(x=>[x.l,x.m]));
+  rows.unshift(["meta","title="+s.title+";build="+s.build+";badge="+r.badge]);
+  const csv=rows.map(row=>row.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="game-a11y-check.csv"; a.click();
+};
+window.__analyze=analyze; window.__stateFromUi=stateFromUi;
+})();
+</script>
+</body>
+</html>
