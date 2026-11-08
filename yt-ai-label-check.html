@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配信前 AI開示ラベル点検（YouTube Studio／C2PA）｜無料</title>
+<meta name="description" content="YouTubeにAI映像・AI音楽を上げる前に、Studioの「AIの使用」をYesにする必要があるか、C2PA（Content Credentials）で自動ラベルが付くか、写実かアニメか、音楽が主役かを自己点検。日英の説明文下書きとCSV。送信なし。権利クリア（ai-rights）やフェス応募形式（ai-fest）とは別。">
+<link rel="canonical" href="https://yema7582-code.github.io/koubo-ai-ok/yt-ai-label-check.html">
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;max-width:820px;margin:24px auto;padding:0 14px;line-height:1.55;color:#1a1a1a}
+h1{font-size:1.35em}h2{font-size:1.1em;margin-top:1.4em;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;margin:.55em 0 .15em;font-weight:600;font-size:.95em}
+textarea,input[type=text],select{width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid #bbb;border-radius:6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.box{background:#f7f7f8;border:1px solid #e2e2e5;border-radius:8px;padding:12px 14px;margin:12px 0}
+.muted{color:#555;font-size:.92em}
+button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-weight:600;margin:4px 6px 4px 0}
+button.sec{background:#fff;color:#1a1a1a}
+.note{background:#fff8e1;padding:10px 12px;border-radius:8px;font-size:.9em;color:#444;border:1px solid #f0e0a0}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:.35em 0}
+.chk input{margin-top:4px}
+.chk span,.chk label{font-weight:400;margin:0;display:inline}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:700;margin-right:4px}
+.pill.ok{background:#e6f6ec;color:#0a7a32}.pill.warn{background:#fff4d6;color:#9a6700}.pill.bad{background:#fde8e6;color:#b42318}
+pre{white-space:pre-wrap;background:#f4f4f5;padding:10px;border-radius:8px;font-size:.9em}
+footer{margin:2.5em 0 1em;font-size:.9em;color:#555}
+a{color:#0b57d0}
+.score{font-weight:700}
+</style>
+</head>
+<body>
+<h1>配信前 AI開示ラベル点検（YouTube Studio／C2PA）</h1>
+<p class="muted">YouTubeは、<strong>写実的に見える</strong>生成AI・改変コンテンツと、<strong>音楽が主役のAI楽曲</strong>について、アップロード時に Studio の Attributes「AI use / AIの使用」で開示するよう求めています。このページは公式ヘルプの例に沿って、Yes / No / 要確認を自己点検し、説明欄用の日英下書きを作ります。入力はブラウザ内だけ（送信なし）。最終判断は各公式ヘルプを正としてください。</p>
+<p class="note">権利（Suno/Udioの商用プラン、声クローン、Content ID）は <a href="ai-rights-check.html">ai-rights-check</a>、映画祭の尺・字幕・プロセス文は <a href="ai-fest-check.html">ai-fest-check</a>、コンテスト用の申告文ひな形は <a href="ai-disclosure.html">ai-disclosure</a> です。ここは<strong>配信プラットフォームのラベル</strong>専用です。</p>
+<p class="muted">主な根拠：<a href="https://support.google.com/youtube/answer/14328491?hl=en">Disclosing use of GenAI content</a> ／ <a href="https://support.google.com/youtube/answer/15447836?hl=en">How this content was made</a>（確認日 2026-11-08）。TikTok / Meta は隣接メモであり、各社の最新ポリシーを別途確認してください。</p>
+
+<div class="box">
+<div class="row">
+<div>
+<label>作品タイトル</label>
+<input type="text" id="title" placeholder="例：潮灯りのクリスマス">
+</div>
+<div>
+<label>見た目の系統</label>
+<select id="look">
+<option value="unknown">未確認</option>
+<option value="photo">写実（実在しそうな映像・写真）</option>
+<option value="animated">非写実（明らかなアニメ・抽象・ファンタジー）</option>
+<option value="mixed">混在（写実ショットがある）</option>
+<option value="music">音楽が主役（MV / 音源投稿）</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div>
+<label>上げる場所</label>
+<select id="dest">
+<option value="youtube">主に YouTube</option>
+<option value="multi">YouTube と Shorts / TikTok / Instagram など複数</option>
+<option value="tiktok">主に TikTok</option>
+<option value="meta">主に Instagram / Facebook</option>
+</select>
+</div>
+<div>
+<label>ファイルの C2PA（Content Credentials）</label>
+<select id="c2pa">
+<option value="unknown">未確認</option>
+<option value="yes">付いている（ツールや verify.contentauthenticity.org で確認）</option>
+<option value="no">付いていない / 書き出していない</option>
+</select>
+</div>
+</div>
+</div>
+
+<h2>1. YouTube が開示を求める4つの型</h2>
+<p class="muted">公式ヘルプは「現実のように見える改変・生成」と「動画の主役になるAI音楽」を挙げています。該当すれば Studio の AI use は <strong>Yes</strong> です。</p>
+<div class="row">
+<div>
+<label>実在の人物が、実際にはしていない発言や行動をしているように見える</label>
+<select id="person">
+<option value="unknown">未確認</option>
+<option value="yes">はい</option>
+<option value="no">いいえ</option>
+</select>
+</div>
+<div>
+<label>実在の出来事や場所の映像を、実際と違う内容に改変している</label>
+<select id="event">
+<option value="unknown">未確認</option>
+<option value="yes">はい</option>
+<option value="no">いいえ</option>
+</select>
+</div>
+</div>
+<div class="row">
+<div>
+<label>実際には起きていない写実的な場面を生成している（実在都市への災害、実在選手の試合など）</label>
+<select id="scene">
+<option value="unknown">未確認</option>
+<option value="yes">はい</option>
+<option value="no">いいえ</option>
+</select>
+</div>
+<div>
+<label>生成AIの音楽が、この動画の主役である</label>
+<select id="music_main">
+<option value="unknown">未確認</option>
+<option value="yes">はい</option>
+<option value="no">いいえ（BGM程度、または人が作曲／コード合成のみ）</option>
+</select>
+</div>
+</div>
+<div class="chk"><input type="checkbox" id="likeness"><span>実在人物を使っている場合、本人（または権利者）の許可がある。使っていない場合はチェック不要</span></div>
+<div class="chk"><input type="checkbox" id="yt_tools"><span>YouTube 自身の生成AI（DreamScreen や Veo など）を使った</span></div>
+
+<h2>2. 公式が「開示しなくてよい」例に近いか</h2>
+<p class="muted">非写実、または見た目を大きく変えない軽い加工は、YouTube上は対象外になり得ます。当てはまるものだけチェックしてください。</p>
+<div class="chk"><input type="checkbox" id="ex_unreal"><span>明らかに非現実（ユニコーン、完全なアニメ、グリーンバックの宇宙など）</span></div>
+<div class="chk"><input type="checkbox" id="ex_minor"><span>軽い見た目の加工だけ（美容フィルター、色調、ぼかし、シャープ／アップスケール、字幕生成）</span></div>
+<div class="chk"><input type="checkbox" id="ex_assist"><span>企画・台本・タイトル・サムネ・インフォグラフィックだけのAI補助</span></div>
+<div class="chk"><input type="checkbox" id="ex_voice"><span>自分の声のクローンでナレーションや吹替をした（他人の声ではない）</span></div>
+<div class="chk"><input type="checkbox" id="ex_game"><span>ゲームのプレイ映像が中心</span></div>
+
+<h2>3. メモ</h2>
+<label>使ったツール（任意・説明文に入れます）</label>
+<input type="text" id="tools" placeholder="例：Python+Skia の自作描画、VOICEVOX、コード生成の伴奏">
+<label>補足（任意）</label>
+<input type="text" id="notes" placeholder="未確認の書き出し設定、別人の声、ロゴなど">
+
+<p>
+<button type="button" id="run">点検する</button>
+<button type="button" id="sample" class="sec">サンプルを入れる</button>
+<button type="button" id="csv" class="sec">CSVを保存</button>
+</p>
+<div id="out"></div>
+
+<p>有料の目安：「配信プラットフォーム向け AI開示ラベル点検パック」¥8,000〜20,000／本（StudioのYes/No判断メモ、C2PAの有無、説明欄の日英文、Shortsと長尺のラベル位置の注意。公式ラベルの代行や削除保証ではありません）。相談：<a href="mailto:shinji-work@mail.grokbot.com">shinji-work@mail.grokbot.com</a>（中崎）</p>
+<footer>YouTube / TikTok / Meta / C2PA の公式適合や、ラベルが付かないことの保証ではありません。メタデータを剥がして自動ラベルを避ける行為は推奨しません。データは送信されません。</footer>
+<script>
+(function(){
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
+function stateFromUi(){
+  return {
+    title:$("title").value.trim(),
+    look:$("look").value,
+    dest:$("dest").value,
+    c2pa:$("c2pa").value,
+    person:$("person").value,
+    event:$("event").value,
+    scene:$("scene").value,
+    music_main:$("music_main").value,
+    likeness:$("likeness").checked,
+    yt_tools:$("yt_tools").checked,
+    ex_unreal:$("ex_unreal").checked,
+    ex_minor:$("ex_minor").checked,
+    ex_assist:$("ex_assist").checked,
+    ex_voice:$("ex_voice").checked,
+    ex_game:$("ex_game").checked,
+    tools:$("tools").value.trim(),
+    notes:$("notes").value.trim()
+  };
+}
+function triggers(s){
+  const keys=["person","event","scene","music_main"];
+  const yes=keys.filter(k=>s[k]==="yes");
+  const unk=keys.filter(k=>s[k]==="unknown");
+  const no=keys.filter(k=>s[k]==="no");
+  return {yes,unk,no};
+}
+function analyze(s){
+  const issues=[], tips=[];
+  let bad=0, warn=0, ok=0;
+  function push(l,m){ (l==="ok"?tips:issues).push({l,m}); if(l==="bad")bad++; else if(l==="warn")warn++; else ok++; }
+  const t=triggers(s);
+  const photoish = s.look==="photo" || s.look==="mixed" || s.look==="unknown";
+  let yt="review";
+  if(t.yes.length) yt="yes";
+  else if(t.unk.length===0) yt="no";
+  else yt="review";
+
+  if(s.look==="unknown") push("warn","見た目の系統が未確認です。写実なら4項目を一つずつ確認し、明らかなアニメならその旨を残してください。");
+  else if(s.look==="photo") push("ok","写実系として点検しています。該当すれば Studio は Yes です。");
+  else if(s.look==="animated") push("ok","非写実（アニメ等）として点検しています。公式は完全なアニメのミサイル描写などを開示不要例に挙げています。");
+  else if(s.look==="mixed") push("warn","写実ショットが混ざる作品です。一部でも4項目に当たれば、動画全体として Yes にするのが安全です。");
+  else if(s.look==="music") push("ok","音楽主役として点検しています。AI楽曲が主役なら Yes です。");
+
+  if(t.yes.indexOf("person")>=0){
+    push("ok","実在人物の見せかけ：Studio の AI use は Yes。プレイヤー付近にラベルが付くことがあります。");
+    if(!s.likeness) push("bad","実在人物を、していない発言や行動をしているように見せています。本人（または権利者）の許可が未確認です。許可なしの公開は別問題です。");
+    else push("ok","実在人物の利用許可ありと自己申告。");
+  } else if(s.person==="unknown"){
+    push(photoish?"bad":"warn","実在人物の見せかけが未確認です。写実的な顔や声があるなら、本人が実際にした言動か確認してください。");
+  } else {
+    push("ok","実在人物を、していない言行をしているようには見せていないと自己申告。");
+  }
+
+  if(t.yes.indexOf("event")>=0) push("ok","実在の出来事・場所の改変：Studio は Yes。");
+  else if(s.event==="unknown") push(photoish?"bad":"warn","実在の出来事や場所の改変が未確認です。");
+  else push("ok","実在の出来事・場所を実際と違う内容には改変していないと自己申告。");
+
+  if(t.yes.indexOf("scene")>=0) push("ok","起きていない写実場面の生成：Studio は Yes（公式例：実在都市へ向かう災害、実在選手の試合）。");
+  else if(s.scene==="unknown") push(photoish?"bad":"warn","「起きていない写実場面」の有無が未確認です。");
+  else push("ok","起きていない写実場面は生成していないと自己申告。");
+
+  if(t.yes.indexOf("music_main")>=0) push("ok","AI音楽が主役：Studio は Yes。音楽または写実コンテンツではプレーヤー上のラベルが付くことがあります。");
+  else if(s.music_main==="unknown") push(s.look==="music"?"bad":"warn","AI音楽が主役かどうか未確認です。BGM程度なら No 側、楽曲投稿やMVの主目的なら Yes です。");
+  else push("ok","AI音楽は主役ではない（または人が作曲／コード合成のみ）と自己申告。");
+
+  if(s.c2pa==="yes"){
+    push("warn","C2PA（Content Credentials）が付いています。YouTube はこれを根拠に自動ラベルを付けることがあり、YouTube自前ツール・C2PA・手動審査後のラベルは原則変更できません。ラベル回避のためにメタデータを剥がさないでください。");
+  } else if(s.c2pa==="unknown"){
+    push("warn","C2PAの有無が未確認です。書き出したファイルを verify.contentauthenticity.org か制作ツールの表示で確認してから上げると、想定外の自動ラベルを減らせます。");
+  } else {
+    push("ok","C2PAは付いていない／書き出していないと自己申告。");
+  }
+
+  if(s.yt_tools) push("warn","YouTube 自身の生成AIを使っています。この経路のラベルは原則変更できません。");
+
+  if(yt==="no" && (s.ex_unreal || s.ex_minor || s.ex_assist || s.ex_voice || s.ex_game)){
+    push("ok","公式の開示不要例（非写実、軽い加工、企画補助、自分の声のクローン、ゲーム映像）に近い自己申告です。");
+  }
+  if(yt==="yes" && s.ex_minor && !t.yes.length){ /* unreachable */ }
+
+  if(s.dest==="tiktok" || s.dest==="multi") push("warn","TikTok は写実的なAI画像・音声・動画のラベルを求め、他社の Content Credentials を読み取って自動表示することがあります。各アプリの最新画面で確認してください。");
+  if(s.dest==="meta" || s.dest==="multi") push("warn","Instagram / Facebook は、写実的な映像や本物らしく聞こえる改変音声の開示を求めることがあります。投稿画面の AI info を確認してください。");
+
+  if(yt==="yes") push("ok","判断：YouTube Studio の「AI use / AIの使用」は Yes。開示自体は視聴回数制限や収益資格の減点にはならない、と公式は説明しています。");
+  else if(yt==="no") push("ok","判断：いまの自己申告では、YouTubeが求める写実改変・主役AI音楽のいずれにも当たらないため、Studio は No でよい可能性があります。映画祭や素材販売の制作過程申告は別です。");
+  else push("warn","判断：未確認項目があるため、Studio を No にするのはまだ早いです。4項目を Yes/No にしてから上げてください。");
+
+  let badge="自己点検：要確認（未記入が多い）";
+  if(yt==="yes" && bad===0 && s.c2pa!=="unknown") badge="自己点検：Studio は Yes（説明文を添えて公開可）";
+  else if(yt==="yes" && bad===0) badge="自己点検：Studio は Yes（C2PA未確認の注意あり）";
+  else if(yt==="yes") badge="自己点検：Studio は Yes（許可など優先度高あり）";
+  else if(yt==="no" && bad===0 && warn<=2) badge="自己点検：Studio は No でよい候補（フェス申告は別）";
+  else if(yt==="no") badge="自己点検：Studio は No 寄り（注意項目あり）";
+  else if(bad>0) badge="自己点検：要修正（写実なのに未確認）";
+
+  const reasonJa = t.yes.length
+    ? t.yes.map(function(k){return ({person:"実在人物の見せかけ",event:"実在の出来事・場所の改変",scene:"起きていない写実場面の生成",music_main:"主役のAI音楽"}[k]);}).join("、")
+    : (yt==="no" ? "写実的な改変や主役のAI音楽には当たらない自己申告" : "未確認項目がある");
+  const draftJa = `【配信前 AI開示 セルフ点検】
+タイトル: ${s.title||"（未記入）"}
+見た目: ${s.look} ／ 公開先: ${s.dest}
+Studio「AIの使用」: ${yt==="yes"?"Yes":yt==="no"?"No（候補）":"要確認"}
+理由: ${reasonJa}
+C2PA: ${s.c2pa}${s.yt_tools?" ／ YouTube自前の生成AIを使用":""}
+ツール: ${s.tools||"（未記入）"}
+
+説明欄案:
+この動画${yt==="yes"?"は生成AIを使って制作した部分があります（"+reasonJa+"）。":"の映像は、YouTubeが開示を求める写実的な合成・改変や、主役となるAI音楽には当たらないと考えています。"}制作に使った主な手段: ${s.tools||"（追記してください）"}。詳しい判断は YouTube ヘルプ「Disclosing use of GenAI content」に基づく自己点検です。
+
+その他: ${s.notes||"（なし）"}
+※公式ラベルの代行や、ラベルが付かない保証ではありません。C2PAを剥がして回避しないでください。`;
+  const draftEn = `Pre-upload AI label self-check
+Title: ${s.title||"(untitled)"}
+Look: ${s.look} / Destination: ${s.dest}
+YouTube Studio "AI use": ${yt==="yes"?"Yes":yt==="no"?"No (candidate)":"Review"}
+Why: ${reasonJa}
+C2PA: ${s.c2pa}${s.yt_tools?" / Used YouTube's own GenAI tools":""}
+Tools: ${s.tools||"(add tools)"}
+
+Description draft:
+${yt==="yes"?"This video includes AI-generated or meaningfully AI-altered material ("+reasonJa+").":"This video is not intended as realistic altered footage or as an AI-music-focused upload under YouTube's disclosure examples."} Main tools: ${s.tools||"(add tools)"}. This note follows YouTube Help, "Disclosing use of GenAI content," as a self-check, not an official determination.`;
+
+  return {issues,tips,bad,warn,ok,badge,yt,draftJa,draftEn,reasonJa};
+}
+function render(r,s){
+  let h=`<div class="box"><span class="score">${esc(r.badge)}</span><br>
+<span class="muted">要修正 ${r.bad} ／ 注意 ${r.warn} ／ OK ${r.ok} ／ Studio: ${esc(r.yt)} ／ タイトル: ${esc(s.title||"（未記入）")}</span></div>`;
+  h+=`<h2>指摘</h2><ul>`;
+  r.issues.concat(r.tips).forEach(x=>{
+    h+=`<li><span class="pill ${x.l}">${x.l==="bad"?"要修正":x.l==="warn"?"注意":"OK"}</span>${esc(x.m)}</li>`;
+  });
+  h+=`</ul>`;
+  h+=`<h2>説明欄・作業メモ（コピペ用）</h2><pre id="draft">${esc(r.draftJa+"\\n\\n---\\n\\n"+r.draftEn)}</pre>
+<button type="button" class="sec" id="cpDraft">メモをコピー</button>`;
+  $("out").innerHTML=h;
+  const b=$("cpDraft");
+  if(b) b.onclick=function(){navigator.clipboard.writeText($("draft").textContent).catch(function(){});};
+}
+function run(){ const s=stateFromUi(); const r=analyze(s); render(r,s); window.__last={s,r}; }
+$("run").onclick=run;
+$("sample").onclick=function(){
+  $("title").value="サンプル・写実の旅行映像";
+  $("look").value="photo";
+  $("dest").value="youtube";
+  $("c2pa").value="unknown";
+  $("person").value="no";
+  $("event").value="no";
+  $("scene").value="yes";
+  $("music_main").value="no";
+  $("likeness").checked=false;
+  $("yt_tools").checked=false;
+  ["ex_unreal","ex_minor","ex_assist","ex_voice","ex_game"].forEach(function(id){$(id).checked=false;});
+  $("tools").value="映像生成モデル（写実）";
+  $("notes").value="サンプル：実在しそうな海岸を生成した宣伝映像。";
+  run();
+};
+$("csv").onclick=function(){
+  const s=stateFromUi(); const r=analyze(s);
+  const rows=[["level","message"]].concat(r.issues.concat(r.tips).map(x=>[x.l,x.m]));
+  rows.unshift(["meta","title="+s.title+";yt="+r.yt+";badge="+r.badge+";c2pa="+s.c2pa]);
+  const csv=rows.map(row=>row.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="yt-ai-label-check.csv"; a.click();
+};
+window.__analyze=analyze; window.__stateFromUi=stateFromUi;
+})();
+</script>
+</body>
+</html>
